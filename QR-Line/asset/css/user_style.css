@@ -94,7 +94,7 @@ body {
 }
 
 .input-orange::placeholder {
-    text-transform: none; 
+    text-transform: none;
     color: black;
     opacity: 0.5;
     font-weight: normal;
