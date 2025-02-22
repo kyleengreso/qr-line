@@ -1,5 +1,6 @@
 <?php
-include 'db_conn.php';
+
+include 'includes/db_conn.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];

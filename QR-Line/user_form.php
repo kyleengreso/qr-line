@@ -16,7 +16,7 @@
             <h4 class="text-center header-title">QR FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
 
-            <form action="php/process.php" method="post">
+            <form action="process.php" method="post">
                 <div class="mb-3">
                     <label for="name" class="form-label fw-bold">Name</label>
                     <input type="text" class="form-control input-orange" id="name" name="name" placeholder="Enter Your Name" required>

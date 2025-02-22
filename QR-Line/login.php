@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db_conn.php'; // Database connection
+include 'includes/db_conn.php'; // Database connection
 
 // if (isset($_SESSION['employee_id'])) {
 //     header("Location: dashboard.php"); // Redirect if already logged in
@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['employee_id'] = $user['id'];
-            header("Location: dashboard.php");
+            header("Location: counter.php");
             exit();
         } else {
             $error = "Invalid username or password.";
