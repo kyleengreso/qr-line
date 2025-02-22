@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db.php'; // Database connection
+include 'includes/db_conn.php'; // Database connection
 
 // if (isset($_SESSION['employee_id'])) {
 //     header("Location: dashboard.php"); // Redirect if already logged in

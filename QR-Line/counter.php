@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "db.php";
+include "includes/db_conn.php";
 
 // Check if employee is logged in
 if (!isset($_SESSION["employee_id"])) {

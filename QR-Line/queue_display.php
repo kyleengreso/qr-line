@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include '<includes/db_conn.php';
 
 $token_number = $_GET['token'] ?? '';
 
