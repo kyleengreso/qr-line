@@ -1,0 +1,11 @@
+body {
+    background: url(../images/background.jpg) no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: auto;
+    margin-top: 10vh;
+}
