@@ -11,8 +11,17 @@
 <body>
     <?php include "includes/navbar.php"; ?>
 
-    <div class="container">
-        
+    <div class="container d-flex justify-content-center align-items-center">
+        <div class="counter-container text-center">
+            <h3 class="fw-bold">COUNTER 1</h3>
+            <p class="mb-3">Current serving</p>
+            <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
+                4
+            </div>
+            <button class="btn btn-warning text-white fw-bold px-4">NEXT</button>
+        </div>
     </div>
+
+    <script src="asset/js/bootstrap.bundle.js"></script>
 </body>
 </html>
