@@ -56,8 +56,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
 <body>
     <?php include "includes/navbar.php"; ?>
 
-    <div class="container d-flex justify-content-center align-items-center">
-        <div class="counter-container text-center">
+    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
+        <div class="text-center w-100" style="max-width: 400px;">
             <h3 class="fw-bold">COUNTER <?php echo $counter['counterNumber']; ?></h3>
             <p class="mb-3">Current Serving</p>
             <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
