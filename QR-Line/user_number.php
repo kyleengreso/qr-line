@@ -1,7 +1,25 @@
 <?php
-$queueNumber = 31;
-$counterNumber = 2;
-$currentNumber = 3;
+include 'includes/db_conn.php';
+
+// Get the latest transaction for the user (assuming the last user added is the current one)
+$stmt = $conn->prepare("SELECT queue_number, idcounter FROM transactions ORDER BY idtransaction DESC LIMIT 1");
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$stmt->close();
+
+$queueNumber = $row['queue_number'] ?? "N/A";
+$counterNumber = $row['idcounter'] ?? "N/A";
+
+// Get the smallest "pending" queue number for the assigned counter (i.e., the current number being served)
+$stmt = $conn->prepare("SELECT MIN(queue_number) AS current_queue FROM transactions WHERE idcounter = ? AND status = 'pending'");
+$stmt->bind_param("i", $counterNumber);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$stmt->close();
+
+$currentQueueNumber = $row['current_queue'] ?? "N/A";
 ?>
 
 <!DOCTYPE html>
@@ -21,10 +39,10 @@ $currentNumber = 3;
     <div class="circle">
         <img src="queue_icon.png" alt="Queue Icon" class="queue-icon">
         <p class="label">Number:</p>
-        <p class="value"><?php echo $queueNumber; ?></p>
+        <p class="value"><?php echo htmlspecialchars($queueNumber); ?></p>
         <p class="label">Counter:</p>
-        <p class="value"><?php echo $counterNumber; ?></p>
-        <p class="current-number">Current number: <strong><?php echo $currentNumber; ?></strong></p>
+        <p class="value"><?php echo htmlspecialchars($counterNumber); ?></p>
+        <p class="current-number">Current number: <strong><?php echo htmlspecialchars($currentQueueNumber); ?></strong></p>
     </div>
 </body>
 </html>
