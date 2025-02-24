@@ -37,7 +37,7 @@ $currentQueueNumber = $row['current_queue'] ?? "N/A";
     <link rel="stylesheet" href="asset/css/user_style.css">
 
     <div class="circle">
-        <img src="queue_icon.png" alt="Queue Icon" class="queue-icon">
+        <img src="asset/images/qr_icon.png" alt="Queue Icon" class="queue-icon">
         <p class="label">Number:</p>
         <p class="value"><?php echo htmlspecialchars($queueNumber); ?></p>
         <p class="label">Counter:</p>
