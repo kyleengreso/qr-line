@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.38, for Win64 (x86_64)
 --
--- Host: localhost    Database: qr_queue
+-- Host: localhost    Database: qr_queue_system
 -- ------------------------------------------------------
 -- Server version	8.0.39
 
@@ -16,28 +16,31 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `counters`
+-- Table structure for table `counter`
 --
 
-DROP TABLE IF EXISTS `counters`;
+DROP TABLE IF EXISTS `counter`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `counters` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `counter_name` varchar(50) NOT NULL,
-  `is_available` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `counter_name` (`counter_name`)
+CREATE TABLE `counter` (
+  `idcounter` int NOT NULL AUTO_INCREMENT,
+  `counterNumber` varchar(45) NOT NULL,
+  `idemployee` int DEFAULT NULL,
+  `queue_count` int DEFAULT '0',
+  PRIMARY KEY (`idcounter`),
+  UNIQUE KEY `counterNumber` (`counterNumber`),
+  KEY `idemployee` (`idemployee`),
+  CONSTRAINT `counter_ibfk_1` FOREIGN KEY (`idemployee`) REFERENCES `employees` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `counters`
+-- Dumping data for table `counter`
 --
 
-LOCK TABLES `counters` WRITE;
-/*!40000 ALTER TABLE `counters` DISABLE KEYS */;
-/*!40000 ALTER TABLE `counters` ENABLE KEYS */;
+LOCK TABLES `counter` WRITE;
+/*!40000 ALTER TABLE `counter` DISABLE KEYS */;
+/*!40000 ALTER TABLE `counter` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -52,8 +55,9 @@ CREATE TABLE `employees` (
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -62,36 +66,7 @@ CREATE TABLE `employees` (
 
 LOCK TABLES `employees` WRITE;
 /*!40000 ALTER TABLE `employees` DISABLE KEYS */;
-INSERT INTO `employees` VALUES (3,'rolando','$2y$10$02fmGZ1JRKGug20FLJZW9.hpQqqsbUuh1CURDx/SGu9TyL7L3Lqxy','2025-02-22 14:23:04');
 /*!40000 ALTER TABLE `employees` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `notifications`
---
-
-DROP TABLE IF EXISTS `notifications`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `notifications` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `queue_number` int NOT NULL,
-  `message` text NOT NULL,
-  `sent_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `notifications`
---
-
-LOCK TABLES `notifications` WRITE;
-/*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
-/*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -102,18 +77,24 @@ DROP TABLE IF EXISTS `transactions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `transactions` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `idtransaction` int NOT NULL AUTO_INCREMENT,
+  `iduser` int DEFAULT NULL,
+  `idemployee` int DEFAULT NULL,
+  `idcounter` int NOT NULL,
   `queue_number` int NOT NULL,
-  `user_id` int DEFAULT NULL,
-  `counter_id` int DEFAULT NULL,
-  `status` enum('waiting','serving','done') DEFAULT 'waiting',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  KEY `counter_id` (`counter_id`),
-  CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `transactions_ibfk_2` FOREIGN KEY (`counter_id`) REFERENCES `counters` (`id`) ON DELETE SET NULL
+  `token_number` varchar(20) NOT NULL,
+  `transaction_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('pending','completed','cancelled') NOT NULL DEFAULT 'pending',
+  `purpose` varchar(255) DEFAULT NULL,
+  `email_sent` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`idtransaction`),
+  UNIQUE KEY `token_number` (`token_number`),
+  KEY `iduser` (`iduser`),
+  KEY `idemployee` (`idemployee`),
+  KEY `idcounter` (`idcounter`),
+  CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`iduser`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `transactions_ibfk_2` FOREIGN KEY (`idemployee`) REFERENCES `employees` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `transactions_ibfk_3` FOREIGN KEY (`idcounter`) REFERENCES `counter` (`idcounter`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -137,7 +118,7 @@ CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
-  `purpose` varchar(255) NOT NULL,
+  `purpose` varchar(20) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
@@ -162,4 +143,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-02-22 22:41:48
+-- Dump completed on 2025-02-23 14:41:27
