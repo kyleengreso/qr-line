@@ -4,16 +4,35 @@ include 'includes/db_conn.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash password
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
 
-    $stmt = $conn->prepare("INSERT INTO employees (username, password) VALUES (?, ?)");
-    $stmt->bind_param("ss", $username, $password);
-
-    if ($stmt->execute()) {
-        $success_message = "Employee registered successfully!";
+    if ($password !== $confirm_password) {
+        $error_message = "Passwords do not match.";
     } else {
-        $error_message = "Error: " . $conn->error;
+
+        // Load if user is exists
+        $stmt = $conn->prepare("SELECT id FROM employees WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $error_message = "Username already exists.";
+        } else {
+            $hash_password = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare("INSERT INTO employees (username, password) VALUES (?, ?)");
+            $stmt->bind_param("ss", $username, $password);
+        
+            if ($stmt->execute()) {
+                $success_message = "Employee registered successfully!";
+            } else {
+                $error_message = "Error: " . $conn->error;
+            }
+        }
     }
+} else {
+    unset($error_message);
 }
 ?>
 
@@ -24,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Employee</title>
     <link rel="stylesheet" href="asset/css/bootstrap.css">
-    <link rel="stylesheet" href="asset/css/style.css">
+    <link rel="stylesheet" href="asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -56,6 +75,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
                                 <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm password" required>
                             </div>
                         </div>
 

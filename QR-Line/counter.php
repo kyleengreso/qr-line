@@ -22,11 +22,15 @@ $stmt->execute();
 $counter = $stmt->get_result()->fetch_assoc();
 
 // Get the next queue number
-$counter_id = $counter['idcounter'];
-$stmt = $conn->prepare("SELECT * FROM transactions WHERE idcounter = ? AND status = 'pending' ORDER BY queue_number ASC LIMIT 1");
-$stmt->bind_param("i", $counter_id);
-$stmt->execute();
-$next_queue = $stmt->get_result()->fetch_assoc();
+if ($counter) {
+    $counter_id = $counter['idcounter'];
+    $stmt = $conn->prepare("SELECT * FROM transactions WHERE idcounter = ? AND status = 'pending' ORDER BY queue_number ASC LIMIT 1");
+    $stmt->bind_param("i", $counter_id);
+    $stmt->execute();
+    $next_queue = $stmt->get_result()->fetch_assoc();
+} else {
+    $next_queue = null;
+}
 
 // If 'NEXT' button is clicked, update the queue
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
@@ -50,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Dashboard | QR-Line</title>
     <link rel="stylesheet" href="asset/css/bootstrap.css">
-    <link rel="stylesheet" href="asset/css/style.css">
+    <link rel="stylesheet" href="asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -58,7 +62,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
 
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
         <div class="text-center w-100" style="max-width: 400px;">
+            
+            <?php if (isset($counter)) : ?>
             <h3 class="fw-bold">COUNTER <?php echo $counter['counterNumber']; ?></h3>
+            <?php else : ?>
+            <h3 class="fw-bold">No Counter Assigned</h3>
+            <?php endif; ?>
+
             <p class="mb-3">Current Serving</p>
             <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
                 <?php echo $next_queue ? $next_queue['queue_number'] : "No Queue"; ?>
