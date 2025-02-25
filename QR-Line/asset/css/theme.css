@@ -1,0 +1,33 @@
+
+/* Body */
+.bg {
+    background: url('./../images/background.jpg') no-repeat center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+/* SECTION: NAVBAR */
+.navbar {
+    background-color: rgb(255, 110, 55);
+}
+
+
+/* SECTION: BUTTON */
+.btn-primary {
+    background-color: rgb(255, 110, 55);
+    border-color: rgb(255, 110, 55);
+}
+.btn-primary:hover {
+    background-color: rgb(230, 100, 50);
+    border-color: rgb(230, 100, 50);
+}
+
+/* SECTION: TEXTBOX with/without property*/
+.input-group-text {
+    background-color: rgb(255, 110, 55);
+    color: white;
+    border-color: rgb(255, 110, 55);
+}
+
+
+/* SECTION */
