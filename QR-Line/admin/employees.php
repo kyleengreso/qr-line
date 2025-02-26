@@ -1,9 +1,13 @@
 <?php
+session_start();
 
 include "./../includes/db_conn.php";
 include "./../base.php";
-
+include "./../asset/php/message.php";
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
+
+    $message_success = $_SESSION['message-success'] ?? null;
+    $message_error = $_SESSION['message-error'] ?? null;
 
     // GET all list from employees
 
@@ -36,13 +40,25 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         <div class="row justify-content-center mt-5">
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
-                    <h4 class="text-center mb-4">Employees List</h4>
-
-                    <?php if (isset($success_message)): ?>
-                        <div class="alert alert-success"><?php echo $success_message; ?></div>
-                    <?php elseif (isset($error_message)): ?>
-                        <div class="alert alert-danger"><?php echo $error_message; ?></div>
-                    <?php endif; ?>
+                <?php if (isset($message_success)) {
+                    message_success($message_success);
+                    unset($_SESSION['message-success']);
+                } else if (isset($message_error)) {
+                    message_error($message_error);
+                    unset($_SESSION['message-error']);
+                }
+                ?>
+                    <div class="row w-100 mb-4">
+                        
+                        <div class="col col-9">
+                            <h4 class="text-center">Employees List</h4>
+                        </div>
+                    
+                        <div class="col col-3 p-0">
+                        <button class="btn btn-success" onclick="window.location.href='./add_employee.php'">Add Employees</button>
+                        </div>
+                    
+                    </div>
 
 
                     <table class="table table-striped" id="table-members">
@@ -53,9 +69,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         </tr>
                         <?php for ($i = 0; $i < count($employees); $i++): ?>
                         <tr>
-                            <td><?php echo $employees[$i]['username']; ?></td>
+                            <td><strong><?php echo $employees[$i]['username']; ?></strong></td>
                             <td><?php echo $employees[$i]['created_at']; ?></td>
-                            <td><a class="text-a-black" href="./edit_employee.php?id=<?php echo $employees[$i]['id'];?>">Edit</a></td>
+                            <td>
+                                <div class="d-flex flex-column flex-md-row justify-content-center p-0 w-100">
+                                    <button class="btn btn-primary m-1" onclick="window.location.href='./edit_employee.php?id=<?php echo $employees[$i]['id'];?>'">Edit</button>
+                                    <button class="btn btn-danger m-1" onclick="window.location.href='./delete_employee.php?id=<?php echo $employees[$i]['id'];?>'">Delete</button>
+                                </div>
+                            </td>
                         </tr>
                         <?php endfor; ?>
                     </table>
