@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $conn->commit();
 
         // Redirect user to queue display page
-        header("Location: user_number.php?queue=$queue_number&counter=$counter_id");
+        header("Location: user_dashboard.php?queue=$queue_number&counter=$counter_id");
         exit();
     } catch (Exception $e) {
         // Rollback transaction on error

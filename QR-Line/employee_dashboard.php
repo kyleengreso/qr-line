@@ -4,7 +4,7 @@ include "includes/db_conn.php";
 
 // Check if employee is logged in
 if (!isset($_SESSION["employee_id"])) {
-    header("Location: login.php");
+    header("Location: employee_login.php");
     exit();
 }
 
@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
         $stmt->execute();
 
         // Refresh the page to update the queue number
-        header("Location: counter.php");
+        header("Location: employee_dashboard.php");
         exit();
     }
 }

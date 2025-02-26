@@ -11,6 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($stmt->execute()) {
         $success_message = "Employee registered successfully!";
+        header("Location: employee_login.php");
     } else {
         $error_message = "Error: " . $conn->error;
     }

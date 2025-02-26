@@ -89,7 +89,7 @@ $currentQueueNumber = $row['current_queue'] ?? "N/A";
     <?php include "includes/navbar.php"; ?>
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
         <div class="circle text-center">
-            <img src="queue_icon.png" alt="Queue Icon" class="queue-icon">
+            <img src="asset/images/logo.gif" alt="Queue Icon" class="queue-icon">
             <div class="info-container">
                 <div class="info-box">
                     <p class="label">Number:</p>
