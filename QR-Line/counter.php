@@ -1,7 +1,7 @@
 <?php
 session_start();
 include "includes/db_conn.php";
-
+include "base.php";
 // Check if employee is logged in
 if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Dashboard | QR-Line</title>
+    <title>Employee Dashboard | <?php echo $project_name?></title>
     <link rel="stylesheet" href="asset/css/bootstrap.css">
     <link rel="stylesheet" href="asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>

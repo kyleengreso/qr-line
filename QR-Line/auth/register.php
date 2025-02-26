@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'includes/db_conn.php';
-
+include "./../includes/db_conn.php";
+include "./../base.php";
 // Uncomment this, when the auth dev is complete
 // if (isset($_SESSION["employee_id"])) {
 //     header("Location: counter.php");
@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // users table
             
-            $stmt = $conn->prepare("INSERT INTO users (name, email,) VALUES (?, ?)");
+            $stmt = $conn->prepare("INSERT INTO users (name, email) VALUES (?, ?)");
 
 
             $stmt->close();
@@ -53,13 +53,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | QR-Line</title>
-    <link rel="stylesheet" href="asset/css/bootstrap.css">
-    <link rel="stylesheet" href="asset/css/theme.css">
+    <title>Register | <?php echo $project_name?></title>
+    <link rel="stylesheet" href="./../asset/css/bootstrap.css">
+    <link rel="stylesheet" href="./../asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
 </head>
 <body class="bg">
-    <?php include "includes/navbar.php"; ?>
+    <?php include "./../includes/navbar.php"; ?>
 
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">

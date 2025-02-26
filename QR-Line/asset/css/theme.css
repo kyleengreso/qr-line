@@ -6,6 +6,12 @@
     position: relative;
 }
 
+/* SECTION: TEXT */
+.text-a-black {
+    text-decoration: none;
+    color: black;
+}
+
 /* SECTION: NAVBAR */
 .navbar {
     background-color: rgb(255, 110, 55);
@@ -28,6 +34,27 @@
     color: white;
     border-color: rgb(255, 110, 55);
 }
+
+/* SECTION: TABLE */
+
+#table-members {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#table-members th {
+    background-color: rgb(255, 110, 55);
+    color: white;
+}
+
+#table-members td {
+    background-color: white;
+    color: black;
+}
+
+
+
 
 
 /* SECTION */

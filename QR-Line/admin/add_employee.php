@@ -1,7 +1,7 @@
 <?php
 
-include 'includes/db_conn.php';
-
+include "./../includes/db_conn.php";
+include "./../base.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
@@ -31,8 +31,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
     }
-} else {
-    unset($error_message);
 }
 ?>
 
@@ -41,13 +39,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Employee</title>
-    <link rel="stylesheet" href="asset/css/bootstrap.css">
-    <link rel="stylesheet" href="asset/css/theme.css">
+    <title>Add Employee | <?php echo $project_name?></title>
+    <link rel="stylesheet" href="./../asset/css/bootstrap.css">
+    <link rel="stylesheet" href="./../asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <?php include "includes/navbar.php"; ?>
+    <?php include "./../includes/navbar.php"; ?>
 
     <div class="container">
         <div class="row justify-content-center mt-5">
@@ -86,13 +84,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                        <button type="submit" class="btn btn-primary w-100">Add Employee</button>
+                        <div class="text-center p-2">
+                            <a class="text-a-black" href="./employees.php">Cancel</a>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="asset/js/bootstrap.bundle.js"></script>
+    <script src="./../asset/js/bootstrap.bundle.js"></script>
 </body>
 </html>
