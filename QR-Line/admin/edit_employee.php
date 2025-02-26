@@ -1,34 +1,39 @@
 <?php
-
+session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
-if ($_SERVER["REQUEST_METHOD"] == "PUT") {
+include "./../asset/php/message.php";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
+    $id = $_GET['id'];
 
     if ($password !== $confirm_password) {
         $error_message = "Passwords do not match.";
     } else {
 
-        // Load if user is exists
-        $stmt = $conn->prepare("SELECT id FROM employees WHERE username = ?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            $error_message = "Username already exists.";
+        if (empty($password)) {
+            $stmt = $conn->prepare("UPDATE employees SET username = ? WHERE id = ?");
+            $stmt->bind_param("ss", $username, $id);
         } else {
             $hash_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO employees (username, password) VALUES (?, ?)");
-            $stmt->bind_param("ss", $username, $password);
-        
+            $stmt = $conn->prepare("UPDATE employees SET username = ?, password = ? WHERE id = ?");
+            $stmt->bind_param("sss", $username, $hash_password, $id);
+        }
+
+        try {
             if ($stmt->execute()) {
-                $success_message = "Employee registered successfully!";
+                $_SESSION['message-success'] = "Employee updated successfully!";
+                header("Location: ./employees.php");
             } else {
-                $error_message = "Error: " . $conn->error;
+                $_SESSION['message-error'] = "Error: " . $conn->error;
+                header("Location: ./employees.php");
             }
+        } catch (Exception $e) {
+            $_SESSION['message-error'] = "Error: " . $e->getMessage();
+            header("Location: ./employees.php");
         }
     }
 } else {
@@ -46,20 +51,12 @@ if ($_SERVER["REQUEST_METHOD"] == "PUT") {
             if ($employee) {
                 // $employee_id = $employee['id'];              // RESERVED //
                 $employee_username = $employee['username'];
-            } else {
-                $_SESSION['error_message'] = "Employee not found.";
-                header("Location: employees.php");
             }
         } else {
-
-            // Redirect to employees page
-
-            // RESERVED //
+            $_SESSION['message-error'] = "Employee not found.";
+            header("Location: ./employees.php");
         }
     } else {
-        
-        // Redirect to employees page if 'id' is not set
-        $_SESSION['error_message'] = "Employee not found.";
         header("Location: ./employees.php");
     }
 }
@@ -91,7 +88,7 @@ if ($_SERVER["REQUEST_METHOD"] == "PUT") {
                         <div class="alert alert-danger"><?php echo $error_message; ?></div>
                     <?php endif; ?>
 
-                    <form id="employeeForm" method="PUT">
+                    <form id="employeeForm" method="POST">
                         <div class="mb-3">
                             <label class="form-label">Username</label>
                             <div class="input-group">
@@ -104,7 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] == "PUT") {
                             <label class="form-label">Password</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                                <input type="password" name="password" class="form-control" placeholder="Enter password">
                             </div>
                         </div>
 
@@ -112,7 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "PUT") {
                             <label class="form-label">Confirm Password</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm password" required>
+                                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm password">
                             </div>
                         </div>
 
