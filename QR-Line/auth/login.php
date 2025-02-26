@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['employee_id'] = $user['id'];
-        header("Location: counter.php");
+        header("Location: ./../counter.php");
         exit();
     } else {
         $error = "Invalid username or password.";

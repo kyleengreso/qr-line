@@ -1,7 +1,7 @@
 <?php
 session_start();
-include "includes/db_conn.php";
-include "base.php";
+include "./../includes/db_conn.php";
+include "./../base.php";
 // Check if employee is logged in
 if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
@@ -53,12 +53,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Dashboard | <?php echo $project_name?></title>
-    <link rel="stylesheet" href="asset/css/bootstrap.css">
-    <link rel="stylesheet" href="asset/css/theme.css">
+    <link rel="stylesheet" href="./../asset/css/bootstrap.css">
+    <link rel="stylesheet" href="./../asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <?php include "includes/navbar.php"; ?>
+    <?php include "./../includes/navbar.php"; ?>
 
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
         <div class="text-center w-100" style="max-width: 400px;">
@@ -79,6 +79,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
         </div>
     </div>
 
-    <script src="asset/js/bootstrap.bundle.js"></script>
+    <script src="./../asset/js/bootstrap.bundle.js"></script>
 </body>
 </html>

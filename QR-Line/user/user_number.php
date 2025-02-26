@@ -1,6 +1,6 @@
 <?php
-include 'includes/db_conn.php';
-
+include './../includes/db_conn.php';
+include './../base.php';
 // Get the latest transaction for the user (assuming the last user added is the current one)
 $stmt = $conn->prepare("SELECT queue_number, idcounter FROM transactions ORDER BY idtransaction DESC LIMIT 1");
 $stmt->execute();
@@ -27,8 +27,9 @@ $currentQueueNumber = $row['current_queue'] ?? "N/A";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR-Line: Palawan State University</title>
-    <link rel="stylesheet" href="asset/css/bootstrap.css">
+    <title>Queue | <?php echo $project_name?></title>
+    <link rel="stylesheet" href="./../asset/css/bootstrap.css">
+    <link rel="stylesheet" href="./../asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
     <style>
         .circle {
@@ -85,8 +86,8 @@ $currentQueueNumber = $row['current_queue'] ?? "N/A";
         }
     </style>
 </head>
-<body class="bg-light">
-    <?php include "includes/navbar.php"; ?>
+<body class="bg">
+    <?php include "./../includes/navbar.php"; ?>
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
         <div class="circle text-center">
             <img src="queue_icon.png" alt="Queue Icon" class="queue-icon">
