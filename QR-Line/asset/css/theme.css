@@ -46,6 +46,7 @@
 #table-members th {
     background-color: rgb(255, 110, 55);
     color: white;
+    font-weight: bold;
 }
 
 #table-members td {

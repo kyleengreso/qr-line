@@ -1,14 +1,18 @@
 <?php
-
+session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
+include "./../asset/php/message.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $success_message = $_SERVER['message-success'] ?? null;
+    $error_message = $_SERVER['message-error'] ?? null;
+
     $username = $_POST['username'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
     if ($password !== $confirm_password) {
-        $error_message = "Passwords do not match.";
+        $error_message = "Password does not match.";
     } else {
 
         // Load if user is exists
@@ -25,7 +29,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bind_param("ss", $username, $password);
         
             if ($stmt->execute()) {
-                $success_message = "Employee registered successfully!";
+                $_SESSION['message-success'] = "Employee registered successfully!";
+                header("Location: ./employees.php");
             } else {
                 $error_message = "Error: " . $conn->error;
             }
@@ -53,11 +58,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="card shadow-sm p-4">
                     <h4 class="text-center mb-4">Add Employee</h4>
 
-                    <?php if (isset($success_message)): ?>
-                        <div class="alert alert-success"><?php echo $success_message; ?></div>
-                    <?php elseif (isset($error_message)): ?>
-                        <div class="alert alert-danger"><?php echo $error_message; ?></div>
-                    <?php endif; ?>
+                    <?php
+                    if (isset($error_message)) {
+                        message_error($error_message);
+                        unset($error_message);
+                    }
+                    ?>
 
                     <form method="POST">
                         <div class="mb-3">
