@@ -28,6 +28,16 @@
     border-color: rgb(230, 100, 50);
 }
 
+.btn-primary:active {
+    background-color: rgb(230, 100, 50);
+    border-color: rgb(230, 100, 50);
+}
+
+.btn-primary:focus {
+    background-color: rgb(230, 100, 50);
+    border-color: rgb(230, 100, 50);
+}
+
 /* SECTION: TEXTBOX with/without property*/
 .input-group-text {
     background-color: rgb(255, 110, 55);
