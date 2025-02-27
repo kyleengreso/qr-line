@@ -51,15 +51,20 @@
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    table-layout: fixed;
 }
 
 #table-members th {
+    padding: 10px;
+    text-align: center;
     background-color: rgb(255, 110, 55);
     color: white;
     font-weight: bold;
 }
 
 #table-members td {
+    text-align: center;
+    padding: 6px;
     background-color: white;
     color: black;
 }

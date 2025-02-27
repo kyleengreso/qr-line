@@ -9,29 +9,6 @@ include './../asset/php/message.php';
 //     exit();
 // }
 
-// if ($_SERVER["REQUEST_METHOD"] == "POST") {
-//     $success_message = $_SESSION['message-success'] ?? null;
-//     $error_message = $_SESSION['message-error'] ?? null;
-
-//     $username = trim($_POST['username']);
-//     $password = trim($_POST['password']);
-
-//     $stmt = $conn->prepare("SELECT id, password FROM employees WHERE username = ?");
-//     $stmt->bind_param("s", $username);
-//     $stmt->execute();
-//     $result = $stmt->get_result();
-//     $user = $result->fetch_assoc();
-        
-//     if ($user && password_verify($password, $user['password'])) {
-//         $_SESSION['employee_id'] = $user['id'];
-//         header("Location: ./../counter.php");
-//         exit();
-//     } else {
-//         $error_message = "Invalid username or password.";
-//     }
-// } else {
-//     $success_message = $_SESSION['message-success'] ?? null;
-// }
 ?>
 
 <!DOCTYPE html>
@@ -50,14 +27,6 @@ include './../asset/php/message.php';
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
             <h4 class="text-center mb-4">Employee Login</h4>
-            <?php if (isset($error_message)) {
-                message_error($error_message);
-                unset($_SESSION['message-error']);
-            } else if (isset($success_message)) {
-                message_success($success_message);
-                unset($_SESSION['message-success']);
-            }
-            ?>
             <form method="POST" id="frmLogIn">
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>

@@ -1,34 +1,40 @@
 
 $(document).ready(function() {
     function auth_success(message) {
-        // alert("Login successful");       // Debug :)
-        $form = $('#frmLogIn') ? $('#frmLogIn') : $('#frmRegister');
+        $form = $('#frmLogIn');
+        $form.find('.alert').remove();
         $form.prepend('<div class="alert alert-success">'+message+'</div>');
     }
 
     function auth_error(message) {
-        // put this into this form
-        $form = $('#frmLogIn') ? $('#frmLogIn') : $('#frmRegister');
+        $form = $('#frmLogIn');
+        $form.find('.alert').remove();
         $form.prepend('<div class="alert alert-danger">'+message+'</div>');
     }
 
-    function register_success() {
+    function register_success(message) {
+        $form = $('#frmRegister');
+        $form.find('.alert').remove();
+        $form.prepend('<div class="alert alert-success">'+message+'</div>');
     }
 
+    function register_error(message) {
+        $form = $('#frmRegister');
+        $form.find('.alert').remove();
+        $form.prepend('<div class="alert alert-danger">'+message+'</div>');
+    }
+
+
     function authenticate(username, password) {
-        // console.log(username, password);
-        // Convert into JSON format
+
         var data = {
             username: username,
-            password: password
+            password: password,
+            auth_method: 'login'
         };
 
-        // Then encrypt using base64
-        // var auth_enc = btoa(JSON.stringify(data));
-
-        console.log("LOGIN")
         $.ajax({
-            url: './../api/api_authenicate.php',
+            url: './../api/api_authenticate.php',
             type: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json',
@@ -46,12 +52,34 @@ $(document).ready(function() {
         });
     }
 
-    function register(username, password) {
+    function register(username, password, confirm_password) {
         // Convert into JSON format
 
-        if (password != confirm_password) {
-            auth_error('Password does not match');
-        }
+        var data = {
+            username: username,
+            password: password,
+            confirm_password: confirm_password,
+            auth_method: 'register'
+        };
+
+        $.ajax({
+            url: './../api/api_authenticate.php',
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    register_success(response.message);
+                    setTimeout(function() {
+                        window.location.href = "./login.php";
+                    }, 1000);
+                } else {
+                    register_error(response.message);
+                }
+            },
+        })
+
     }
 
     // Login Form
