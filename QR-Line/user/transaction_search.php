@@ -8,7 +8,7 @@ include "./../base.php"
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Form | <?php echo $project_name?></title>
+    <title>Transaction Search | <?php echo $project_name?></title>
     <link rel="stylesheet" href="./../asset/css/bootstrap.css">
     <link rel="stylesheet" href="./../asset/css/theme.css">
     <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
@@ -16,28 +16,10 @@ include "./../base.php"
 <body class="bg">
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh;" >
+    <div class="container d-flex justify-content-center align-items-center flex-column flex-md-row mt-5 mt-md-20">
     <div class="card shadow-sm p-4 mb-4 mr-0 mb-md-0 mx-md-4" style="max-width: 400px; width: 100%;">
-        <h4 class="text-center mb-4">COUNTER STATS</h4>
-        <!-- <table id="table-members"></table> -->
-        <div class="row">
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 1</h5>
-                <h1 class="text-center" id="total-counter">0</h1>
-            </div>
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 2</h5>
-                <h1 class="text-center" id="active-counter">0</h1>
-            </div>
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 3</h5>
-                <h1 class="text-center" id="active-counter">0</h1>
-            </div>
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 4</h5>
-                <h1 class="text-center" id="active-counter">0</h1>
-            </div>
-        </div>
+        <h4 class="text-center mb-4">TRANSACTION SEARCH</h4>
+
     </div>
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
             <h4 class="text-center fw-bold">QR FORM</h4>

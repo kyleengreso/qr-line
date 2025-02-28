@@ -93,5 +93,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     "message" => "Error: " . $conn->error));
             }
         }
+    } else if ($auth_method == "logout") {
+        session_destroy();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "User logged out"));
+    } else {
+        echo json_encode(array(
+            "status" => "error",
+            "message" => "Invalid auth method"));
     }
 }

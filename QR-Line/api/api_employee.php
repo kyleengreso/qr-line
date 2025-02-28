@@ -1,11 +1,9 @@
 <?php
 include "./../includes/db_conn.php";
-
+header("Content-Type: application/json");   
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Similar for the api_authenticate.php but this time it has token
-
-    header("Content-Type: application/json");
     $data = json_decode(file_get_contents("php://input"));
 
 
@@ -140,6 +138,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $search = "%" . $_GET['search'] . "%";
         $stmt = $conn->prepare("SELECT id, username, created_at FROM employees WHERE username LIKE ?");
         $stmt->bind_param("s", $search);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employees = $result->fetch_all(MYSQLI_ASSOC);
+    } else if (isset($_GET['page']) && isset($_GET['paginate'])) {
+        $page = $_GET['page'];
+        $limit = $_GET['paginate'];
+        $offset = ($page - 1) * $limit;
+        $stmt = $conn->prepare("SELECT id, username, created_at FROM employees LIMIT ? OFFSET ?");
+        $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
         $employees = $result->fetch_all(MYSQLI_ASSOC);

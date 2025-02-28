@@ -90,7 +90,7 @@ $currentQueueNumber = $row['current_queue'] ?? "N/A";
     <?php include "./../includes/navbar.php"; ?>
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
         <div class="circle text-center">
-            <img src="queue_icon.png" alt="Queue Icon" class="queue-icon">
+            <img src="./../asset/images/queue_icon.png" alt="Queue Icon" class="queue-icon">
             <div class="info-container">
                 <div class="info-box">
                     <p class="label">Number:</p>
@@ -104,5 +104,7 @@ $currentQueueNumber = $row['current_queue'] ?? "N/A";
             <p class="current-number">Current number: <strong><?php echo htmlspecialchars($currentQueueNumber); ?></strong></p>
         </div>
     </div>
+    <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <script src="./../asset/js/counters.js"></script>
 </body>
 </html>

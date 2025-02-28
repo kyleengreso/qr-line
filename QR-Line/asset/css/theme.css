@@ -1,4 +1,11 @@
 
+/* Navbar */
+.navbar-title {
+    font-size: 80vw;
+}
+
+
+
 /* Body */
 .bg {
     background: url('./../images/background.jpg') no-repeat center fixed;
@@ -47,14 +54,14 @@
 
 /* SECTION: TABLE */
 
-#table-members {
+.table-members {
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     table-layout: fixed;
 }
 
-#table-members th {
+.table-members th {
     padding: 10px;
     text-align: center;
     background-color: rgb(255, 110, 55);
@@ -62,14 +69,12 @@
     font-weight: bold;
 }
 
-#table-members td {
+.table-members td {
     text-align: center;
     padding: 6px;
     background-color: white;
     color: black;
 }
-
-
 
 
 

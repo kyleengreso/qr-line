@@ -24,7 +24,7 @@ include './../asset/php/message.php';
 <body class="bg">
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
+    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
             <h4 class="text-center mb-4">Employee Login</h4>
             <form method="POST" id="frmLogIn">
@@ -49,7 +49,7 @@ include './../asset/php/message.php';
     </div>
 
     <script src="./../asset/js/bootstrap.bundle.js"></script>
-    <script src="./../asset/js/jquery-3.6.0.min.js"></script>
+    <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/authenticate.js"></script>
 </body>

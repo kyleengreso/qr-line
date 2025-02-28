@@ -59,7 +59,7 @@ include "./../base.php";
     </div>
 
     <script src="./../asset/js/bootstrap.bundle.js"></script>
-    <script src="./../asset/js/jquery-3.6.0.min.js"></script>
+    <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/employee.js"></script>
 </body>
