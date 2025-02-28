@@ -1,56 +1,145 @@
 <?php
-session_start();
 include "./../includes/db_conn.php";
-include "./../asset/php/message.php";
 
-$response = array();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
 
-    if ($password != $confirm_password) {
-        $response['status'] = 'error';
-        $response['message'] = "Password does not match.";
-    } else {
+    // Similar for the api_authenticate.php but this time it has token
 
-        // Load if user is exists
-        $stmt = $conn->prepare("SELECT id FROM employees WHERE username = ?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    header("Content-Type: application/json");
+    $data = json_decode(file_get_contents("php://input"));
 
-        if ($result->num_rows > 0) {
-            $response['status'] = 'error';
-            $response['message'] = "Username already exists.";
-        } else {
-            $hash_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO employees (username, password) VALUES (?, ?)");
-            $stmt->bind_param("ss", $username, $password);
 
-            if ($stmt->execute()) {
-                $response['status'] = 'success';
-                $response['message'] = "Employee registered successfully!";
+    // method: "create", "update", "delete"
+    if (isset($data->set_method)) {
+
+        $method = $data->set_method;
+
+        if ($method == "create") {
+            $username = $data->username;
+            $password = $data->password;
+            $confirm_password = $data->confirm_password;
+
+            if ($password != $confirm_password) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Password does not match."
+                ));
+                exit;
+            }
+            
+            $stmt = $conn->prepare("SELECT id FROM employees WHERE username = ?");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows > 0) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Username already exists."
+                ));
+                exit;
             } else {
-                $response['status'] = 'error';
-                $response['message'] = "Error: " . $conn->error;
+                $hash_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("INSERT INTO employees (username, password) VALUES (?, ?)");
+                $stmt->bind_param("ss", $username, $hash_password);
+
+                if ($stmt->execute()) {
+                    echo json_encode(array(
+                        "status" => "success",
+                        "message" => "Employee registered successfully!"
+                    ));
+                } else {
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => "Error: " . $conn->error
+                    ));
+                }
+            }
+
+        } else if ($method == "update") {
+            $id = $_GET['id'];
+            $password = $data->password;
+            $confirm_password = $data->confirm_password;
+
+            if ($password != $confirm_password) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Password does not match."
+                ));
+                exit;
+            }
+
+
+            try {
+                if (empty($password) || empty($confirm_password)) {
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => "Nothing changed."
+                    ));
+                    exit;
+                }
+                $hash_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("UPDATE employees SET password = ? WHERE id = ?");
+                $stmt->bind_param("ss", $hash_password, $id);
+                $stmt->execute();
+
+                if ($stmt->affected_rows > 0) {
+                    echo json_encode(array(
+                        "status" => "success",
+                        "message" => "Employee updated successfully!"
+                    ));
+                } else {
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => "No password changed."
+                    ));
+                }
+            } catch (Exception $e) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Error: " . $conn->error
+                ));
+            }
+        } else if ($method == "delete") {
+            $id = $_GET['id'];
+
+            $stmt = $conn->prepare("DELETE FROM employees WHERE id = ?");
+            $stmt->bind_param("s", $id);
+            $stmt->execute();
+
+            if ($stmt->affected_rows > 0) {
+                echo json_encode(array(
+                    "status" => "success",
+                    "message" => "Employee deleted successfully!"
+                ));
+            } else {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Employee not found."
+                ));
             }
         }
+    } else {
+        echo json_encode(array(
+            "status" => "error",
+            "message" => "Method for employee not set."
+        ));
     }
+
 } else if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
-    // GET all list from employee/s
-    if (isset($_GET['search'])) {
+    // ID first
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+        $stmt = $conn->prepare("SELECT id, username, created_at FROM employees WHERE id = ?");
+        $stmt->bind_param("s", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employees = $result->fetch_all(MYSQLI_ASSOC)[0];
+    } else if (isset($_GET['search'])) {
         $search = "%" . $_GET['search'] . "%";
         $stmt = $conn->prepare("SELECT id, username, created_at FROM employees WHERE username LIKE ?");
         $stmt->bind_param("s", $search);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employees = $result->fetch_all(MYSQLI_ASSOC);
-    } else if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, username, created_at FROM employees WHERE id = ?");
-        $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $employees = $result->fetch_all(MYSQLI_ASSOC);
@@ -61,16 +150,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $employees = $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    if ($result->num_rows > 0) {
-        $response['status'] = 'success';
-        $response['data'] = $employees;
-        $response['message'] = "Employees found.";
+    if ($employees) {
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $employees,
+            "message" => "Employees found."
+        ));
     } else {
-        $response['status'] = 'success';
-        $response['data'] = [];
-        $response['message'] = "No employees found.";
+        echo json_encode(array(
+            "status" => "error",
+            "message" => "No employees found."
+        ));
     }
 }
-
-echo json_encode($response);
 ?>
