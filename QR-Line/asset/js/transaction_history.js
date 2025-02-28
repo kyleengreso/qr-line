@@ -37,8 +37,11 @@ $(document).ready(function() {
         });
     }
 
-    $('#table-transaction-history').ready(function() {
-        getTransactionHistory();
-    });
+    if ($('#table-transaction-history').length) {
+        $('#table-transaction-history').ready(function() {
+            getTransactionHistory();
+        });
+    }
+
 
 });

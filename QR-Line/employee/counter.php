@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["next_queue"])) {
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
+    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15svh">
         <div class="text-center w-100" style="max-width: 400px;">
             
             <?php if (isset($counter)) : ?>

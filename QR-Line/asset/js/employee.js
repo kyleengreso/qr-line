@@ -37,6 +37,9 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.status === 'success') {
                     message_success(form, response.message);
+                    setTimeout(function() {
+                        window.location.href = "./employees.php";
+                    }, 500);
                 } else {
                     message_error(form, response.message);
                 }
@@ -92,7 +95,63 @@ $(document).ready(function() {
         });
     }
 
-    // checking existing $fromAddEmployee
+    function loadEmployees(searchQuery = '') {
+        $.ajax({
+            url: './../api/api_employee.php',
+            type: 'GET',
+            data: { search: searchQuery },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    var table = $('#table-employees');
+                    table.empty();
+                    var employees = response.data;
+                    var tableHeader = `
+                        <tr>
+                            <th>#</th>
+                            <th>Username</th>
+                            <th>Created At</th>
+                            <th>Action</th>
+                        </tr>`;
+                    table.append(tableHeader);
+                    if (employees.length == 0) {
+                        var row = `
+                            <tr>
+                                <td colspan="2" class="text-center">No employees found</td>
+                            </tr>`;
+                        table.append(row);
+                        return;
+                    } else {
+                        employees.forEach(function(employee) {
+                            var row = `
+                                <tr>
+                                    <td>${employee.id}</td>
+                                    <td>${employee.username}</td>
+                                    <td>${employee.created_at}</td>
+                                    <td>
+                                        <div class="d-flex flex-column flex-md-row justify-content-center p-0 w-100">
+                                            <button class="btn btn-primary m-1" onclick="window.location.href='./edit_employee.php?id=${employee.id}'">Update</button>
+                                            <button class="btn btn-danger m-1" onclick="window.location.href='./delete_employee.php?id=${employee.id}'">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                            table.append(row);
+                        });
+                    }
+                } else {
+                    console.log('Error:', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+            }
+        });
+    }
+
+    if ($('#table-employees').length) {
+        loadEmployees();
+    }
+
     if ($('#frmAddEmployee').length) {
         $('#frmAddEmployee').submit(function(e) {
             e.preventDefault();
