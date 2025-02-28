@@ -7,6 +7,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     header("Content-Type: application/json");
     $data = json_decode(file_get_contents("php://input"));
 
+    if (!isset($data->username) || !isset($data->password) || !isset($data->auth_method)) {
+        echo json_encode(array(
+            "status" => "error",
+            "message" => "Username, password, and auth_method are required"));
+        exit;
+    }
+
     $username = $data->username;
     $password = $data->password;
     $auth_method = $data->auth_method;
@@ -30,9 +37,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $user = $result->fetch_assoc();
             if (password_verify($password, $user['password'])) {
                 $_SESSION['employee_id'] = $user['username'];
+
+                // Generate token by using username and date and date expired
+                $token = base64_encode($username . ':' . date('Y-m-d H:i:s') . ':' . date('Y-m-d H:i:s', strtotime('+1 day')));
+
                 echo json_encode(array(
                     "status" => "success",
-                    "message" => "User authenticated"));
+                    "message" => "User authenticated",
+                    "token" => $token
+                ));
             } else {
                 echo json_encode(array(
                     "status" => "error",

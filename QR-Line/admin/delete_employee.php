@@ -3,49 +3,7 @@ session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
 include "./../asset/php/message.php";
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id = $_GET['id'];
-
-    $stmt = $conn->prepare("DELETE FROM employees WHERE id = ?");
-    $stmt->bind_param("s", $id);
-
-    // I can't tell the delete has trick to do
-    try {
-        if ($stmt->execute()) {
-            $_SESSION['message-success'] = "Employee deleted successfully!";
-            header("Location: ./employees.php");
-        } else {
-            $_SESSION['message-error'] = "Error: " . $conn->error;
-            header("Location: ./employees.php");
-        }
-    } catch (Exception $e) {
-        $_SESSION['message-error'] = "Error: " . $e->getMessage();
-        header("Location: ./employees.php");
-    }
-} else if ($_SERVER["REQUEST_METHOD"] == "GET") {
-    // header("Location: ./employees.php");
-    if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, username FROM employees WHERE id = ?");
-        $stmt->bind_param("s", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_assoc();
-
-        if ($result->num_rows == 1) {
-            $employee_username = $employee['username'];
-        } else {
-            $_SESSION['message-error'] = "Employee not found.";
-            header("Location: ./employees.php");
-        }
-    } else {
-        header("Location: ./employees.php");
-    }
-}
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,21 +22,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
                     <h4 class="text-center mb-4">Delete Employee</h4>
-
-                    <!-- <?php
-                    // if (isset($_SERVER['message-success'])) {
-                    //     message_success($_SERVER['message-success']);
-                    //     header("Location: ./employees.php");
-                    // } else if (isset($_SERVER['message-error'])) {
-                    //     message_error($_SERVER['message-error']);
-                    //     header("Location: ./employees.php");
-                    // }
-                    ?> -->
-
-                    <form method="POST">
-
-                        <label class="form-label">Do you want to delete this employee <strong><?php echo $employee_username;?></strong>?</label>
-
+                    <form method="POST" id="frmDeleteEmployee">
+                        <label class="form-label">Do you want to delete this employee <strong><span id="username"></span></strong>?</label>
                         <div class="col col-12 offset-md-3 col-md-6 p-0">
                             <button type="submit" class="btn btn-danger w-100 w-md-50">Delete Employee</button>
                             <div class="text-center p-2">
@@ -94,5 +39,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 
     <script src="./../asset/js/bootstrap.bundle.js"></script>
+    <script src="./../asset/js/jquery-3.6.0.min.js"></script>
+    <script src="./../asset/js/message.js"></script>
+    <script src="./../asset/js/employee.js"></script>   
 </body>
 </html>
