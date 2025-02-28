@@ -1,6 +1,5 @@
 <?php
 include "./../base.php"
-
 ?>
 
 <!DOCTYPE html>
@@ -43,7 +42,7 @@ include "./../base.php"
             <h4 class="text-center fw-bold">QR FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
 
-            <form action="process.php" method="post">
+            <form method="post" id="frmUserForm">
                 <div class="mb-3">
                     <label for="name" class="form-label fw-bold">Name</label>
                     <div class="input-group">
@@ -73,7 +72,10 @@ include "./../base.php"
         </div>
     </div>
 
+    <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <script src="./../asset/js/message.js"></script>
+    <script src="./../asset/js/user_form.js"></script>
     <script src="./../asset/js/counters.js"></script>
 </body>
 </html>
