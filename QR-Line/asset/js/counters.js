@@ -8,10 +8,8 @@ $(document).ready(function(){
             dataType: 'json',
             success: function(response) {
                 if (response.status === 'success') {
-                    // console.log('Counters found:', response.data);
                     displayCounters(response.data);
                 } else {
-                    // console.log('Error:', response.message);
                 }
             },
             error: function(xhr, status, error) {
@@ -22,7 +20,6 @@ $(document).ready(function(){
 
     // Function to display counters in a table
     function displayCounters(counters) {
-        // To get table from class and not id
         var tableBody = $('#table-counters');
         tableBody.empty();
         tableHeader = `
@@ -33,7 +30,6 @@ $(document).ready(function(){
                 <th>Queue Count</th>
             </tr>`;
         tableBody.append(tableHeader);
-        // if counting is not available
 
         // BUG!!
         if (counters.length == 0) {

@@ -46,7 +46,7 @@ $(document).ready(function() {
             var row = `
                 <tr>
                     <td>${transactions[i].transaction_time}</td>
-                    <td>${transactions[i].purpose}</td>
+                    <td>${transactions[i].payment}</td>
                 </tr>`;
             table.append(row);
         }
