@@ -297,14 +297,10 @@ $(document).ready(function() {
     async function displayTransctionRecords() {
         var token = localStorage.getItem('token');
         if (!token) {
-            var data = {
-                "auth_method" : "logout"
-            }
             $.ajax({
                 url: './../api/api_authenticate.php',
                 type: 'POST',
                 dataType: 'json',
-                data : data,
                 success: function(response) {
                     localStorage.removeItem('token');
                     window.location.href = './../auth/login.php';
@@ -313,8 +309,7 @@ $(document).ready(function() {
                     localStorage.removeItem('token');
                     window.location.href = './../auth/login.php';
                 }
-            })
-            window.location.href = './../login.php';
+            });
         } else {
             var role = atob(localStorage.getItem('token')).split('!!')[3];
 

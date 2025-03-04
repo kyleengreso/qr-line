@@ -9,16 +9,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $message_success = $_SESSION['message-success'] ?? null;
     $message_error = $_SESSION['message-error'] ?? null;
 
-    // GET all list from employees
-    $stmt = $conn->prepare("SELECT id, username, created_at FROM employees");
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $employees = $result->fetch_all(MYSQLI_ASSOC);
-    } else {
-        $employees = [];
-    }
 }
 ?>
 
@@ -175,13 +165,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                                     <th>Username</th>
                                     <th>Created At</th>
                                 </tr>
-                                <?php foreach ($employees as $employee): ?>
-                                <tr>
-                                    <td><?php echo $employee['id']; ?></td>
-                                    <td><?php echo $employee['username']; ?></td>
-                                    <td><?php echo $employee['created_at']; ?></td>
-                                </tr>
-                                <?php endforeach; ?>
                             </table>
                             <nav aria-label="Page navigation example">
                                 <ul class="pagination justify-content-center">
