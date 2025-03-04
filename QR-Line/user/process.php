@@ -4,15 +4,15 @@ include './../includes/db_conn.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = $_POST["name"];
     $email = $_POST["email"];
-    $purpose = $_POST["purpose"];
+    $payment = $_POST["payment"];
 
     // Start transaction
     $conn->begin_transaction();
 
     try {
         // Insert user data into the database
-        $stmt = $conn->prepare("INSERT INTO users (name, email, purpose) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $email, $purpose);
+        $stmt = $conn->prepare("INSERT INTO requesters (name, email, payment) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $name, $email, $payment);
         $stmt->execute();
         $user_id = $stmt->insert_id;
         $stmt->close();
@@ -42,8 +42,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $token_number = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
 
         // Insert queue details into transactions
-        $stmt = $conn->prepare("INSERT INTO transactions (iduser, idcounter, queue_number, token_number, status, purpose) VALUES (?, ?, ?, ?, 'pending', ?)");
-        $stmt->bind_param("iiiss", $user_id, $counter_id, $queue_number, $token_number, $purpose);
+        $stmt = $conn->prepare("INSERT INTO transactions (iduser, idcounter, queue_number, token_number, status, payment) VALUES (?, ?, ?, ?, 'pending', ?)");
+        $stmt->bind_param("iiiss", $user_id, $counter_id, $queue_number, $token_number, $payment);
         $stmt->execute();
         $stmt->close();
 

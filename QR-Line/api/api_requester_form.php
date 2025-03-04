@@ -50,13 +50,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $queue_number = $row['next_queue'];
         $stmt->close();
 
+        // Get idemployee from the counter
+        $stmt = $conn->prepare("SELECT idemployee FROM counter WHERE idcounter = ?");
+        $stmt->bind_param("s", $counter_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employee = $result->fetch_assoc();
+        $stmt->close();
 
         // Generate a unique token number
         $token_number = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
 
         // Insert queue details into transactions
-        $stmt = $conn->prepare("INSERT INTO transactions (idrequester, idcounter, queue_number, token_number, status) VALUES (?, ?, ?, ?, 'pending')");
-        $stmt->bind_param("ssss", $requester_id, $counter_id, $queue_number, $token_number);
+        $stmt = $conn->prepare("INSERT INTO transactions (idrequester, idcounter, queue_number, token_number, idemployee, status) VALUES (?, ?, ?, ?, ?, 'pending')");
+        $stmt->bind_param("sssss", $requester_id, $counter_id, $queue_number, $token_number, $employee['idemployee']);
         $stmt->execute();
         $stmt->close();
 

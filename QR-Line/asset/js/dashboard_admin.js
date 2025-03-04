@@ -8,6 +8,8 @@ $(document).ready(function() {
     var total_employee = 0;
 
     var paginate = 5;
+    var transaction_corporate = "none";
+    var transaction_payment = "none";
 
     window.nextPaginateTransactions = function() {
         page_transaction++;
@@ -26,27 +28,39 @@ $(document).ready(function() {
     function displayTransactionHistory(transactions) {
         var table = $('#table-transaction-history');
 
-        table.empty();
-        if (transactions.length == 0) {
+        table.empty()
+
+        var tableHeader = `
+            <tr>
+                <th class="p-2">Datetime</th>
+                <th class="p-2">Status</th>
+                <th class="p-2">Payment</th>
+                <th class="p-2">Employee</th>
+                <th class="p-2">Counter No.</th>
+                <th class="p-2">Email</th>
+            </tr>`;
+        table.append(tableHeader);
+
+        if (transactions.status === 'empty') {
             var row = `
                 <tr>
-                    <td colspan="2" class="text-center">No transactions found</td>
+                    <td colspan="6" class="text-center">No transactions found</td>
                 </tr>`;
             table.append(row);
             return;
         }
 
-        var tableHeader = `
-            <tr>
-                <th>Datetime</th>
-                <th>Transaction Type</th>
-            </tr>`;
-        table.append(tableHeader);
+        transactions = transactions.data;
+
         for (var i = 0; i < transactions.length; i++) {
             var row = `
                 <tr>
-                    <td>${transactions[i].transaction_time}</td>
-                    <td>${transactions[i].purpose}</td>
+                    <td class="p-2">${transactions[i].transaction_time}</td>
+                    <td class="p-2">${transactions[i].status}</td>
+                    <td class="p-2">${transactions[i].payment}</td>
+                    <td class="p-2">${transactions[i].employee_name}</td>
+                    <td class="p-2">${transactions[i].idcounter}</td>
+                    <td class="p-2">${transactions[i].email}</td>
                 </tr>`;
             table.append(row);
         }
@@ -66,22 +80,20 @@ $(document).ready(function() {
 
     function getTransactions() {
         $.ajax({
-            url: './../api/api_transaction_history.php?page=' + page_transaction + '&paginate=' + paginate,
+            url: './../api/api_transaction_history.php?page=' + page_transaction + '&paginate=' + paginate + "&corporate=" + transaction_corporate + "&payment=" + transaction_payment, 
             type: 'GET',
-            data: {
-                page: page_transaction,
-                paginate: paginate},
-            dataType: 'json',
             success: function(response) {
-                if (response.status === 'success') {
-                    total_transaction = response.data.total;
-                    displayTransactionHistory(response.data);
+                if (response.status === 'success' || response.status === 'empty') {
+                    // total_transaction = response.data;
+                    console.log(response.data);
+                    displayTransactionHistory(response);
                 } else {
                     console.log('Error:', response.message);
                 }
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', status, error);
+                console.error('Response Text:', xhr.responseText); // Log the response text
             }
         });
     }
@@ -121,16 +133,14 @@ $(document).ready(function() {
             <tr>
                 <th>#</th>
                 <th>Employee</th>
-                <th>Counter No.</th>
                 <th>Queue Count</th>
             </tr>`;
         table.append(tableHeader);
         for (var i = 0; i < counters.length; i++) {
             var row = `
                 <tr>
-                    <td>${counters[i].idcounter}</td>
-                    <td>${counters[i].idemployee}</td>
                     <td>${counters[i].counterNumber}</td>
+                    <td>${counters[i].username}</td>
                     <td>${counters[i].queue_count}</td>
                 </tr>`;
             table.append(row);
@@ -170,7 +180,6 @@ $(document).ready(function() {
             prevPaginateCounters();
         });
     }   
-
 
 
     window.nextPaginateEmployees = function() {
@@ -284,5 +293,111 @@ $(document).ready(function() {
     }
 
     getEmployees();
+
+    async function displayTransctionRecords() {
+        var token = localStorage.getItem('token');
+        if (!token) {
+            var data = {
+                "auth_method" : "logout"
+            }
+            $.ajax({
+                url: './../api/api_authenticate.php',
+                type: 'POST',
+                dataType: 'json',
+                data : data,
+                success: function(response) {
+                    localStorage.removeItem('token');
+                    window.location.href = './../auth/login.php';
+                },
+                error: function(xhr, status, error) {
+                    localStorage.removeItem('token');
+                    window.location.href = './../auth/login.php';
+                }
+            })
+            window.location.href = './../login.php';
+        } else {
+            var role = atob(localStorage.getItem('token')).split('!!')[3];
+
+            var data = {
+                "method" : "dashboard_"+role,
+                "token" : token
+            }
+
+            $.ajax({
+                url: './../api/api_monitor.php',
+                type: 'POST',
+                data: JSON.stringify(data),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        var total_transactions = response.total_transactions;
+                        var pending_transactions = response.pending_transactions;
+                        var completed_transactions = response.completed_transactions;
+                        var canceled_transactions = response.canceled_transactions;
+
+                        $('#transactions-total').text(total_transactions);
+                        $('#transactions-pending').text(pending_transactions);
+                        $('#transactions-completed').text(completed_transactions);
+                        $('#transactions-canceled').text(canceled_transactions);
+                    } else {
+                        console.log('Error:', response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+    }
+
+    // displayTransctionRecords();
+    async function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // using while loop delay every 5 sec
+    async function startInit() {
+        while (true) {
+            await displayTransctionRecords();
+            await delay(5000); // Delay for 5 seconds
+        }
+    }
+
+    startInit();
+
+    
+    // At Transaction History can do filter
+    var btn_transaction_history_filter_corporate = $('#transaction-history-filter-corporate');
+    var btn_transaction_history_filter_non_corporate = $('#transaction-history-filter-non-corporate');
+    var transaction_history_filter_email = $('#transaction-history-filter-email');
+
+    btn_transaction_history_filter_corporate.click(function() {
+        transaction_corporate = "true";
+        transaction_history_filter_email.text("Corporate");
+        getTransactions();
+    });
+
+    btn_transaction_history_filter_non_corporate.click(function() {
+        transaction_corporate = "false";
+        transaction_history_filter_email.text("Non-Corporate");
+        getTransactions();
+    });
+
+    var btn_payment_registrar = $('#transaction-history-filter-registrar');
+    var btn_payment_assessment = $('#transaction-history-filter-assessment');
+    var btn_transaction_history_filter_payment = $('#transaction-history-filter-payment');
+
+    btn_payment_registrar.click(function() {
+        transaction_payment = "registrar";
+        btn_transaction_history_filter_payment.text("Registrar");
+        getTransactions();
+    });
+
+    btn_payment_assessment.click(function() {
+        transaction_payment = "assessment";
+        btn_transaction_history_filter_payment.text("Assessment");
+        getTransactions();
+    });
+
 
 });

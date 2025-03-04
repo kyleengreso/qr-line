@@ -28,7 +28,7 @@ $(document).ready(function() {
         var user = {
             name: $('#name').val(),
             email: $('#email').val(),
-            purpose: $('#purpose').val(),
+            payment: $('#payment').val(),
         };
         sumbitUserForm(user);
     });

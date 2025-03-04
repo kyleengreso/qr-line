@@ -42,8 +42,14 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.status === 'success') {
                     auth_success('Login successful');
+                    var token = atob(response.token);
+                    role = token.split('!!')[3];
                     setTimeout(function() {
-                        window.location.href = "./../employee/counter.php";
+                        if (role === 'admin') {
+                            window.location.href = "./../admin/dashboard.php";
+                        } else if (role === 'employee') {
+                            window.location.href = "./../employee/counter.php";
+                        }
                     }, 1000);
                 } else {
                     auth_error('Invalid username or password');
@@ -53,7 +59,6 @@ $(document).ready(function() {
     }
 
     function register(username, password, confirm_password) {
-        // Convert into JSON format
 
         var data = {
             username: username,

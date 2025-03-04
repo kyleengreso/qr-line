@@ -43,10 +43,10 @@ include "./../base.php"
                 </div>
 
                 <div class="mb-3">
-                    <label for="purpose" class="form-label fw-bold">Purpose</label>
+                    <label for="payment" class="form-label fw-bold">payment</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
-                        <input type="text" class="form-control" id="purpose" name="purpose" placeholder="Enter Your Purpose" required>
+                        <input type="text" class="form-control" id="payment" name="payment" placeholder="Enter Your payment" required>
                     </div>
                 </div>
 

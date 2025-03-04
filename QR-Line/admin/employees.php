@@ -23,18 +23,17 @@ include "./../asset/php/message.php";
         <div class="row justify-content-center mt-5">
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
-                    <div class="row w-100 mb-4">
-                        
-                        <div class="col col-9">
-                            <h4 class="text-center">Employees List</h4>
+                    <div class="row align-center my-4">
+                        <div class="col d-flex justify-content-center">
+                            <button class="btn btn-primary" onclick="window.location.href='./dashboard.php'">Back Dashboard</button>
                         </div>
-                    
-                        <div class="col col-3 p-0">
-                        <button class="btn btn-success" onclick="window.location.href='./add_employee.php'">Add Employees</button>
+                        <div class="col" >
+                            <h4 class="text-center my-1">Employees</h4>
                         </div>
-                    
+                        <div class="col d-flex justify-content-center">
+                            <button class="btn btn-success" style="width: 80%" onclick="window.location.href='./add_employee.php'">Add Employee</button>
+                        </div>
                     </div>
-
 
                     <table class="table table-striped table-members" id="table-employees">
                         <tr>
@@ -44,11 +43,23 @@ include "./../asset/php/message.php";
                             <th>Action</th>
                         </tr>
                     </table>
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item">
+                            <a class="page-link" onclick="prevPaginateEmployees()" id="pagePrevEmployees">Previous</a>
+                            </li>
+                            <li class="page-item">
+                            <a class="page-link" onclick="nextPaginateEmployees();" id="pageNextEmployees" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <script src="./../asset/js/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/employee.js"></script>

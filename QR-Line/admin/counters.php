@@ -29,24 +29,24 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
-                    <div class="row w-100 mb-4">
-                        
-                        <div class="col col-9">
-                            <h4 class="text-center">Counters List</h4>
+                <div class="row align-center my-4">
+                        <div class="col d-flex justify-content-center">
+                            <button class="btn btn-primary" onclick="window.location.href='./dashboard.php'">Back Dashboard</button>
                         </div>
-                    
-                        <div class="col col-3 p-0">
-                        <button class="btn btn-success" onclick="window.location.href='./add_counter.php'">Add Counter</button>
+                        <div class="col" >
+                            <h4 class="text-center my-1">Counters</h4>
                         </div>
-                    
+                        <div class="col d-flex justify-content-center">
+                            <button class="btn btn-success" style="width: 80%" onclick="window.location.href='./add_counter.php'">Add Employee</button>
+                        </div>
                     </div>
 
                     <table class="table table-striped table-members" id="table-counters">
                         <tr>
                             <th>#</th>
                             <th>Employee</th>
-                            <th>Counter No,</th>
                             <th>Queue Count</th>
+                            <th>Action</th>
                         </tr>
                     </table>
 

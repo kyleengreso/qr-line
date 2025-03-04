@@ -80,96 +80,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 } if ($_SERVER["REQUEST_METHOD"] == "GET") {
-    if (isset($_GET['available'])) {
-        $search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : '%';
-    
-        $stmt_employee = $conn->prepare("SELECT id, username, created_at FROM employees WHERE username LIKE ?");
-        $stmt_employee->bind_param("s", $search);
-        $stmt_employee->execute();
-        $result_employee = $stmt_employee->get_result();
-        $employees = $result_employee->fetch_all(MYSQLI_ASSOC);
-    
-        $stmt_counter = $conn->prepare("SELECT * FROM counter;");
-        $stmt_counter->execute();
-        $result_counter = $stmt_counter->get_result();
-        $counters = $result_counter->fetch_all(MYSQLI_ASSOC);
-    
-        // The sample is
-        // $response['data'] = array([
-        //     'employee_id' => employee_id,
-        //     'employee_username' => employee_username,
-        //     'available' => true,
-        //     'queue_count' => 0 or queue_count from existed date])
-    
-        // employee than counter
-        $response['status'] = 'success';
-        $response['message'] = 'Employee list retrieved successfully';
-        $response['data'] = [];
-    
-        foreach ($employees as $employee) {
-            $employee_id = $employee['id'];
-            $employee_username = $employee['username'];
-            $available = true;
-            $queue_count = 0;
-    
-            foreach ($counters as $counter) {
-                if ($counter['idemployee'] == $employee_id) {
-                    $available = false;
-                    $queue_count = $counter['queue_count'];
-                    break;
-                }
-            }
-    
-            $response['data'][] = array(
-                'employee_id' => $employee_id,
-                'employee_username' => $employee_username,
-                'available' => $available,
-                'queue_count' => $queue_count
-            );
-        }
-    } else if (isset($_GET['id'])) {
-        // CALL THE COUNTER's ID so it will confirmation if exists
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT * FROM counter WHERE idcounter = ?");
-        $stmt->bind_param("s", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counters = $result->fetch_all(MYSQLI_ASSOC);
 
-    // CALL THE COUNTER's EMPLOYEE ID so it will confirmation if exists
-    } else if (isset($_GET['employee_id'])) {
-        $employee_id = $_GET['employee_id'];
-        $stmt = $conn->prepare("SELECT * FROM counter WHERE idemployee = ?");
-        $stmt->bind_param("s", $employee_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counters = $result->fetch_all(MYSQLI_ASSOC);
-    } else if (isset($_GET['page']) && isset($_GET['paginate'])) {
-        $page = $_GET['page'];
-        $paginate = $_GET['paginate'];
-        $offset = ($page - 1) * $paginate;
-        $stmt = $conn->prepare("SELECT * FROM counter LIMIT ?, ?");
-        $stmt->bind_param("ii", $offset, $paginate);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counters = $result->fetch_all(MYSQLI_ASSOC);
-    } else  {
-        // GET ALL REGISTERED COUNTERS
-        $stmt = $conn->prepare("SELECT * FROM counter");
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counters = $result->fetch_all(MYSQLI_ASSOC);
+    function do_where() {
+        global $sql_cmd, $where_trigger;
+        if (!$where_trigger) {
+            $sql_cmd .= " WHERE ";
+            $where_trigger = TRUE;
+        } else {
+            $sql_cmd .= " AND ";
+        }
     }
-    if ($counters) {
-        $response['status'] = 'success';
-        $response['data'] = $counters;
-        $response['message'] = 'Counters found';
+
+    if (isset($_GET['available'])) {
+        // Applies to the counter that is available
+        $sql_cmd = "SELECT e.username, e.id,  CASE WHEN c.queue_count IS NULL THEN 'Available' ELSE 'Busy' END as availability FROM employees e LEFT JOIN counter c ON e.id = c.idemployee WHERE c.idemployee IS NULL ";
+
+        if (isset($_GET['search'])) {
+            $search = $_GET['search'];
+            $sql_cmd .= "AND e.username LIKE '%$search%' ";
+        }
+
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $counters = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $counters,
+            "message" => "Counter list retrieved successfully"
+        ));
     } else {
-        $response['status'] = 'error';
-        $response['message'] = 'No counters found';
+        // So i can tell that counter will we tell to that employee is assigned to specified counter no.
+        // In short thats total counter that we have
+        $sql_cmd = "SELECT e.username, c.queue_count, c.counterNumber, CASE WHEN c.queue_count = 0 THEN 'available' ELSE 'busy' END as availability FROM employees e JOIN counter c ON e.id = c.idemployee";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $counters = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $counters,
+            "message" => "Counter list retrieved successfully"
+        ));
     }
 }
-
-echo json_encode($response);
 
 ?>

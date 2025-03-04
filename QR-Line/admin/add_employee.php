@@ -17,11 +17,21 @@ include "./../base.php";
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container">
+    <div class="container" style="margin-top: 15vh ">
         <div class="row justify-content-center mt-5">
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
-                    <h4 class="text-center mb-4">Add Employee</h4>
+                        <div class="row align-center my-2">
+                            <div class="col d-flex justify-content-center">
+                                <button class="btn btn-primary" onclick="window.location.href='./dashboard.php'">Back Dashboard</button>
+                            </div>
+                            <div class="col" >
+                                <h4 class="text-center my-1">Add Employee</h4>
+                            </div>
+                            <div class="col d-flex justify-content-center">
+                                <button class="btn btn-danger" style="width: 80%" onclick="window.location.href='./employees.php'">Back</button>
+                            </div>
+                        </div>
 
                     <form method="POST" id="frmAddEmployee">
                         <div class="mb-3">
@@ -49,17 +59,15 @@ include "./../base.php";
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100">Add Employee</button>
-                        <div class="text-center p-2">
-                            <a class="text-a-black" href="./employees.php">Cancel</a>
-                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <script src="./../asset/js/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/employee.js"></script>
 </body>
