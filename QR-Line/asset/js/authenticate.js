@@ -48,7 +48,7 @@ $(document).ready(function() {
                         if (role === 'admin') {
                             window.location.href = "./../admin/dashboard.php";
                         } else if (role === 'employee') {
-                            window.location.href = "./../employee/counter.php";
+                            window.location.href = "./../admin/dashboard.php";
                         }
                     }, 1000);
                 } else {
