@@ -10,13 +10,56 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $data = json_decode(file_get_contents("php://input"));
 
-    if (!isset($data->name) || !isset($data->email) || !isset($data->payment)) {
+    if (isset($data->cashier) && !isset($data->employee_id)) {
+        echo json_encode(array(
+            "status" => "error",
+            "message" => "Employee ID please."
+        ));
+        exit;
+    }
+
+    if (isset($data->cashier) && isset($data->employee_id) && isset($data->transaction_id)) {
+        $sql_cmd = "UPDATE transactions SET status = 'completed' WHERE idtransaction = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $data->transaction_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Transaction completed for transaction_id = " . $data->transaction_id . " by employee_id = " . $data->employee_id
+        ));
+        exit;
+    }
+
+
+
+
+    if (!isset($data->name) || !isset($data->email) || !isset($data->payment) && isset($data->cashier)) {
         echo json_encode(array(
             "status" => "error",
             "message" => "Please fill up the information."
         ));
         exit;
     }
+
+    if (!isset($data->cashier)) {
+
+        $conn->begin_transaction();
+
+        try {
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error processing request: " . $e->getMessage()
+            ));
+            exit;
+        }
+        exit;
+    }
+
 
     $conn->begin_transaction();
 
@@ -99,7 +142,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 } else if ($_SERVER["REQUEST_METHOD"] == "GET") {
     // Base SQL query to select transaction details
     $sql_cmd = "SELECT t.idrequester as idrequester, e.username as employee_name, t.idcounter as idcounter, t.transaction_time as transaction_time, r.email as email, t.status as status, r.payment FROM transactions t JOIN requesters r ON t.idrequester = r.id JOIN employees e ON t.idemployee = e.id";
-    $where_trigger = FALSE; // Flag to track if WHERE clause has been added
+    $where_trigger = FALSE;
 
     function do_where() {
         global $sql_cmd, $where_trigger;
@@ -110,6 +153,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $sql_cmd .= " AND ";
         }
     }
+
+    // Login as cashier, as cashier will tell to collect his/her transaction queue
+    if (isset($_GET['cashier']) && !isset($_GET['employee_id'])) {
+        echo json_encode(array(
+            "status" => "error",
+            "message" => "Employee ID please."
+        ));
+        exit;
+    }
+    if (isset($_GET['cashier']) && $_GET['employee_id']) {
+        $sql_cmd = "SELECT t.idtransaction, c.counterNumber, t.queue_number, t.status, e.username from counter c LEFT JOIN transactions t ON c.idemployee = t.idemployee LEFT JOIN employees e on c.idemployee = e.id WHERE e.id = ? AND t.status = 'pending' LIMIT 0, 1";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $_GET['employee_id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transactions = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $transactions,
+            "message" => "Transactions found."
+        ));
+        exit;
+    }
+
 
     // Add search condition if 'search' parameter is set
     if (isset($_GET['search'])) {
