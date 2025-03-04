@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit;
         }
 
-        $stmt = $conn->prepare("SELECT username, password, role_type FROM employees WHERE username = ?");
+        $stmt = $conn->prepare("SELECT id, username, password, role_type FROM employees WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -38,12 +38,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 $role_type = $user['role_type'];
                 // Generate token by using username and date and date expired
-                $token = base64_encode($username . ':' . date('Y-m-d H:i:s') . ':' . date('Y-m-d H:i:s', strtotime('+1 day')));
+                $date_logged_in = date('Y-m-d H:i:s');
+                $date_expiration = date('Y-m-d H:i:s', strtotime('+1 day'));
 
-                $_SESSION['employee_id'] = $user['id'];
+                $user_id = $user['id'];
+                $_SESSION['user_id'] = $user_id;
                 $_SESSION['username'] = $username;
-                $_SESSION['token'] = $token;
                 $_SESSION['role_type'] = $role_type;
+
+                $token = base64_encode($username . '!!' . $date_logged_in . '!!' . $date_expiration . '!!' . $role_type);
+
 
                 echo json_encode(array(
                     "status" => "success",

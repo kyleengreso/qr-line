@@ -23,7 +23,18 @@ include "./../asset/php/message.php";
         <div class="row justify-content-center mt-5">
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
-                    <h4 class="text-center mb-4">Add Counter</h4>
+                    <div class="row align-center my-2">
+                        <div class="col d-flex justify-content-center">
+                            <button class="btn btn-primary" onclick="window.location.href='./dashboard.php'">Back Dashboard</button>
+                        </div>
+                        <div class="col" >
+                            <h4 class="text-center my-1">Add Counter</h4>
+                        </div>
+                        <div class="col d-flex justify-content-center">
+                            <button class="btn btn-danger" style="width: 80%" onclick="window.location.href='./counters.php'">Back</button>
+                        </div>
+                    </div>
+                    
                     <form method="POST" id="frmAddCounter">
                         <div class="mb-3">
                             <label class="form-label">Search</label>
@@ -37,13 +48,11 @@ include "./../asset/php/message.php";
                             <label class="form-label">Employees Available</label>
                             <div class="input-group">
 
-                            <table class="table table-striped" id="table-members">
+                            <table class="table table-striped table-members" id="table-counters">
                                 <tr>
-                                    <th></th>
-                                    <th>#</th>
+                                    <th class="col-2"></th>
                                     <th>Username</th>
-                                    <th>Status</th>
-                                    <th>Queue</th>
+                                    <th>Available</th>
                                 </tr>
                             </table>
                             </div>
@@ -57,9 +66,6 @@ include "./../asset/php/message.php";
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Add Counter</button>
-                        <div class="text-center p-2">
-                            <a class="text-a-black" href="./counters.php">Cancel</a>
-                        </div>
                     </form>
                 </div>
             </div>
