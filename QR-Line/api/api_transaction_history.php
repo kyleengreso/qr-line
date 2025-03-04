@@ -101,7 +101,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sql_cmd = "SELECT t.idrequester as idrequester, e.username as employee_name, t.idcounter as idcounter, t.transaction_time as transaction_time, r.email as email, t.status as status, r.payment FROM transactions t JOIN requesters r ON t.idrequester = r.id JOIN employees e ON t.idemployee = e.id";
     $where_trigger = FALSE; // Flag to track if WHERE clause has been added
 
-    // Function to add WHERE or AND clause as needed
     function do_where() {
         global $sql_cmd, $where_trigger;
         if (!$where_trigger) {
@@ -134,6 +133,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+    if (isset($_GET['payment'])) {
+        if ($_GET['payment'] == "registrar") {
+            do_where();
+            $sql_cmd .= " r.payment = 'registrar' ";
+        } else if ($_GET['payment'] == "assessment") {
+            do_where();
+            $sql_cmd .= " r.payment = 'assessment' ";
+        }
+    }
     // Add ORDER BY clause to sort results by transaction time in descending order
     $sql_cmd .= " ORDER BY t.transaction_time DESC ";
 
@@ -173,7 +181,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ));
     } else {
         echo json_encode(array(
-            "status" => "error",
+            "status" => "empty",
             "message" => "No transaction found."
         ));
     }
