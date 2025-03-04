@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['username'] = $username;
                 $_SESSION['role_type'] = $role_type;
 
-                $token = base64_encode($username . '!!' . $date_logged_in . '!!' . $date_expiration . '!!' . $role_type);
+                $token = base64_encode($username . '!!' . $date_logged_in . '!!' . $date_expiration . '!!' . $role_type . '!!' . $user_id);
 
 
                 echo json_encode(array(

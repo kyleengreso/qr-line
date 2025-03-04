@@ -44,6 +44,8 @@ $(document).ready(function() {
                     auth_success('Login successful');
                     var token = atob(response.token);
                     role = token.split('!!')[3];
+                    user_id = token.split('!!')[4];
+                    localStorage.setItem('user_id', user_id);
                     setTimeout(function() {
                         if (role === 'admin') {
                             window.location.href = "./../admin/dashboard.php";

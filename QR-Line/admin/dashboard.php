@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             <div class="card p-4 mx-0 my-2">
                 <div class="row text-center">
                     <div class="col-6 col-md-3">
-                        <h5 class="text-center" style="font-size: 2vh">TRANSACTIONS</h5>
+                        <h5 class="text-center" style="font-size: 2vh">TRANSACTIONS TODAY</h5>
                         <h1 class="text-center" id="transactions-total">0</h1>
                     </div>
                     <div class="col-6 col-md-3">
