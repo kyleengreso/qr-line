@@ -13,7 +13,6 @@ $(document).ready(function() {
             type : 'GET',
             success : function(response) {
                 if (response.status === 'success') {
-                    console.log(response.data);
                     resp = response.data;
                     displayTransaction(resp);
                 } else {
@@ -30,7 +29,6 @@ $(document).ready(function() {
             p_queue_number.text('No queue');
         } else {
             var total_transactons = resp.length;
-            console.log(total_transactons);
             p_queue_number.text(resp[0].queue_number);
         }
     }
@@ -43,7 +41,6 @@ $(document).ready(function() {
             transaction_id : resp[0].idtransaction,
             cashier : employee_id
         };
-        console.log(data);
         $.ajax({
             url : './../api/api_transaction_history.php',
             type : 'POST',
