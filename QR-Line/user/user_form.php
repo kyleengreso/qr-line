@@ -41,9 +41,10 @@ include "./../base.php"
                 </div>
 
                 <div class="mb-3">
+                <label for="email" class="form-label fw-bold">Payment</label>
                     <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="transaction-history-filter-payment" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Filter
+                        <button class="btn btn-secondary dropdown-toggle col-12" type="button" id="transaction-history-filter-payment" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Payment
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             <a class="dropdown-item" id="transaction-history-filter-registrar" value="registrar">Registrar</a>

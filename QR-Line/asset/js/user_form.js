@@ -26,10 +26,12 @@ $(document).ready(function() {
     var payment = null;
     $('#transaction-history-filter-assessment').click(function() {
         payment = 'assessment';
+        $('#transaction-history-filter-payment').text('Assessment');
     });
     
     $('#transaction-history-filter-registrar').click(function() {
         payment = 'registrar';
+        $('#transaction-history-filter-payment').text('Registrar');
     });
 
     $('#frmUserForm').submit(function(e) {
