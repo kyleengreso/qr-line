@@ -312,7 +312,7 @@ $(document).ready(function() {
             });
         } else {
             var role = atob(localStorage.getItem('token')).split('!!')[3];
-
+            var token = localStorage.getItem('token');
             var data = {
                 "method" : "dashboard_"+role,
                 "token" : token
@@ -324,6 +324,7 @@ $(document).ready(function() {
                 data: JSON.stringify(data),
                 dataType: 'json',
                 success: function(response) {
+                    console.log(response);
                     if (response.status === 'success') {
                         var total_transactions = response.total_transactions;
                         var pending_transactions = response.pending_transactions;
