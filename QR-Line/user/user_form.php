@@ -18,25 +18,6 @@ include "./../base.php"
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh;" >
     <div class="card shadow-sm p-4 mb-4 mr-0 mb-md-0 mx-md-4" style="max-width: 400px; width: 100%;">
         <h4 class="text-center mb-4">COUNTER STATS</h4>
-        <!-- <table id="table-members"></table> -->
-        <div class="row">
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 1</h5>
-                <h1 class="text-center" id="total-counter">0</h1>
-            </div>
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 2</h5>
-                <h1 class="text-center" id="active-counter">0</h1>
-            </div>
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 3</h5>
-                <h1 class="text-center" id="active-counter">0</h1>
-            </div>
-            <div class="col-6">
-                <h5 class="text-center">COUNTER 4</h5>
-                <h1 class="text-center" id="active-counter">0</h1>
-            </div>
-        </div>
     </div>
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
             <h4 class="text-center fw-bold">QR FORM</h4>
@@ -60,10 +41,14 @@ include "./../base.php"
                 </div>
 
                 <div class="mb-3">
-                    <label for="payment" class="form-label fw-bold">payment</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
-                        <input type="text" class="form-control" id="payment" name="payment" placeholder="Enter Your payment" required>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="transaction-history-filter-payment" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Filter
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" id="transaction-history-filter-registrar" value="registrar">Registrar</a>
+                            <a class="dropdown-item" id="transaction-history-filter-assessment" value="assessment">Assessment</a>
+                        </div>
                     </div>
                 </div>
 
