@@ -16,9 +16,6 @@ include "./../base.php"
     <?php include "./../includes/navbar.php"; ?>
 
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh;" >
-    <div class="card shadow-sm p-4 mb-4 mr-0 mb-md-0 mx-md-4" style="max-width: 400px; width: 100%;">
-        <h4 class="text-center mb-4">COUNTER STATS</h4>
-    </div>
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
             <h4 class="text-center fw-bold">QR FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
