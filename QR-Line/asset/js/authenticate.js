@@ -43,15 +43,15 @@ $(document).ready(function() {
                 if (response.status === 'success') {
                     auth_success('Login successful');
                     var token = atob(response.token);
-                    role = token.split('!!')[3];
-                    user_id = token.split('!!')[4];
+                    var role = token.split('!!')[3];
+                    var user_id = token.split('!!')[4];
                     localStorage.setItem('user_id', user_id);
                     localStorage.setItem('token', token);
                     setTimeout(function() {
                         if (role === 'admin') {
                             window.location.href = "./../admin/dashboard.php";
                         } else if (role === 'employee') {
-                            window.location.href = "./../admin/dashboard.php";
+                            window.location.href = "./../employee/counter.php";
                         }
                     }, 1000);
                 } else {

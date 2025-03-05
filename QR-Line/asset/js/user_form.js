@@ -2,7 +2,7 @@ $(document).ready(function() {
 
     function sumbitUserForm(user) {
         $.ajax({
-            url: './../api/api_user_form.php',
+            url: './../api/api_requester_form.php',
             type: 'POST',
             data: JSON.stringify(user),
             success: function(response) {

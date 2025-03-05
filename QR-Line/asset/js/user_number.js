@@ -1,7 +1,7 @@
 $(document).ready(function() {
 
         $.ajax({
-            url: './../api/api_user_number.php',
+            url: './../api/api_requester_number.php',
             type: 'GET',
             success: function(response) {
                 console.log(response.data);
