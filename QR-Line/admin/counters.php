@@ -1,14 +1,9 @@
 <?php
 session_start();
-
 include "./../includes/db_conn.php";
 include "./../base.php";
-include "./../asset/php/message.php";
-if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
-    $message_success = $_SESSION['message-success'] ?? null;
-    $message_error = $_SESSION['message-error'] ?? null;
-}
+login_as_employee();
 ?>
 
 <!DOCTYPE html>

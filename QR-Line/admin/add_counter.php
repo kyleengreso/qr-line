@@ -2,8 +2,8 @@
 session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
-include "./../asset/php/message.php";
 
+login_as_employee();
 ?>
 
 <!DOCTYPE html>

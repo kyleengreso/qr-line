@@ -1,15 +1,9 @@
 <?php
 session_start();
-
 include "./../includes/db_conn.php";
 include "./../base.php";
-include "./../asset/php/message.php";
-if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
-    $message_success = $_SESSION['message-success'] ?? null;
-    $message_error = $_SESSION['message-error'] ?? null;
-
-}
+login_as_employee();
 ?>
 
 <!DOCTYPE html>
@@ -214,7 +208,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     </div>
 
     <script src="./../asset/js/jquery-3.7.1.js"></script>
-    <script src="./../asset/js/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="./../asset/js/popper.min.js"></script>
     <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/dashboard_admin.js"></script>
 </body>

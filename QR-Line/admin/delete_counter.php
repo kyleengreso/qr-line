@@ -2,47 +2,9 @@
 session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
-include "./../asset/php/message.php";
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $success_message = $_SERVER['message-success'] ?? null;
-    $error_message = $_SERVER['message-error'] ?? null;
 
-    if (isset($_POST['employee-choose'])) {
-        $employee_id = $_POST['employee-choose'];
-        $counter_no = $_POST['counter_no'];
+login_as_employee();
 
-        $stmt = $conn->prepare("SELECT * FROM employees WHERE id = ?");
-        $stmt->bind_param("s", $employee_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_assoc();
-        $stmt->close();
-
-        // ADD FEATURE BREAKER
-
-        if (!$employee) {
-            $error_message = "Employee not found.";
-        } else {
-            $stmt = $conn->prepare("SELECT * FROM counter WHERE idemployee = ?");
-            $stmt->bind_param("i", $employee_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $counter = $result->fetch_assoc();
-            $stmt->close();
-
-            if ($counter) {
-                $error_message = "Employee already assigned to a counter.";
-            } else {
-                $stmt = $conn->prepare("INSERT INTO counter (idemployee, queue_count, counterNumber) VALUES (?, 0, ?)");
-                $stmt->bind_param("ss", $employee_id, $counter_no);
-                $stmt->execute();
-                $stmt->close();
-
-                $success_message = "Employee added to counter successfully.";
-            }
-        }
-    }
-}
 ?>
 
 <!DOCTYPE html>
