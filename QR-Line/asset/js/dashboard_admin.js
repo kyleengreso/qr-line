@@ -250,15 +250,15 @@ $(document).ready(function() {
                 <th>Created At</th>
             </tr>`;
         table.append(tableHeader);
-        for (var i = 0; i < employees.length; i++) {
+        employees.forEach(function(employee) {
             var row = `
                 <tr>
-                    <td>${employees[i].id}</td>
-                    <td>${employees[i].username}</td>
-                    <td>${employees[i].created_at}</td>
+                    <td>${employee.id}</td>
+                    <td>${employee.username}</td>
+                    <td>${employee.created_at}</td>
                 </tr>`;
             table.append(row);
-        }
+        });
     }
 
     if ($('#pageNextEmployee').length) {
@@ -277,7 +277,8 @@ $(document).ready(function() {
             type: 'GET',
             data: {
                 page: page_employee,
-                paginate: paginate},
+                paginate: paginate
+            },
             dataType: 'json',
             success: function(response) {
                 if (response.status === 'success') {
@@ -346,21 +347,9 @@ $(document).ready(function() {
         }
     }
 
-    // displayTransctionRecords();
-    async function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // using while loop delay every 5 sec
-    async function startInit() {
-        while (true) {
-            await displayTransctionRecords();
-            await delay(5000); // Delay for 5 seconds
-        }
-    }
-
-    startInit();
-
+    setInterval(
+        displayTransctionRecords, 5000
+    );
     
     // At Transaction History can do filter
     var btn_transaction_history_filter_corporate = $('#transaction-history-filter-corporate');
