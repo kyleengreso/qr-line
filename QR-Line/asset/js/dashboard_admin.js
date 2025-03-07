@@ -85,7 +85,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.status === 'success' || response.status === 'empty') {
                     // total_transaction = response.data;
-                    console.log(response.data);
+                    // console.log(response.data);
                     displayTransactionHistory(response);
                 } else {
                     console.log('Error:', response.message);
@@ -325,7 +325,7 @@ $(document).ready(function() {
                 data: JSON.stringify(data),
                 dataType: 'json',
                 success: function(response) {
-                    console.log(response);
+                    // console.log(response);
                     if (response.status === 'success') {
                         var total_transactions = response.total_transactions;
                         var pending_transactions = response.pending_transactions;

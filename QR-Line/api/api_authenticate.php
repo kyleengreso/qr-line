@@ -2,6 +2,7 @@
 session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     header("Content-Type: application/json");
@@ -48,12 +49,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 $token = base64_encode($username . '!!' . $date_logged_in . '!!' . $date_expiration . '!!' . $role_type . '!!' . $user_id);
 
-
                 echo json_encode(array(
                     "status" => "success",
                     "message" => "User authenticated",
                     "token" => $token
                 ));
+
             } else {
                 echo json_encode(array(
                     "status" => "error",
@@ -102,10 +103,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
     } else if ($auth_method == "logout") {
+        session_unset();
         session_destroy();
         echo json_encode(array(
             "status" => "success",
             "message" => "User logged out"));
+        exit;
     } else {
         echo json_encode(array(
             "status" => "error",
