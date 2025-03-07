@@ -77,7 +77,7 @@ $(document).ready(function() {
             var row = `
                 <tr>
                     <td style="background-color: #FFEAC1"><input class="form-check-input" type="radio" name="employee" id="employee-radio" value="${employee.id}"></td>
-                    <td class="d-none d-xl-block">${employee.username}</td>
+                    <td class="d-xl-block">${employee.username}</td>
                     <td>${employee.availability}</td>
                 </tr>`;
             tableBody.append(row);
@@ -106,5 +106,5 @@ $(document).ready(function() {
             message_error($('#frmAddCounter'), 'Please select an employee.');
         }
     });
-
+    
 });

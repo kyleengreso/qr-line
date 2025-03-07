@@ -8,9 +8,8 @@ $(document).ready(function(){
             dataType: 'json',
             success: function(response) {
                 if (response.status === 'success') {
-                    console.log(response.data);
+                    // console.log(response.data);
                     displayCounters(response.data);
-                } else {
                 }
             },
             error: function(xhr, status, error) {
@@ -65,10 +64,6 @@ $(document).ready(function(){
     // Load counters when the page is ready
 
     loadCounters();
-
-    setInterval(function() {
-        loadCounters();
-    }, 10000);
 
     // Search counters
     if ($('#search-counter').length) {
