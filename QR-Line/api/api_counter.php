@@ -74,6 +74,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             "status" => "success",
             "message" => "Counter registered successfully"
         ));
+
+        // Finding the transaction that was managed by the counter so transfer to the new registered counter
+        $stmt = $conn->prepare("SELECT idtransaction FROM transactions WHERE counterNumber = ?");
+        $stmt->bind_param("s", $counter_no);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transactions = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $transactions,
+            "message" => "Transaction list retrieved successfully"
+        ));
         exit;
     }
 
