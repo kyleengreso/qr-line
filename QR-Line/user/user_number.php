@@ -15,7 +15,7 @@ include './../base.php';
 </head>
 <body class="bg">
     <?php include "./../includes/navbar.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 10vh">
+    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
         <div class="circle text-center">
             <img src="./../asset/images/queue_icon.png" alt="Queue Icon" class="queue-icon">
             <div class="info-container">
