@@ -5,7 +5,7 @@ $(document).ready(function() {
     var resp = 0;
 
     // Load the Transaction Session for the Cashier
-    function loadTrnsactions() {
+    function loadTransactions() {
         var user_id = localStorage.getItem('user_id');
         console.log(user_id);
         $.ajax({
@@ -49,7 +49,7 @@ $(document).ready(function() {
             dataType : 'json',
             success: function(response) {
                 if (response.status === 'success') {
-                    loadTrnsactions();
+                    loadTransactions();
                 } else {
                     console.log('Error:', response.message);
                 }
@@ -61,7 +61,7 @@ $(document).ready(function() {
 
     });
     // Refresh by Cashier
-    loadTrnsactions();
+    loadTransactions();
 
 
 
