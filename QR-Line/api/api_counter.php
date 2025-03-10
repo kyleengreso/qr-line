@@ -8,92 +8,164 @@ header("Content-Type: application/json");
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $data = json_decode(file_get_contents("php://input"));
 
-    if (!isset($data->employee_id) || !isset($data->counter_no)) {
+    if (empty($data->method) || !isset($data->method)) {
         echo json_encode(array(
             "status" => "error",
-            "message" => "Employee ID and Counter Number are required"));
+            "message" => "Method is required"));
         exit;
     }
 
-    $employee_id = $data->employee_id;
-    $counter_no = $data->counter_no;
+    $method = $data->method;
 
-    // Checking if both employee and counter number are already registered
-    // $stmt = $conn->prepare("SELECT * FROM counter WHERE idemployee = ? AND counterNumber = ?");
-    // $stmt->bind_param("ss", $employee_id, $counter_no);
-    // $stmt->execute();
-    // $result = $stmt->get_result();
+    if ($method == "create") {
+        if (!isset($data->employee_id) || !isset($data->counter_no) || empty($data->counter_pwd)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee ID, Counter Number, Counter PWD are required"));
+            exit;
+        }
+    
+        $employee_id = $data->employee_id;
+        $counter_no = $data->counter_no;
+        $counter_pwd = $data->counter_pwd;
+    
+        if ($counter_pwd == "true") { $counter_pwd = "Y";
+        } else { $counter_pwd = "N";}
 
-    // if ($result->num_rows > 0) {
-    //     echo json_encode(array(
-    //         "status" => "error",
-    //         "message" => "Employee and counter number already registered"
-    //     ));
-    //     exit;
-    // } else {
-    //     $stmt = $conn->prepare("INSERT INTO counter (idemployee, counterNumber) VALUES (?, ?)");
-    //     $stmt->bind_param("ss", $employee_id, $counter_no);
-    //     $stmt->execute();
-    //     echo json_encode(array(
-    //         "status" => "success",
-    //         "message" => "Counter registered successfully"
-    //     ));
-    //     exit;
-    // }
-
-    // Checking if the employee is already registered
-    $stmt = $conn->prepare("SELECT * FROM employees WHERE id = ?");
-    $stmt->bind_param("s", $employee_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows == 0) {
-        echo json_encode(array(
-            "status" => "error",
-            "message" => "Employee not found"
-        ));
-        exit;
-    }
-
-    // Checking if the counter number is already registered
-    $stmt = $conn->prepare("SELECT * FROM counter WHERE counterNumber = ?");
-    $stmt->bind_param("s", $counter_no);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        echo json_encode(array(
-            "status" => "error",
-            "message" => "Counter number already registered"
-        ));
-        exit;
-    } else {
-        $stmt = $conn->prepare("INSERT INTO counter (idemployee, counterNumber) VALUES (?, ?)");
-        $stmt->bind_param("ss", $employee_id, $counter_no);
+        // Checking if the employee is already registered
+        $stmt = $conn->prepare("SELECT * FROM employees WHERE id = ?");
+        $stmt->bind_param("s", $employee_id);
         $stmt->execute();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Counter registered successfully"
-        ));
-
-        // Finding the transaction that was managed by the counter so transfer to the new registered counter
-        $stmt = $conn->prepare("SELECT idtransaction FROM transactions WHERE counterNumber = ?");
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee not found"
+            ));
+            exit;
+        }
+    
+        // Checking if the counter number is already registered
+        $stmt = $conn->prepare("SELECT * FROM counter WHERE counterNumber = ?");
         $stmt->bind_param("s", $counter_no);
         $stmt->execute();
         $result = $stmt->get_result();
-        $transactions = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "data" => $transactions,
-            "message" => "Transaction list retrieved successfully"
-        ));
-        exit;
+    
+        if ($result->num_rows > 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Counter number already registered"
+            ));
+            exit;
+        } else {
+            $stmt = $conn->prepare("INSERT INTO counter (idemployee, counterNumber, counter_pwd) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $employee_id, $counter_no, $counter_pwd);
+            $stmt->execute();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Counter registered successfully"
+            ));
+            exit;
+        }
+    } else if ($method == "delete") {
+        $counter_no = $data->counter_no;
+        // Checking if the counter is exist
+        $stmt = $conn->prepare("SELECT * FROM counter WHERE idcounter = ?");
+        $stmt->bind_param("s", $counter_no);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Counter not found"
+            ));
+            exit;
+        } else {
+            $stmt = $conn->prepare("DELETE FROM counter WHERE idcounter = ?");
+            $stmt->bind_param("s", $counter_no);
+            $stmt->execute();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Counter deleted successfully"
+            ));
+            exit;
+        }
+    } else if ($method == "update") {
+        // BUG FIX: Counter number is not being updated
+        if (!isset($data->employee_id) || !isset($data->counter_no) || empty($data->counter_pwd)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee ID, Counter Number, Counter PWD are required"));
+            exit;
+        }
+    
+        $employee_id = $data->employee_id;
+        $counter_no = $data->counter_no;
+        $counter_pwd = $data->counter_pwd;
+    
+        if ($counter_pwd == "true") { $counter_pwd = "Y";
+        } else { $counter_pwd = "N";}
+
+        // Checking if the employee is already registered
+        $stmt = $conn->prepare("SELECT * FROM employees WHERE id = ?");
+        $stmt->bind_param("s", $employee_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employee = $result->fetch_all(MYSQLI_ASSOC)[0];
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee not found"
+            ));
+            exit;
+        } else {
+            // echo json_encode(array(
+            //     "status" => "error",
+            //     "employee_id" => $employee['id'],
+            //     "counter_no" => $counter_no,
+            //     "counter_pwd" => $counter_pwd
+            // ));
+            // exit;
+            $sql_cmd = "UPDATE counter SET counter_pwd = ?, counterNumber = ? WHERE idemployee = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("sss", $counter_pwd, $counter_no, $employee['id']);
+            $stmt->execute();
+            if ($stmt->affected_rows == 0) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Issue"
+                ));
+                exit;
+            } else {
+                echo json_encode(array(
+                    "status" => "success",
+                    "message" => "Counter updated successfully"
+                ));
+                exit;
+            }
+        }
     }
-
-
 
 } if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
+    // Get the data about the counter
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+        $sql_cmd = "SELECT c.idcounter, c.counterNumber, c.idemployee, c.queue_count, c.counter_pwd, e.username FROM counter c LEFT JOIN employees e ON c.idemployee = e.id WHERE c.idcounter = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $counter = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $counter[0],
+            "message" => "Counter retrieved successfully"
+        ));
+        exit;
+    }
     function do_where() {
         global $sql_cmd, $where_trigger;
         if (!$where_trigger) {
@@ -126,7 +198,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         // So i can tell that counter will we tell to that employee is assigned to specified counter no.
         // In short thats total counter that we have
-        $sql_cmd = "SELECT e.username, c.queue_count, c.counterNumber, CASE WHEN c.queue_count = 0 THEN 'available' ELSE 'busy' END as availability FROM employees e JOIN counter c ON e.id = c.idemployee";
+        $search = NULL;
+        if (isset($_GET['search'])) {
+            $search = $_GET['search'];
+            $sql_cmd = "SELECT c.idcounter, e.username, c.queue_count, c.counterNumber, CASE WHEN c.queue_count = 0 THEN 'available' ELSE 'busy' END as availability FROM employees e JOIN counter c ON e.id = c.idemployee WHERE e.username LIKE '%$search%'";
+        } else {
+            $sql_cmd = "SELECT c.idcounter, e.username, c.queue_count, c.counterNumber, CASE WHEN c.queue_count = 0 THEN 'available' ELSE 'busy' END as availability FROM employees e JOIN counter c ON e.id = c.idemployee";
+        }
+        
         $stmt = $conn->prepare($sql_cmd);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -139,5 +218,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ));
     }
 }
-
 ?>

@@ -1,5 +1,6 @@
 $(document).ready(function() {
 
+    var counter_pwd = false;
 
     function addCounter(employee_id, counter_no) {
         $.ajax({
@@ -7,7 +8,8 @@ $(document).ready(function() {
             type: 'POST',
             data: JSON.stringify({
                 employee_id: employee_id,
-                counter_no: counter_no
+                counter_no: counter_no,
+                counter_pwd: counter_pwd
             }),
             dataType: 'json',
             success: function(response) {
@@ -106,5 +108,17 @@ $(document).ready(function() {
             message_error($('#frmAddCounter'), 'Please select an employee.');
         }
     });
-    
+
+    $('#counter-pwd').on('click', function(event) {
+        event.preventDefault();
+        counter_pwd = $('#counter-pwd').attr('value');
+        document.getElementById('counter-type').innerText = 'Yes';
+        $('#counter-type').text('Yes');
+    });
+
+    $('#counter-non-pwd').on('click', function(event) {
+        event.preventDefault();
+        counter_pwd = $('#counter-non-pwd').attr('value');
+        $('#counter-type').text('No');
+    });
 });

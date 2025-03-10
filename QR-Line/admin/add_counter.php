@@ -65,6 +65,18 @@ login_as_employee();
                                 <input type="text" name="counter_no" id="counter_no" class="form-control" placeholder="Enter counter number" required>
                             </div>
                         </div>
+
+                        <div class="mb-3">
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle col-12" type="button" id="counter-type" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    No
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a class="dropdown-item" id="counter-pwd" value="true">Yes</a>
+                                    <a class="dropdown-item" id="counter-non-pwd" value="false">No</a>
+                                </div>
+                            </div>
+                        </div>
                         <button type="submit" class="btn btn-primary w-100">Add Counter</button>
                     </form>
                 </div>
@@ -73,6 +85,8 @@ login_as_employee();
     </div>
 
     <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <script src="./../asset/js/popper.min.js" ></script>
+    <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/counter_get.js"></script>
 </body>

@@ -2,7 +2,7 @@ $(document).ready(function(){
     // Function to load counters
     function loadCounters(searchQuery = '') {
         $.ajax({
-            url: './../api/api_counter.php',
+            url: './../api/api_counter.php?search=' + searchQuery,
             type: 'GET',
             data: { search: searchQuery },
             dataType: 'json',
@@ -19,11 +19,14 @@ $(document).ready(function(){
     }
 
     function chkCounterAction(queue_count) {
-        if (queue_count == 0) {
-            return `<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editCounterModal" data-counter-id="${queue_count}">Delete</button>`;
-        } else {
-            return `<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editCounterModal" data-counter-id="${queue_count}" disabled>Resign?</button>`;
-        }
+        // if (queue_count == 0) {
+        //     return `<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editCounterModal" data-counter-id="${queue_count}">Delete</button>`;
+        // } else {
+        //     return `<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editCounterModal" data-counter-id="${queue_count}" disabled>Resign?</button>`;
+        // }
+        
+        // About to delete
+        return `<a class="btn btn-primary btn-sm" id="">Delete</a>`;
     }
 
     // Function to display counters in a table
@@ -54,7 +57,7 @@ $(document).ready(function(){
                     <td>${counter.username}</td>
                     <td>${counter.queue_count}</td>
                     <td>
-                        ${chkCounterAction(counter.queue_count)}
+                        <button class="btn btn-primary btn-sm" onclick="window.location.href='./delete_counter.php?idcounter=${counter.idcounter}'">Delete</button>
                     </td>
                 </tr>`;
             tableBody.append(row);
@@ -70,6 +73,50 @@ $(document).ready(function(){
         $('#search-counter').on('input', function() {
             var searchQuery = $(this).val();
             loadCounters(searchQuery);
+        });
+    }
+
+    if ($('#frmDeleteCounter').length) {
+        var counterId = new URLSearchParams(window.location.search).get('idcounter');
+        // console.log(counterId);
+        $.ajax({
+            url: './../api/api_counter.php?id=' + counterId,
+            type: 'GET',
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#counterNumber').text(response.data.counterNumber);
+                    $('#username').text(response.data.username);
+                    $('#queue_count').text(response.data.queue_count);
+                } else {
+                    console.log('Error: Unexpected response status');
+                }
+            },
+            error: function(xhr, status, error) {
+                // Print the error message from raw response
+                console.error('AJAX Error:', status, error);
+            }
+        });
+        $('#frmDeleteCounter').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: './../api/api_counter.php?id=' + counterId,
+                type: 'POST',
+                data: JSON.stringify({
+                    "method" : 'delete',
+                    "counter_no" : counterId,
+                }),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.href = './counters.php';
+                    } else {
+                        console.log('Error: Unexpected response status');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Print the error message from raw response
+                    console.error('AJAX Error:', status, error);
+                }
+            });
         });
     }
 })
