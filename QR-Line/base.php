@@ -7,7 +7,7 @@ $root_path = "/QR-Line/";
 $auth_path = $root_path . "auth/";
 $admin_path = $root_path . "admin/";
 $employee_path = $root_path . "employee/";
-$api_path = $root_path . "api\/";
+$api_path = $root_path . "apif/";
 
 function login_as_employee() {
     // global $auth_path, $admin_path, $employee_path;

@@ -1,6 +1,8 @@
 .circle {
-    width: 500px;
-    height: 500px;
+    max-width: 400px;
+    width: 400px;
+    height: 400px;
+    max-height: 400px;
     border-radius: 50%;
     border: 5px solid #ff6600;
     display: flex;
