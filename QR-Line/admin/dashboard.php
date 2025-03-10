@@ -61,9 +61,10 @@ login_as_employee();
                                         <div class="col-6 px-0">
                                             <div class="dropdown">
                                                 <button class="btn btn-secondary dropdown-toggle" type="button" id="transaction-history-filter-email" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    Filter
+                                                    All
                                                 </button>
                                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <a class="dropdown-item" id="transaction-history-filter-corporate-none" value="none">All</a>
                                                     <a class="dropdown-item" id="transaction-history-filter-corporate" value="true">Corporate Email</a>
                                                     <a class="dropdown-item" id="transaction-history-filter-non-corporate" value="false">Non-corporate</a>
                                                 </div>
@@ -77,9 +78,10 @@ login_as_employee();
                                         <div class="col-6 px-0">
                                             <div class="dropdown">
                                                 <button class="btn btn-secondary dropdown-toggle" type="button" id="transaction-history-filter-payment" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    Filter
+                                                    All
                                                 </button>
                                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <a class="dropdown-item" id="transaction-history-filter-payment-none" value="none">All</a>
                                                     <a class="dropdown-item" id="transaction-history-filter-registrar" value="registrar">Registrar</a>
                                                     <a class="dropdown-item" id="transaction-history-filter-assessment" value="assessment">Assessment</a>
                                                 </div>

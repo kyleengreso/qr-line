@@ -352,9 +352,16 @@ $(document).ready(function() {
     );
     
     // At Transaction History can do filter
+    var btn_transaction_history_filter_corporate_none = $('#transaction-history-filter-corporate-none');
     var btn_transaction_history_filter_corporate = $('#transaction-history-filter-corporate');
     var btn_transaction_history_filter_non_corporate = $('#transaction-history-filter-non-corporate');
     var transaction_history_filter_email = $('#transaction-history-filter-email');
+
+    btn_transaction_history_filter_corporate_none.click(function() {
+        transaction_corporate = "none";
+        transaction_history_filter_email.text("All");
+        getTransactions();
+    });
 
     btn_transaction_history_filter_corporate.click(function() {
         transaction_corporate = "true";
@@ -368,9 +375,16 @@ $(document).ready(function() {
         getTransactions();
     });
 
+    var btn_transaction_history_payment_none = $('#transaction-history-filter-payment-none');
     var btn_payment_registrar = $('#transaction-history-filter-registrar');
     var btn_payment_assessment = $('#transaction-history-filter-assessment');
     var btn_transaction_history_filter_payment = $('#transaction-history-filter-payment');
+
+    btn_transaction_history_payment_none.click(function() {
+        transaction_payment = "none";
+        btn_transaction_history_filter_payment.text("All");
+        getTransactions();
+    });
 
     btn_payment_registrar.click(function() {
         transaction_payment = "registrar";
