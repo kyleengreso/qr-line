@@ -148,6 +148,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 } if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
+    if (isset($_GET['page']) && isset($_GET['paginate'])) {
+        $page = $_GET['page'];
+        $pagination = $_GET['paginate'];
+        $offset = ($page - 1) * $pagination;
+        $sql_cmd = "SELECT c.idcounter, c.counterNumber, c.idemployee, c.queue_count, c.counter_pwd, e.username FROM counter c LEFT JOIN employees e ON c.idemployee = e.id LIMIT ? OFFSET ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("ss", $pagination, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $counters = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $counters,
+            "message" => "Counter list retrieved successfully"
+        ));
+        exit;
+    }
+
     // Get the data about the counter
     if (isset($_GET['id'])) {
         $id = $_GET['id'];
@@ -166,6 +186,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ));
         exit;
     }
+
+    // Get total count of the counter
+    if (isset($_GET['total_count'])) {
+        $stmt = $conn->prepare("SELECT COUNT(idcounter) as total FROM counter");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $total = $result->fetch_all(MYSQLI_ASSOC)[0];
+        $stmt->close();
+
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $total,
+            "message" => "Total counter retrieved successfully"
+        ));
+        exit;
+    }
+
     function do_where() {
         global $sql_cmd, $where_trigger;
         if (!$where_trigger) {

@@ -11,20 +11,59 @@ $(document).ready(function() {
     var transaction_corporate = "none";
     var transaction_payment = "none";
 
-    window.nextPaginateTransactions = function() {
-        page_transaction++;
-        getTransactions();
+    function getTotalCounter() {
+        return $.ajax({
+            url: './../api/api_counter.php?total_count',
+            type: 'GET'
+        });
     }
 
-    window.prevPaginateTransactions = function() {
-        if (page_transaction > 1) {
-            page_transaction--;
-        } else {
-            page_transaction = 1;
+    function getTotalTransaction() {
+        return $.ajax({
+            url: './../api/api_transaction_history.php?total_count',
+            type: 'GET'
+        });
+    }
+
+    function getTotalEmployee() {
+        return $.ajax({
+            url: './../api/api_employee.php?total_count',
+            type: 'GET'
+        });
+    }
+
+    $.when(getTotalCounter(), getTotalTransaction(), getTotalEmployee()).done(function(counterResponse, transactionResponse, employeeResponse) {
+        if (counterResponse[0].status === 'success') {
+            total_counter = counterResponse[0].data.total;
         }
-        getTransactions();
-    }
+        if (transactionResponse[0].status === 'success') {
+            total_transaction = transactionResponse[0].data.total;
+        }
+        if (employeeResponse[0].status === 'success') {
+            total_employee = employeeResponse[0].data.total;
+        }
+    
+        // Print out the total count... but i cant escape
+        console.log(`Total Counter: ${total_counter}`);
+        console.log(`Total Transaction: ${total_transaction}`);
+        console.log(`Total Employee: ${total_employee}`);
+    });
 
+    $('#pagePrevCounters').click(function(e) {
+        e.preventDefault();
+        if (page_counter > 1) {
+            page_counter--;
+        } else {
+            page_counter = 1;
+        }
+        getCounters();
+    });
+
+    $('#pageNextCounters').click(function(e) {
+        e.preventDefault();
+        page_counter++;
+        getCounters();
+    });
     function displayTransactionHistory(transactions) {
         var table = $('#table-transaction-history');
 
@@ -80,7 +119,7 @@ $(document).ready(function() {
 
     function getTransactions() {
         $.ajax({
-            url: './../api/api_transaction_history.php?page=' + page_transaction + '&paginate=' + paginate + "&corporate=" + transaction_corporate + "&payment=" + transaction_payment, 
+            url: `./../api/api_transaction_history.php?page=${page_transaction}&paginate=${paginate}&corporate=${transaction_corporate}&payment=${transaction_payment}`,
             type: 'GET',
             success: function(response) {
                 if (response.status === 'success' || response.status === 'empty') {
@@ -98,37 +137,25 @@ $(document).ready(function() {
         });
     }
 
-
-
-
-
-    window.nextPaginateCounters = function() {
-        page_counter++;
-        getCounters();
-    }
-
-    window.prevPaginateCounters = function() {
-        if (page_counter > 1) {
-            page_counter--;
+    $('#pagePrevEmployees').click(function() {
+        if (page_employee > 1) {
+            page_employee--;
         } else {
-            page_counter = 1;
+            page_employee = 1;
         }
-        getCounters();
-    }
+        getEmployees();
+    });
+
+    $('#pageNextEmployees').click(function() {
+        if (page_employee < total_employee) {
+            page_employee++;
+        } 
+        getEmployees();
+    });
 
     function displayCounters(counters) {
         var table = $('#table-counters');
-
         table.empty();
-        if (counters.length == 0) {
-            var row = `
-                <tr>
-                    <td colspan="4" class="text-center">No counters found</td>
-                </tr>`;
-            table.append(row);
-            return;
-        }
-        
         var tableHeader = `
             <tr>
                 <th>#</th>
@@ -136,6 +163,15 @@ $(document).ready(function() {
                 <th>Queue Count</th>
             </tr>`;
         table.append(tableHeader);
+        if (counters.length == 0) {
+            var row = `
+                <tr>
+                    <td colspan="3" class="text-center">No counters found</td>
+                </tr>`;
+            table.append(row);
+            return;
+        }
+        
         for (var i = 0; i < counters.length; i++) {
             var row = `
                 <tr>
@@ -149,7 +185,7 @@ $(document).ready(function() {
 
     function getCounters() {
         $.ajax({
-            url: './../api/api_counter.php?page=' + page_counter + '&paginate=' + paginate,
+            url: `./../api/api_counter.php?page=${page_counter}&paginate=${paginate}`,
             type: 'GET',
             data: {
                 page: page_counter,
@@ -181,58 +217,20 @@ $(document).ready(function() {
         });
     }   
 
-
-    window.nextPaginateEmployees = function() {
-        page_employee++;
-        $.ajax({
-            url : './../api/api_employee.php?page=' + page_employee + '&paginate=' + paginate,
-            type: 'GET',
-            data: {
-                page: page_employee,
-                paginate: paginate},
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    displayEmployees(response.data);
-                } else {
-                    console.log('Error:', response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-            }
-        });
-    }
-
-    window.prevPaginateEmployees = function() {
-        if (page_employee > 1) {
-            page_employee--;
-        } else {
-            page_employee = 1;
+    $('#pagePrevTransactions').click(function() {
+        if (page_transaction > 1) {
+            page_transaction--;
         }
-        $.ajax({
-            url : './../api/api_employee.php?page=' + page_employee + '&paginate=' + paginate,
-            type: 'GET',
-            data: {
-                page: page_employee,
-                paginate: paginate},
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    displayEmployees(response.data);
-                } else {
-                    console.log('Error:', response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-            }
-        });
-    }
+        getTransactions();
+    });
+
+    $('#pageNextTransactions').click(function() {
+        page_transaction++;
+        getTransactions();
+    });
 
     function displayEmployees(employees) {
         var table = $('#table-employees');
-
         table.empty();
         if (employees.length == 0) {
             var row = `
@@ -273,7 +271,7 @@ $(document).ready(function() {
 
     function getEmployees() {
         $.ajax({
-            url: './../api/api_employee.php?page=' + page_employee + '&paginate=' + paginate,
+            url: `./../api/api_employee.php?page=${page_employee}&paginate=${paginate}`,
             type: 'GET',
             data: {
                 page: page_employee,

@@ -99,10 +99,10 @@ login_as_employee();
                             <nav aria-label="Page navigation example">
                                 <ul class="pagination justify-content-center">
                                     <li class="page-item">
-                                        <a class="page-link" onclick="prevPaginateTransactions()" id="pagePrevEmployees">Previous</a>
+                                        <a class="page-link" id="pagePrevTransactions">Previous</a>
                                     </li>
                                     <li class="page-item">
-                                        <a class="page-link" onclick="nextPaginateTransactions();" id="pageNextEmployees" href="#">Next</a>
+                                        <a class="page-link" id="pageNextTransactions">Next</a>
                                     </li>
                                 </ul>
                             </nav>
@@ -165,10 +165,10 @@ login_as_employee();
                             <nav aria-label="Page navigation example">
                                 <ul class="pagination justify-content-center">
                                     <li class="page-item">
-                                        <a class="page-link" onclick="prevPaginateEmployees()" id="pagePrevEmployees">Previous</a>
+                                        <a class="page-link" id="pagePrevEmployees">Previous</a>
                                     </li>
                                     <li class="page-item">
-                                        <a class="page-link" onclick="nextPaginateEmployees();" id="pageNextEmployees" href="#">Next</a>
+                                        <a class="page-link" id="pageNextEmployees">Next</a>
                                     </li>
                                 </ul>
                             </nav>
@@ -194,10 +194,10 @@ login_as_employee();
                             <nav aria-label="Page navigation example">
                                 <ul class="pagination justify-content-center">
                                     <li class="page-item">
-                                        <a class="page-link" onclick="prevPaginateCounters()" id="pagePrevEmployees">Previous</a>
+                                        <a class="page-link" id="pagePrevCounters">Previous</a>
                                     </li>
                                     <li class="page-item">
-                                        <a class="page-link" onclick="nextPaginateCounters();" id="pageNextEmployees" href="#">Next</a>
+                                        <a class="page-link"id="pageNextCounters">Next</a>
                                     </li>
                                 </ul>
                             </nav>

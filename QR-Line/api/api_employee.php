@@ -134,6 +134,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute();
         $result = $stmt->get_result();
         $employees = $result->fetch_all(MYSQLI_ASSOC)[0];
+    } else if (isset($_GET['total_count'])) {
+        $stmt = $conn->prepare("SELECT COUNT(id) as total FROM employees");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employees = $result->fetch_all(MYSQLI_ASSOC)[0];
     } else if (isset($_GET['search'])) {
         $search = "%" . $_GET['search'] . "%";
         $stmt = $conn->prepare("SELECT id, username, created_at FROM employees WHERE username LIKE ?");

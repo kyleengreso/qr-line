@@ -242,6 +242,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+    // Total count of transactions
+    if (isset($_GET['total_count'])) {
+        $sql_cmd = "SELECT COUNT(idtransaction) as total FROM transactions";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $total = $result->fetch_all(MYSQLI_ASSOC)[0];
+        $stmt->close();
+
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $total,
+            "message" => "Total transactions retrieved successfully."
+        ));
+        exit;
+    }
     // Login as cashier, as cashier will tell to collect his/her transaction queue
     if (isset($_GET['cashier']) && !isset($_GET['employee_id'])) {
         echo json_encode(array(
