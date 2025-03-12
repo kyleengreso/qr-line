@@ -185,7 +185,7 @@ $(document).ready(function() {
 
     function getCounters() {
         $.ajax({
-            url: `./../api/api_counter.php?page=${page_counter}&paginate=${paginate}`,
+            url: './../api/api_counter.php?page=' + page_counter + '&paginate=' + paginate,
             type: 'GET',
             data: {
                 page: page_counter,
