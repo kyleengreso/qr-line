@@ -7,6 +7,7 @@ $(document).ready(function() {
             url: './../api/api_counter.php',
             type: 'POST',
             data: JSON.stringify({
+                method: "create",
                 employee_id: employee_id,
                 counter_no: counter_no,
                 counter_pwd: counter_pwd

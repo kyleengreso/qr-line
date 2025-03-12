@@ -67,6 +67,7 @@ login_as_employee();
                         </div>
 
                         <div class="mb-3">
+                        <label class="form-label">Is Line is PWD?</label>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle col-12" type="button" id="counter-type" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     No
