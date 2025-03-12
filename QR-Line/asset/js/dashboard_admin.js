@@ -271,7 +271,7 @@ $(document).ready(function() {
 
     function getEmployees() {
         $.ajax({
-            url: `./../api/api_employee.php?page=${page_employee}&paginate=${paginate}`,
+            url: './../api/api_employee.php?page=' + page_employee + '&paginate=' + paginate,
             type: 'GET',
             data: {
                 page: page_employee,
