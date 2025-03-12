@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $method = $data->method;
 
     if ($method == "create") {
-        if (!isset($data->employee_id) || !isset($data->counter_no) || empty($data->counter_pwd)) {
+        if (!isset($data->employee_id) || !isset($data->counter_no)) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee ID, Counter Number, Counter PWD are required"));
@@ -27,10 +27,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
         $employee_id = $data->employee_id;
         $counter_no = $data->counter_no;
-        $counter_pwd = $data->counter_pwd;
-    
-        if ($counter_pwd == "true") { $counter_pwd = "Y";
-        } else { $counter_pwd = "N";}
 
         // Checking if the employee is already registered
         $stmt = $conn->prepare("SELECT * FROM employees WHERE id = ?");
@@ -58,8 +54,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ));
             exit;
         } else {
-            $stmt = $conn->prepare("INSERT INTO counter (idemployee, counterNumber, counter_pwd) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $employee_id, $counter_no, $counter_pwd);
+            $stmt = $conn->prepare("INSERT INTO counter (idemployee, counterNumber) VALUES (?, ?)");
+            $stmt->bind_param("ss", $employee_id, $counter_no);
             $stmt->execute();
             echo json_encode(array(
                 "status" => "success",
@@ -215,7 +211,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (isset($_GET['available'])) {
         // Applies to the counter that is available
-        $sql_cmd = "SELECT e.username, e.id,  CASE WHEN c.queue_count IS NULL THEN 'Available' ELSE 'Busy' END as availability FROM employees e LEFT JOIN counter c ON e.id = c.idemployee WHERE c.idemployee IS NULL ";
+        $sql_cmd = "SELECT e.username, e.id,  CASE WHEN c.queue_count IS NULL THEN 'Available' ELSE 'Busy' END as availability FROM employees e LEFT JOIN counter c ON e.id = c.idemployee WHERE c.idemployee IS NULL AND e.role_type = 'employee'";
 
         if (isset($_GET['search'])) {
             $search = $_GET['search'];

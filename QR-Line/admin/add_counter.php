@@ -65,19 +65,6 @@ login_as_employee();
                                 <input type="text" name="counter_no" id="counter_no" class="form-control" placeholder="Enter counter number" required>
                             </div>
                         </div>
-
-                        <div class="mb-3">
-                        <label class="form-label">Is Line is PWD?</label>
-                            <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle col-12" type="button" id="counter-type" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    No
-                                </button>
-                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a class="dropdown-item" id="counter-pwd" value="true">Yes</a>
-                                    <a class="dropdown-item" id="counter-non-pwd" value="false">No</a>
-                                </div>
-                            </div>
-                        </div>
                         <button type="submit" class="btn btn-primary w-100">Add Counter</button>
                     </form>
                 </div>
