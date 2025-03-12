@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-    var counter_pwd = false;
+    var counter_pwd = "false";
 
     function addCounter(employee_id, counter_no) {
         $.ajax({
