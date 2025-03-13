@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->close();
 
         // Get queue_count_int value from setup
-        $sql_cmd = "SELECT setup_value_int FROM setup WHERE setup_key = 'queue_count'";
+        $sql_cmd = "SELECT setup_value_int FROM setup_system WHERE setup_key = 'queue_count'";
         $stmt = $conn->prepare($sql_cmd);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Then increment the queue_count_int value by 1
         $queue_count_int++;
         $stmt->close();
-        $sql_cmd = "UPDATE setup SET setup_value_int = ? WHERE setup_key = 'queue_count'";
+        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'queue_count'";
         $stmt = $conn->prepare($sql_cmd);
         $stmt->bind_param("s", $queue_count_int);
         $stmt->execute();
