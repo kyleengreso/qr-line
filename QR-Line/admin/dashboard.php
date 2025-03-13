@@ -11,11 +11,11 @@ login_as_employee();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php head_icon()?>
     <title>Dashboard | <?php echo $project_name; ?></title>
-    <link rel="stylesheet" href="./../asset/css/bootstrap.css">
-    <link rel="stylesheet" href="./../asset/css/theme.css">
-    <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <?php head_css()?>
+    <?php before_js()?>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"  >
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>

@@ -11,10 +11,10 @@ login_as_employee();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php head_icon()?>
     <title>Counters List | <?php echo $project_name?></title>
-    <link rel="stylesheet" href="./../asset/css/bootstrap.css">
-    <link rel="stylesheet" href="./../asset/css/theme.css">
-    <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
+    <?php head_css()?>
+    <?php before_js()?>
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
@@ -55,8 +55,7 @@ login_as_employee();
             </div>
         </div>
     </div>
-
-    <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <?php after_js()?>
     <script src="./../asset/js/counters.js"></script>
 </body>
 </html>

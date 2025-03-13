@@ -7,10 +7,10 @@ include './../base.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php head_icon()?>
     <title>Queue | <?php echo $project_name?></title>
-    <link rel="stylesheet" href="./../asset/css/bootstrap.css">
-    <link rel="stylesheet" href="./../asset/css/theme.css">
-    <script src="https://kit.fontawesome.com/0aa2c3c0f4.js" crossorigin="anonymous"></script>
+    <?php head_css()?>
+    <?php before_js()?>
     <link rel="stylesheet" href="./../asset/css/user_number.css">
 </head>
 <body class="bg">

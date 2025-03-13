@@ -41,6 +41,18 @@ function login_as_employee() {
 //     }
 // }
 
+function head_icon() {
+    echo '<link rel="icon" href="./../asset/images/favicon.png">';
+}
+function head_css() {
+    echo '
+        <link rel="stylesheet" href="./../asset/css/bootstrap.css">
+        <link rel="stylesheet" href="./../asset/css/theme.css">
+    ';
+}
+function before_js() {
+    echo '<script src="./../asset/js/0aa2c3c0f4.js"  ></script>';
+}
 
 function after_js() {
     echo '
