@@ -1,5 +1,6 @@
 <?php
 include "./../includes/db_conn.php";
+session_start();
 
 function employee_check($employee_id) {
     global $conn;
@@ -14,89 +15,6 @@ function employee_check($employee_id) {
         return TRUE;
     }
 }
-function get_available_counter_for_employee_id($employee_id, $queue_count = 2) {
-    global $conn;
-
-    // Get the counter with the highest queue count
-    $sql_cmd = "SELECT t.idcounter, COUNT(t.idtransaction) as pending_count
-                FROM transactions t
-                LEFT JOIN employees e ON t.idemployee = e.id
-                WHERE t.idcounter != ? AND t.status = 'pending' AND e.role_type = 'employee'
-                GROUP BY t.idcounter;";
-    $stmt = $conn->prepare($sql_cmd);
-    $stmt->bind_param("s", $employee_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $counters = $result->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    // Get idcounter using idemployee at counter table
-    $sql_cmd = "SELECT idcounter, counterNumber, idemployee FROM counter WHERE idemployee = ?";
-    $stmt = $conn->prepare($sql_cmd);
-    $stmt->bind_param("s", $employee_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $counters_main = $result->fetch_assoc();
-    $stmt->close();
-
-    // echo json_encode(array(
-    //     "status" => "success",
-    //     "data" => $counters_main,
-    //     "message" => "Counters found."
-    // ));
-    // exit;
-    $counter_highest_queue = 0;
-    $counter_id = 0;
-
-    foreach ($counters as $counter) {
-        if ($counter['pending_count'] > $counter_highest_queue) {
-            $counter_highest_queue = $counter['pending_count'];
-            $counter_id = $counter['idcounter'];
-        }
-    }
-
-    // echo json_encode(array(
-    //     "status" => "success",
-    //     "highest_queue" => $counter_highest_queue,
-    //     "counter_id" => $counter_id,
-    //     "message" => "Counter found."
-    // ));
-    // exit;
-
-
-    // Get the 2nd queue at the counter with the highest queue count
-    $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND status = 'pending' ORDER BY idtransaction ASC LIMIT 1,1";
-    $stmt = $conn->prepare($sql_cmd);
-    $stmt->bind_param("s", $counter_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $transaction = $result->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    if ($transaction) {
-        $sql_cmd = "UPDATE transactions SET idcounter = ?, idemployee = ? WHERE idtransaction = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("sss", $counters_main['idcounter'], $employee_id, $transaction[0]['idtransaction']);
-        $stmt->execute();
-
-        if ($stmt->affected_rows > 0) {
-            echo json_encode(array(
-                "status" => "success",
-                "data" => $transaction,
-                "message" => "Transaction updated successfully."
-            ));
-        } else {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "No rows updated. Check if the transaction exists."
-            ));
-        }
-
-        $stmt->close();
-    }
-    // exit();
-}
-
 
 header("Content-Type: application/json");
 
@@ -110,124 +28,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    if (isset($data->cashier) && isset($data->employee_id) && isset($data->transaction_id)) {
-        $sql_cmd = "UPDATE transactions SET status = 'completed' WHERE idtransaction = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->transaction_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Transaction completed for transaction_id = " . $data->transaction_id . " by employee_id = " . $data->employee_id
-        ));
-        exit;
-    }
-
-
-
-
-    if (!isset($data->name) || !isset($data->email) || !isset($data->payment) && isset($data->cashier)) {
-        echo json_encode(array(
-            "status" => "error",
-            "message" => "Please fill up the information."
-        ));
-        exit;
-    }
-
-    if (!isset($data->cashier)) {
-
-        try {
-            // Reserved for cashier
-        } catch (Exception $e) {
-            $conn->rollback();
+    // As cashier, to get the transaction queue
+    if (isset($data->cashier) && isset($data->employee_id) && isset($data->transaction_id) && isset($data->status)) {
+        $transaction_status = $data->status;
+        if ($transaction_status == "completed") {
+            $sql_cmd = "UPDATE transactions SET status = 'completed' WHERE idtransaction = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $data->transaction_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $stmt->close();
             echo json_encode(array(
-                "status" => "error",
-                "message" => "Error processing request: " . $e->getMessage()
+                "status" => "success",
+                "message" => "Transaction completed for transaction_id = " . $data->transaction_id . " by employee_id = " . $data->employee_id
+            ));
+            exit;
+        } else if ($transaction_status == "missed") {
+            $sql_cmd = "UPDATE transactions SET status = 'missed' WHERE idtransaction = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $data->transaction_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction completed for transaction_id = " . $data->transaction_id . " by employee_id = " . $data->employee_id
+            ));
+            exit;
+        } else if ($transaction_status == "cancelled") {
+            $sql_cmd = "UPDATE transactions SET status = 'cancelled' WHERE idtransaction = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $data->transaction_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction cancelled for transaction_id = " . $data->transaction_id . " by employee_id = " . $data->employee_id
             ));
             exit;
         }
-        exit;
     }
-
-
-    $conn->begin_transaction();
-
-    try {
-        $name = $data->name;
-        $email = $data->email;
-        $payment = $data->payment;
-
-        // Insert user data into the database
-        $stmt = $conn->prepare("INSERT INTO requesters (name, email, payment) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $email, $payment);
-        $stmt->execute();
-        $user_id = $stmt->insert_id;
-        $stmt->close();
-
-        // To tell to find the available counters
-        $stmt = $conn->prepare("SELECT idcounter FROM counter ORDER BY queue_count ASC LIMIT 1");
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counter = $result->fetch_assoc();
-        $stmt->close();
-
-        if (!$counter) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "No available counters."
-            ));
-            exit;
-        }
-
-        $counter_id = $counter['idcounter'];
-
-        // Get the next queue number
-        $stmt = $conn->prepare("SELECT IFNULL(MAX(queue_number) + 1, 1) AS next_queue FROM transactions");
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        $queue_number = $row['next_queue'];
-        $stmt->close();
-
-        // Generate a unique token number
-        $token_number = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
-
-        // Insert queue details into transactions
-        $stmt = $conn->prepare("INSERT INTO transactions (iduser, idcounter, queue_number, token_number, status, payment) VALUES (?, ?, ?, ?, 'pending', ?)");
-        $stmt->bind_param("sssss", $user_id, $counter_id, $queue_number, $token_number, $payment);
-        $stmt->execute();
-        $stmt->close();
-
-        // Update counter queue count
-        $stmt = $conn->prepare("UPDATE counter SET queue_count = queue_count + 1 WHERE idcounter = ?");
-        $stmt->bind_param("i", $counter_id);
-        $stmt->execute();
-        $stmt->close();
-
-        // Commit transaction
-        $conn->commit();
-
-        // Redirect user to queue display page
-        echo json_encode(array(
-            "status" => "success",  
-            "gotoLocation" => "./user_number.php?queue=$queue_number&counter=$counter_id",
-            "message" => "Done..."
-        ));
-        exit();
-
-    } catch (Exception $e) {
-        // Rollback transaction on error
-        $conn->rollback();
-        echo json_encode(array(
-            "status" => "error",
-            "message" => "Error processing request: " .$e->getMessage()
-        ));
-        exit;
-    }
-
-
 } else if ($_SERVER["REQUEST_METHOD"] == "GET") {
+
     // Base SQL query to select transaction details
     $sql_cmd = "SELECT t.idrequester as idrequester, e.username as employee_name, t.idcounter as idcounter, t.transaction_time as transaction_time, r.email as email, t.status as status, r.payment FROM transactions t JOIN requesters r ON t.idrequester = r.id JOIN employees e ON t.idemployee = e.id";
     $where_trigger = FALSE;
@@ -266,22 +109,126 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ));
         exit;
     }
-    if (isset($_GET['cashier']) && $_GET['employee_id']) {
-        $sql_cmd = "SELECT t.idtransaction, c.counterNumber, t.queue_number, t.status, e.username from counter c LEFT JOIN transactions t ON c.idemployee = t.idemployee LEFT JOIN employees e on c.idemployee = e.id WHERE e.id = ? AND t.status = 'pending' LIMIT 0, 1";
+
+
+
+
+    if (isset($_GET['cashier']) && isset($_GET['employee_id'])) {
+        // Get the transaction queue for the cashier
+        $sql_cmd = "SELECT * 
+                    FROM transactions t
+                    WHERE t.status = 'pending' AND t.idemployee is null AND t.idcounter is null
+                    ORDER BY t.transaction_time ASC
+                    LIMIT 0,1";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $_GET['employee_id']);
         $stmt->execute();
         $result = $stmt->get_result();
         $transaction = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        if ($transaction) {
-            echo json_encode(array(
-                "status" => "success",
-                "data" => $transaction,
-                "message" => "Transaction found."
-            ));
+
+        if ($result->num_rows > 0) {
+            // Assign the transaction to the cashier
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "data" => $transaction,
+            //     "message" => "Transaction found."
+            // ));
+            // exit;
+
+            // Counter data
+            $sql_cmd = "SELECT * FROM counter WHERE idemployee = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $_GET['employee_id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $counter = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "data" => $counter,
+            //     "message" => "Counter found."
+            // ));
+            // exit;
+
+            // Get queue_count
+            // $sql_cmd = "SELECT setup_value_int FROM setup_system WHERE setup_key = 'queue_count'";
+            // $stmt = $conn->prepare($sql_cmd);
+            // $stmt->execute();
+            // $result = $stmt->get_result();
+            // $queue_count = $result->fetch_all(MYSQLI_ASSOC)[0]['setup_value_int'];
+            // $stmt->close();
+
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "data" => $queue_count,
+            //     "message" => "Transaction found."
+            // ));
+            // exit;
+
+            // $queue_count++;
+
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "data" => $queue_count,
+            //     "message" => "Transaction found."
+            // ));
+            // exit;
+
+            // $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'queue_count'";
+            // $stmt = $conn->prepare($sql_cmd);
+            // $stmt->bind_param("s", $queue_count);
+            // $stmt->execute();
+            // $result = $stmt->get_result();
+            // $stmt->close();
+
+            
+            // Now checking if that transaction was already assigned to the cashier
+            $sql_cmd = "SELECT *
+                        FROM transactions
+                        WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";    
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("ss", $counter[0]['idcounter'], $_GET['employee_id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transaction1 = $result->fetch_all(MYSQLI_ASSOC);
+            
+            if ($result->num_rows > 0) {
+                echo json_encode(array(
+                    "status" => "success",
+                    "data" => $transaction1[0],
+                    "message" => "Transaction found."
+                ));
+                exit;
+            } else {
+                // Otherwise assign the transaction to the cashier
+                $sql_cmd = "UPDATE transactions SET idcounter = ?, idemployee = ?, status = 'serve' WHERE idtransaction = ?";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("sss", $counter[0]['idcounter'], $_GET['employee_id'], $transaction[0]['idtransaction']);
+                $stmt->execute();
+                $stmt->close();
+
+                // Then get the transaction details again
+                $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("ss", $counter[0]['idcounter'], $_GET['employee_id']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $transaction = $result->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+
+                echo json_encode(array(
+                    "status" => "success",
+                    "data" => $transaction[0],
+                    "message" => "Transaction found."
+                ));
+                exit;
+            }
         } else {
-            get_available_counter_for_employee_id($_GET['employee_id']);
+            // No transaction available
+            echo json_encode(array(
+                "status" => "empty",
+                "message" => "No transaction available."
+            ));
         }
         exit;
     }

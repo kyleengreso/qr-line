@@ -28,7 +28,8 @@ login_as_employee();
                 <span id="queue-number"></span>
             </div>
             <form method="POST" id="frmNextTransaction">
-                <button type="submit" name="next_queue" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
+                <button type="submit" name="next_queue" id="btn-counter-success"class="btn btn-warning text-white fw-bold px-4">NEXT</button>
+                <button type="submit" name="next_queue" id="btn-counter-skip"class="btn btn-warning text-white fw-bold px-4">SKIP</button>
             </form>
         </div>
     </div>
