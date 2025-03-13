@@ -20,8 +20,8 @@ login_as_employee();
     <?php include "./../includes/navbar.php"; ?>
 
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
-        <div class="text-center w-100" style="max-width: 400px;">
-            <h3 class="fw-bold">COUNTER</h3>
+        <div class="text-center w-100" style="max-width: 400px;" id="employeeDashboard">
+            <h3 class="fw-bold">COUNTER <span id="employee-counter-number"></span></h3>
 
             <p class="mb-3">Current Serving</p>
             <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
@@ -35,6 +35,7 @@ login_as_employee();
     </div>
 
 <?php after_js()?>
+    <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/dashboard_cashier.js"></script>
 </body>
 </html>

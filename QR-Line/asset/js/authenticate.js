@@ -90,16 +90,15 @@ $(document).ready(function() {
                 }
             },
         })
-
     }
 
-    function register(username, password, confirm_password) {
+    function registerAdmin(username, password, confirm_password) {
 
         var data = {
             username: username,
             password: password,
             confirm_password: confirm_password,
-            auth_method: 'register'
+            auth_method: 'registerAdmin'
         };
 
         $.ajax({
@@ -119,7 +118,6 @@ $(document).ready(function() {
                 }
             },
         })
-
     }
 
     // Login Form
@@ -144,6 +142,6 @@ $(document).ready(function() {
         username = $('#username').val();
         password = $('#password').val();
         confirm_password = $('#confirm_password').val();
-        register(username, password, confirm_password);
+        registerAdmin(username, password, confirm_password);
     }); 
 });

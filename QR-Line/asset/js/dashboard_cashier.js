@@ -149,10 +149,11 @@ $(document).ready(function() {
     loadTransactions();
 
     console.log(transaction);
+    
     // Refresh by Cashier
-    // setInterval(function() {
-    //     loadTransactions();
-    // }, 5000);
+    setInterval(function() {
+        loadTransactions();
+    }, 10000);
 
 
 

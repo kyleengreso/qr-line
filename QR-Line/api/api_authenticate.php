@@ -102,6 +102,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     "message" => "Error: " . $conn->error));
             }
         }
+    } else if ($auth_method == "registerAdmin") {
+
+        $confirm_password = $data->confirm_password;
+
+        if ($password != $confirm_password) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Passwords do not match"));
+            exit;
+        }
+
+        $stmt = $conn->prepare("SELECT username FROM employees WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Username already exists"));
+            exit;
+        } else {
+            $hash_password = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare("INSERT INTO employees (username, password, role_type) VALUES (?, ?, 'admin')");
+            $stmt->bind_param("ss", $username, $hash_password);
+
+            if ($stmt->execute()) {
+                echo json_encode(array(
+                    "status" => "success",
+                    "message" => "Administrator registered successfully"));
+            } else {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Error: " . $conn->error));
+            }
+        }
     } else if ($auth_method == "logout") {
         session_unset();
         session_destroy();

@@ -2,14 +2,15 @@ $(document).ready(function() {
 
 
     function addCounter(employee_id, counter_no) {
+        var data = {
+            method: "create",
+            employee_id: employee_id,
+            counter_no: counter_no,
+        }
         $.ajax({
             url: './../api/api_counter.php',
             type: 'POST',
-            data: JSON.stringify({
-                method: "create",
-                employee_id: employee_id,
-                counter_no: counter_no,
-            }),
+            data: JSON.stringify(data),
             dataType: 'json',
             success: function(response) {
                 console.log(response);

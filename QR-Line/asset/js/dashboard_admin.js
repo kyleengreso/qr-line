@@ -397,4 +397,44 @@ $(document).ready(function() {
     });
 
 
+    $(document).ready(function() {
+        var select_month = 1;
+        var select_year = 2020;
+    
+        var month = $('#generate-report-month');
+        var year = $('#generate-report-year');
+    
+        for (var i = 1; i <= 12; i++) {
+            month.append(`<a class="dropdown-item text-center" onclick="setGenMonth(${i})" id="select-month-${i}" value="${i}">${i}</a>`);
+        }
+        month.css('max-height', '200px');
+        month.css('overflow-y', 'auto');
+    
+        for (var i = 2020; i <= 2100; i++) {
+            year.append(`<a class="dropdown-item" onclick="setGenYear(${i})" id="select-year-${i}" value="${i}">${i}</a>`);
+        }
+        year.css('max-height', '200px');
+        year.css('overflow-y', 'auto');
+    
+        // This is button when before selecting the month and year
+        var gen_month = $('#gen-month');
+        var gen_year = $('#gen-year');
+    
+        // When clicked
+        $(document).on('click', '[id^=select-month-]', function() {
+            gen_month.text($(this).text());
+        });
+    
+        $(document).on('click', '[id^=select-year-]', function() {
+            gen_year.text($(this).text());
+        });
+    
+        window.setGenMonth = function(month) {
+            gen_month.text(month);
+        }
+    
+        window.setGenYear = function(year) {
+            gen_year.text(year);
+        }
+    });
 });

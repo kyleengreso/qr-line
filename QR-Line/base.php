@@ -9,6 +9,12 @@ $admin_path = $root_path . "admin/";
 $employee_path = $root_path . "employee/";
 $api_path = $root_path . "apif/";
 
+// System Website Control
+$system_development_mode = true;
+$enable_register_employee = false;
+
+
+
 function login_as_employee() {
     // global $auth_path, $admin_path, $employee_path;
     // if (isset($_SESSION['username']) && isset($_SESSION['role_type'])) {

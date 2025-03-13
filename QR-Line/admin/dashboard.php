@@ -15,7 +15,6 @@ login_as_employee();
     <title>Dashboard | <?php echo $project_name; ?></title>
     <?php head_css()?>
     <?php before_js()?>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"  >
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
@@ -116,23 +115,19 @@ login_as_employee();
                             <div class="row">
                                 <div class="col-12 col-md-8 d-flex justify-content-center my-2">
                                     <div class="dropdown mx-2">
-                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="month">
                                             Month
                                         </button>
-                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">Action</a>
-                                            <a class="dropdown-item" href="#">Another action</a>
-                                            <a class="dropdown-item" href="#">Something else here</a>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="generate-report-month">
+                                            <a class="dropdown-item text-center" href="#">Month</a>
                                         </div>
                                     </div>
                                     <div class="dropdown mx-2">
-                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            Month
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="year">
+                                            Year
                                         </button>
-                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">Action</a>
-                                            <a class="dropdown-item" href="#">Another action</a>
-                                            <a class="dropdown-item" href="#">Something else here</a>
+                                        <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton" id="generate-report-year">
+                                        <a class="dropdown-item" href="#">Year</a>
                                         </div>
                                     </div>
                                 </div>
