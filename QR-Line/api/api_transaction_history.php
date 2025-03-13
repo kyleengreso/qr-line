@@ -71,6 +71,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 } else if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
+    $data = json_decode(file_get_contents("php://input"));
+
     // Base SQL query to select transaction details
     $sql_cmd = "SELECT t.idrequester as idrequester, e.username as employee_name, t.idcounter as idcounter, t.transaction_time as transaction_time, r.email as email, t.status as status, r.payment FROM transactions t JOIN requesters r ON t.idrequester = r.id JOIN employees e ON t.idemployee = e.id";
     $where_trigger = FALSE;
@@ -110,7 +112,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    if (isset($_GET['getEmployee']) && isset($_GET['employee_id'])) {
+        $sql_cmd = "SELECT * FROM counter WHERE idemployee = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $_GET['employee_id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employee = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
 
+        echo json_encode(array(
+            "status" => "success",
+            "data" => $employee,
+            "message" => "Employee found."
+        ));
+        exit;
+
+    }
 
 
     if (isset($_GET['cashier']) && isset($_GET['employee_id'])) {

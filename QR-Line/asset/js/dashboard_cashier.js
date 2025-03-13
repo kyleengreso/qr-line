@@ -6,6 +6,32 @@ $(document).ready(function() {
     var user_id = localStorage.getItem('user_id');
     console.log(user_id);
 
+    function counterInformation() {
+        var user_id = localStorage.getItem('user_id');
+        var username = localStorage.getItem('username');
+        $.ajax({
+            url: './../api/api_transaction_history.php?getEmployee&employee_id=' + user_id,
+            type: 'GET',
+            success: function(response) {
+                if (response.status === 'success') {
+                    console.log(response);
+                    var authSuccessNotify = localStorage.getItem('authSuccessNotify');
+                    if (authSuccessNotify == 1) {
+                        message_success('#employeeDashboard', 'Welcome back ' + username);
+                        setTimeout(function() {
+                            $('#employeeDashboard').find('.alert').remove();
+                        }, 3000);
+                        localStorage.setItem('authSuccessNotify', 0);
+                    }
+                    var displayCounterNumber = $('#employee-counter-number');
+                    displayCounterNumber.text(response.data[0].idcounter);
+                } else {
+                    console.log('Error:', response.message);
+                }
+            },
+        });
+    }
+
     // Load the Transaction Session for the Cashier
     function loadTransactions() {
         transaction = null;
@@ -119,6 +145,7 @@ $(document).ready(function() {
         });
     });
 
+    counterInformation();
     loadTransactions();
 
     console.log(transaction);

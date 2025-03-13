@@ -43,10 +43,13 @@ $(document).ready(function() {
                 if (response.status === 'success') {
                     auth_success('Login successful');
                     var token = atob(response.token);
+                    var username = token.split('!!')[0];
                     var role = token.split('!!')[3];
                     var user_id = token.split('!!')[4];
+                    localStorage.setItem('username', username);
                     localStorage.setItem('user_id', user_id);
                     localStorage.setItem('token', response.token);
+                    localStorage.setItem('authSuccessNotify', 1);
                     setTimeout(function() {
                         if (role === 'admin') {
                             window.location.href = "./../admin/dashboard.php";
@@ -90,6 +93,35 @@ $(document).ready(function() {
 
     }
 
+    function register(username, password, confirm_password) {
+
+        var data = {
+            username: username,
+            password: password,
+            confirm_password: confirm_password,
+            auth_method: 'register'
+        };
+
+        $.ajax({
+            url: './../api/api_authenticate.php',
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    register_success(response.message);
+                    setTimeout(function() {
+                        window.location.href = "./login.php";
+                    }, 1000);
+                } else {
+                    register_error(response.message);
+                }
+            },
+        })
+
+    }
+
     // Login Form
     $('#frmLogIn').on('submit', function(event) {
         event.preventDefault();
@@ -100,6 +132,14 @@ $(document).ready(function() {
 
     // Register Form
     $('#frmRegister').on('submit', function(event) {
+        event.preventDefault();
+        username = $('#username').val();
+        password = $('#password').val();
+        confirm_password = $('#confirm_password').val();
+        register(username, password, confirm_password);
+    }); 
+
+    $('#frmRegisterAdmin').on('submit', function(event) {
         event.preventDefault();
         username = $('#username').val();
         password = $('#password').val();
