@@ -126,6 +126,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $transaction = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
 
+        $no_transaction = FALSE;
+        $has_serve = FALSE;
         if ($result->num_rows > 0) {
             // Assign the transaction to the cashier
             // echo json_encode(array(
@@ -224,11 +226,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
         } else {
-            // No transaction available
-            echo json_encode(array(
-                "status" => "empty",
-                "message" => "No transaction available."
-            ));
+            // Counter data
+            $sql_cmd = "SELECT * FROM counter WHERE idemployee = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $_GET['employee_id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $counter = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            // $dat = json_decode($counter, true);
+            // get $counter 'status'
+            // $c_status
+            $idcounter = $counter[0]['idcounter'];
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "data" => $counter[0]
+            // ));
+
+            // exit;
+            // Now checking if that transaction was already assigned to the cashier
+            $sql_cmd = "SELECT *
+                        FROM transactions
+                        WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";    
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("ss", $idcounter, $_GET['employee_id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transaction1 = $result->fetch_all(MYSQLI_ASSOC);
+            
+            if ($result->num_rows > 0) {
+                echo json_encode(array(
+                    "status" => "success",
+                    "data" => $transaction1[0],
+                    "message" => "Transaction found."
+                ));
+                exit;
+            } else {
+                // No transaction available
+                echo json_encode(array(
+                    "status" => "empty",
+                    "message" => "No transaction available."
+                ));
+            }
         }
         exit;
     }
