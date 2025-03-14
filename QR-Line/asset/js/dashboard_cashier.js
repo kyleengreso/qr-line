@@ -4,7 +4,7 @@ $(document).ready(function() {
     var transaction = null;
     var resp = 0;
     var user_id = localStorage.getItem('user_id');
-    console.log(user_id);
+    // console.log(user_id);
 
     function counterInformation() {
         var user_id = localStorage.getItem('user_id');
@@ -14,7 +14,7 @@ $(document).ready(function() {
             type: 'GET',
             success: function(response) {
                 if (response.status === 'success') {
-                    console.log(response);
+                    // console.log(response);
                     var authSuccessNotify = localStorage.getItem('authSuccessNotify');
                     if (authSuccessNotify == 1) {
                         message_success('#employeeDashboard', 'Welcome back ' + username);
@@ -26,7 +26,7 @@ $(document).ready(function() {
                     var displayCounterNumber = $('#employee-counter-number');
                     displayCounterNumber.text(response.data[0].idcounter);
                 } else {
-                    console.log('Error:', response.message);
+                    // console.log('Error:', response.message);
                 }
             },
         });
@@ -41,17 +41,17 @@ $(document).ready(function() {
             type : 'GET',
             success : function(response) {
                 if (response.status === 'success') {
-                    console.log(response);
+                    // console.log(response);
                     transaction = response;
                     displayTransaction(transaction);
                     
                 } else {
                     displayTransaction(response);
-                    console.log('Error:', response.message);
+                    // console.log('Error:', response.message);
                 }
             },
             error : function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
+                // console.error('AJAX Error:', status, error);
             }
         });
     }
@@ -63,7 +63,6 @@ $(document).ready(function() {
         if (response.status === 'empty') {       
             p_queue_number.text('No queue');
         } else {
-            console.log(transaction);
             // console.log(response.data);
             // console.log(transaction);
             p_queue_number.text(transaction.data.queue_number);
@@ -110,7 +109,7 @@ $(document).ready(function() {
     
     $('#btn-counter-skip').click(function(e) {
         e.preventDefault();
-        console.log(transaction); // Check if transaction is defined and has the expected properties
+        // console.log(transaction); // Check if transaction is defined and has the expected properties
     
         // Create data object to be sent in the AJAX request
         var data = {
@@ -119,7 +118,7 @@ $(document).ready(function() {
             cashier : transaction.data.idcounter,
             status : "missed"
         };
-        console.log(data); // Verify the contents of the data object
+        // console.log(data); // Verify the contents of the data object
     
         // Send AJAX POST request
 
@@ -128,19 +127,19 @@ $(document).ready(function() {
             type : 'POST',
             data : JSON.stringify(data), // Convert data object to JSON string
             success: function(response) {
-                console.log(response); // Verify the server response
+                // console.log(response); // Verify the server response
                 // Check if the response status is 'success'
                 if (response.status === 'success') {
                     // Handle success case
                     loadTransactions();
                 } else {
                     // Handle error case
-                    console.error('Error:', response.message);
+                    // console.error('Error:', response.message);
                 }
             },
             error : function(xhr, status, error) {
-                console.error(xhr);
-                console.error('AJAX Error:', status, error); // Log AJAX error details
+                // console.error(xhr);
+                // console.error('AJAX Error:', status, error); // Log AJAX error details
             }
         });
     });
@@ -148,7 +147,7 @@ $(document).ready(function() {
     counterInformation();
     loadTransactions();
 
-    console.log(transaction);
+    // console.log(transaction);
     
     // Refresh by Cashier
     setInterval(function() {

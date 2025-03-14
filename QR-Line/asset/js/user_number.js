@@ -12,7 +12,7 @@ $(document).ready(function() {
             type: 'GET',
             // data: JSON.stringify(data),
             success: function(response) {
-                console.log(response);
+                // console.log(response);
                 if (response.status === 'success') {
                     var user_number = response.queueNumber;
                     var counter_number = response.counterNumber;
@@ -21,7 +21,7 @@ $(document).ready(function() {
                     $('#counterNumber').text(counter_number);
                     $('#currentQueueNumber').text(current_queue_number);
                 } else {
-                    console.log(response.message);
+                    // console.log(response.message);
                 }
             },
             error: function() {
