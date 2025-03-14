@@ -1,5 +1,11 @@
 <?php
 include './../base.php';
+include './../../vendor/autoload.php';
+
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+
+session_start();
 ?>
 
 <!DOCTYPE html>
@@ -12,12 +18,20 @@ include './../base.php';
     <?php head_css()?>
     <?php before_js()?>
     <link rel="stylesheet" href="./../asset/css/user_number.css">
+    <?php
+    $requester_token = $_SESSION['requester_token'];
+    $web_domain = $_SERVER['HTTP_HOST'];
+    $web_resource = $_SERVER['REQUEST_URI'];
+    $website = $web_domain . $web_resource . '?requester_token=' . $requester_token;
+    ?>
 </head>
 <body class="bg">
     <?php include "./../includes/navbar.php"; ?>
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
         <div class="circle text-center">
-            <img src="./../asset/images/queue_icon.png" alt="Queue Icon" class="queue-icon">
+            <?php 
+            echo '<img src="' . (new QRCode)->render($website) . '" alt="Queue Icon" class="queue-icon" id="qr-code-img">'; ?>
+        
             <div class="info-container">
                 <div class="info-box">
                     <p class="label">Number:</p>

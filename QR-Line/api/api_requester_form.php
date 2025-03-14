@@ -4,6 +4,7 @@ header("Content-Type: application/json");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get the POST data
+    session_start();
     $data = json_decode(file_get_contents("php://input"));
 
     if (!isset($data->name) || !isset($data->email) || !isset($data->payment)) {
@@ -57,6 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $conn->commit();
 
+        $_SESSION['requester_token'] = $token_number;
         echo json_encode(array(
             "status" => "success",
             "message" => "Queue number generated successfully",
