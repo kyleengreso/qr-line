@@ -34,7 +34,7 @@ login_as_employee();
         </div>
     </div>
 
-<?php after_js()?>
+    <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/dashboard_cashier.js"></script>
 </body>

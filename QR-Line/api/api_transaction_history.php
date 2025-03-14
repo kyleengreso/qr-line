@@ -220,10 +220,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ));
                 exit;
             } else {
+                // GET queue_number from transaction
+
+                // ++++
+
                 // Otherwise assign the transaction to the cashier
                 $sql_cmd = "UPDATE transactions SET idcounter = ?, idemployee = ?, status = 'serve' WHERE idtransaction = ?";
                 $stmt = $conn->prepare($sql_cmd);
                 $stmt->bind_param("sss", $counter[0]['idcounter'], $_GET['employee_id'], $transaction[0]['idtransaction']);
+                $stmt->execute();
+                $stmt->close();
+
+                // Then get the transaction details again
+                $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("ss", $counter[0]['idcounter'], $_GET['employee_id']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $transaction = $result->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+    
+                $queue_number = $transaction[0]['queue_number'];
+
+                // echo json_encode(array(
+                //     "status" => "success",
+                //     "data" => $queue_number,
+                //     "message" => "Transaction found."
+                // ));
+                // exit;
+
+                // Then update it to the counter's queue_count
+                $sql_cmd = "UPDATE counter SET queue_count = ? WHERE idcounter = ?";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("ss", $queue_number, $counter[0]['idcounter']);
                 $stmt->execute();
                 $stmt->close();
 

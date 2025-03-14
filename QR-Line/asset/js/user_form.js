@@ -10,6 +10,9 @@ $(document).ready(function() {
                 var form = $('#frmUserForm');
                 if (response.status === 'success') {
                     message_success(form, response.message);
+                    localStorage.setItem('requester_token', response.token_number);
+                    // var requester_token = localStorage.getItem('requester_token');
+                    // console.log(requester_token);
                     setTimeout(function() {
                         window.location.href = "./user_number.php";
                     }, 1000);
