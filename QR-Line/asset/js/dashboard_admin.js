@@ -397,44 +397,34 @@ $(document).ready(function() {
     });
 
 
-    $(document).ready(function() {
-        var select_month = 1;
-        var select_year = 2020;
-    
-        var month = $('#generate-report-month');
-        var year = $('#generate-report-year');
-    
-        for (var i = 1; i <= 12; i++) {
-            month.append(`<a class="dropdown-item text-center" onclick="setGenMonth(${i})" id="select-month-${i}" value="${i}">${i}</a>`);
-        }
-        month.css('max-height', '200px');
-        month.css('overflow-y', 'auto');
-    
-        for (var i = 2020; i <= 2100; i++) {
-            year.append(`<a class="dropdown-item" onclick="setGenYear(${i})" id="select-year-${i}" value="${i}">${i}</a>`);
-        }
-        year.css('max-height', '200px');
-        year.css('overflow-y', 'auto');
-    
-        // This is button when before selecting the month and year
-        var gen_month = $('#gen-month');
-        var gen_year = $('#gen-year');
-    
-        // When clicked
-        $(document).on('click', '[id^=select-month-]', function() {
-            gen_month.text($(this).text());
-        });
-    
-        $(document).on('click', '[id^=select-year-]', function() {
-            gen_year.text($(this).text());
-        });
-    
-        window.setGenMonth = function(month) {
-            gen_month.text(month);
-        }
-    
-        window.setGenYear = function(year) {
-            gen_year.text(year);
-        }
+    // Generate Report
+
+    var year = 2024;
+    var month = 1;
+
+    var dd_year = $('#year');
+    for (var y = 2020; y <= 2060; y++) {
+        dd_year.append('<option value="' + y + '">' + y + '</option>');
+    }
+
+    dd_year.change(function() {
+        year = $(this).val();
+        console.log("Selected value: " + year);
+    });
+
+    var dd_month = $('#month');
+    for (var m = 1; m <= 12; m++) {
+        dd_month.append('<option value="' + m + '">' + m + '</option>');
+    }
+    dd_month.change(function() {
+        month = $(this).val();
+        console.log("Selected value: " + month);
+    });
+
+    $('#btnGenerateReport').click(function() {
+        // new tab using windows.location.href
+        var url = './../api/api_generate_report.php?year=' + year + '&month=' + month;
+        window.open(url, '_blank');
+
     });
 });
