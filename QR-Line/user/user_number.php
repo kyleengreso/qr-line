@@ -29,14 +29,10 @@ session_start();
     <?php include "./../includes/navbar.php"; ?>
 
     <div class="container col d-flex justify-content-center align-items-center" style="margin-top: 15vh;flex-direction:column">
-        <div class="row" id="circle-info">
-
-        </div>
-
         <div class="row circle text-center">
-            <?php 
-            echo '<img src="' . (new QRCode)->render($website) . '" alt="Queue Icon" class="queue-icon" id="qr-code-img">'; ?>
-        
+            <div>
+                <img src="./../asset/images/logo_blk.png" alt="logo" width="75px" style="margin-top: -15px;">
+            </div>
             <div class="info-container">
                 <div class="info-box">
                     <p class="label">Number:</p>
