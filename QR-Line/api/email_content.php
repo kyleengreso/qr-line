@@ -32,7 +32,7 @@ function email_content($name, $email, $payment, $transaction_id, $check_url, $ca
                 If you want to check or cancel your request, click the link below.
             </div>
             <div style="display:flex; flex-direction:column">
-                <a href="$check_url" style="text-decoration:none">Check your request</a>
+                <a href="$check_url" style="text-decoration:none">View your request</a>
             </div>
             <br>
 
