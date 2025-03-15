@@ -61,6 +61,44 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         "counterNumber" => $counterNumber,
         "currentQueueNumber" => $currentQueueNumber
     ));
+} else if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+    if (!isset($_GET['cancel'])) {
+        echo json_encode(array(
+            "status" => "error",
+            "message" => "Please tell that transaction is you want to cancel."
+        ));
+        exit;
+    } else {
+        $requester_token = $_GET['requester_token'];
+
+        // Checking if that transaction was already cancelled
+        $sql_cmd = "SELECT status FROM transactions WHERE token_number = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $requester_token);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($row['status'] == "cancelled") {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Transaction has already cancelled."
+            ));
+            exit;
+        }
+        $sql_cmd = "UPDATE transactions SET status = 'cancelled' WHERE token_number = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $requester_token);
+        $stmt->execute();
+        $stmt->close();
+
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Transaction has been cancelled."
+        ));
+    }
 } else {
     echo json_encode(array(
         "status" => "error",

@@ -1,6 +1,19 @@
 <?php
 
 $project_name = "QR-Line";
+$project_name_full = "QR-Line: Palawan State University";
+// Project Support
+$project_email = "marcsysman@gmail.com";
+$project_phone = "0909-123-4567";
+
+// Email Feature setup
+$email_feature = TRUE;
+
+// SMTP AUTH
+$smtp_host = "smtp.gmail.com";
+$smtp_port = 465;
+$smtp_email = "marcsysman@gmail.com";
+$smtp_password = "zgojyaysdylvdlnh";
 
 // PATHS
 $root_path = "/QR-Line/";

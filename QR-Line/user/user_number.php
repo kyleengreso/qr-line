@@ -27,8 +27,13 @@ session_start();
 </head>
 <body class="bg">
     <?php include "./../includes/navbar.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
-        <div class="circle text-center">
+
+    <div class="container col d-flex justify-content-center align-items-center" style="margin-top: 15vh;flex-direction:column">
+        <div class="row" id="circle-info">
+
+        </div>
+
+        <div class="row circle text-center">
             <?php 
             echo '<img src="' . (new QRCode)->render($website) . '" alt="Queue Icon" class="queue-icon" id="qr-code-img">'; ?>
         
@@ -45,7 +50,14 @@ session_start();
             <p class="current-number">Current number: <strong><span id="currentQueueNumber"></span></strong></p>
         </div>
     </div>
+    <div class="container d-flex justify-content-center align-items-center">
+        <!-- set white div -->
+        <div class="mt-4 rounded-start p-4 d-flex justify-content-center" style="width: 100%">
+            <a class="btn btn-primary text-white fw-bold" id="btnCancelRequest">Cancel Request</a>
+        </div>
+    </div>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/user_number.js"></script>
 </body>
 </html>
