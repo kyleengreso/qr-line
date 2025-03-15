@@ -112,27 +112,15 @@ login_as_employee();
                             <div class="row w-100 mb-4">
                                 <h4 class="text-center">Generate Report (Tentative)</h4>
                             </div>
-                            <div class="row">
-                                <div class="col-12 col-md-8 d-flex justify-content-center my-2">
-                                    <div class="dropdown mx-2">
-                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="month">
-                                            Month
-                                        </button>
-                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="generate-report-month">
-                                            <a class="dropdown-item text-center" href="#">Month</a>
-                                        </div>
-                                    </div>
-                                    <div class="dropdown mx-2">
-                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="year">
-                                            Year
-                                        </button>
-                                        <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton" id="generate-report-year">
-                                        <a class="dropdown-item" href="#">Year</a>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="row d-flex justify-content-center">
+                                <select style="width:30%;margin:0 10px 0;" name="month" id="month">
+                                    <option value="01">Month</option>
+                                </select>
+                                <select style="width:30%;margin:0 10px 0;" name="year" id="year">
+                                    <option value="2023">Year</option>
+                                </select>
                                 <div class="col-12 col-md-4 d-flex justify-content-center my-2">
-                                    <button class="btn btn-primary rounded" type="submit">Generate Report</button>
+                                    <button class="btn btn-primary rounded" type="button" id="btnGenerateReport">Generate Report</button>
                                 </div>
                             </div>
                         </div>
