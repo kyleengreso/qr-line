@@ -58,9 +58,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $token_number = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
 
         // Commit the transaction after the requester is inserted
-        $sql_cmd = "INSERT INTO transactions (idrequester, token_number, queue_number, email_sent) VALUES (?, ?, ?)";
+        $sql_cmd = "INSERT INTO transactions (idrequester, token_number, queue_number, email_sent) VALUES (?, ?, ?, 1)";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("sss", $requester_id, $token_number, $queue_count_int, 1);
+        $stmt->bind_param("sss", $requester_id, $token_number, $queue_count_int);
         $stmt->execute();
         $transaction_id = $stmt->insert_id;
         $stmt->close();
