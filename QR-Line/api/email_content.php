@@ -18,7 +18,7 @@ function email_content($name, $email, $payment, $transaction_id, $check_url, $ca
                 <p>Your request has been proceed. Please check the details below.</p>
             </div>
             <div>
-                <h3>Your counter # is <strong>$transaction_id</strong></h3>
+                <h3>Your queue # is <strong>$transaction_id</strong></h3>
             </div>
             <div>
                 <table>
