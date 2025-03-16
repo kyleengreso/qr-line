@@ -26,8 +26,7 @@ $api_path = $root_path . "apif/";
 $system_development_mode = true;
 $enable_register_employee = false;
 
-// Transaction System
-$transaction_cancelled_yesterday = true;
+
 
 function login_as_employee() {
     // global $auth_path, $admin_path, $employee_path;
@@ -66,7 +65,7 @@ function head_icon() {
 }
 function head_css() {
     echo '
-        // <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css">
         <link rel="stylesheet" href="./../asset/css/bootstrap.css">
         <link rel="stylesheet" href="./../asset/css/theme.css">
     ';

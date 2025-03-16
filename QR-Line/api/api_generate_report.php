@@ -195,7 +195,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $pdf->Output();
 
 
-// This part will soon be used
 } else if (isset($data['datetime_start']) && isset($data['datetime_end'])) {
     $datetime_start = $data['datetime_start'];
     $datetime_end = $data['datetime_end'];

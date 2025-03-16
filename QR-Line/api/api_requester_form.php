@@ -2,6 +2,10 @@
 include_once "./../base.php";
 include_once "./../includes/db_conn.php";
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+require "./../../vendor/autoload.php";
 
 header("Content-Type: application/json");
 
@@ -81,17 +85,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $website_check = $website . '?requester_token=' . $token_number;
         $website_cancel = $website . '?requester_token=' . $token_number . '&cancel=true';
 
-        $request_data = array(
-            "name" => $name,
-            "email" => $email,
-            "payment" => $payment,
-            "transaction_id" => $transaction_id,
-            "website_check" => $website_check,
-            "website_cancel" => $website_cancel,
-            "queue_count_int" => $queue_count_int
-        );
         include "./email_content.php";
-        send_email_request_submit($request_data);
+        try {
+            //Server settings
+            $mail = new PHPMailer($email_feature);
+            // $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+            $mail->isSMTP();                                            //Send using SMTP
+            $mail->Host       = $smtp_host;                            //Set the SMTP server to send through
+            $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
+            $mail->Username   = $smtp_email;                          //SMTP username
+            $mail->Password   = $smtp_password;                               //SMTP password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            //Enable implicit TLS encryption
+            $mail->Port       = $smtp_port;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+
+            //Recipients
+            $mail->setFrom($smtp_email, $project_name);
+            // $mail->addAddress('joe@example.net', 'The Requester');     //Add a recipient
+            $mail->addAddress($email);               //Name is optional
+            // $mail->addReplyTo('info@example.com', 'Information');
+            // $mail->addCC('cc@example.com');
+            // $mail->addBCC('bcc@example.com');
+
+            //Attachments
+            // $mail->addAttachment('/var/tmp/file.tar.gz');         //Add attachments
+            // $mail->addAttachment('/tmp/image.jpg', 'new.jpg');    //Optional name
+
+            //Content
+            $mail->isHTML(true);                                  //Set email format to HTML
+            $mail->Subject = 'QR-LINE: Your Request #' . $queue_count_int;
+            $mail->Body    = email_content($name, $email, $payment, $transaction_id, $website_check, $website_cancel);
+            $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+            $mail->send();
+            // echo 'Message has been sent';
+        } catch (Exception $e) {
+            echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+        }
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(array(
