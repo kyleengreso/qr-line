@@ -17,7 +17,7 @@ login_as_employee();
     <?php before_js()?>
 </head>
 <body class="bg">
-    <?php include "./../includes/navbar.php"; ?>
+    <?php include "./../includes/navbar_non.php"; ?>
 
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">

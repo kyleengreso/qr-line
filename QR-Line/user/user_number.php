@@ -26,7 +26,7 @@ session_start();
     ?>
 </head>
 <body class="bg">
-    <?php include "./../includes/navbar.php"; ?>
+    <?php include "./../includes/navbar_non.php"; ?>
 
     <div class="container col d-flex justify-content-center align-items-center" style="margin-top: 15vh;flex-direction:column">
         <div class="row circle text-center">
