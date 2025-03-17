@@ -14,9 +14,8 @@ include "./../base.php"
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh;" >
-        <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
+    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top: 50px;">
+        <div class="card shadow-sm p-4" style="max-width: 400px;width: 100%;">
             <h4 class="text-center fw-bold">QR FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
 
@@ -60,4 +59,5 @@ include "./../base.php"
     <script src="./../asset/js/user_form.js"></script>
     <script src="./../asset/js/counters.js"></script>
 </body>
+<?php include_once "./../includes/footer.php"; ?>
 </html>

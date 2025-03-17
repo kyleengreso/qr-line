@@ -20,7 +20,7 @@ login_as_employee();
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container" style="margin-top: 15vh">
+    <div class="container container-set before-footer" style="margin-top:100px">
         <div class="row justify-content-center mt-5">
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
@@ -58,8 +58,8 @@ login_as_employee();
             </div>
         </div>
     </div>
-
-<?php after_js()?>
+    <?php include_once "./../includes/footer.php"; ?>
+    <?php after_js()?>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/employee.js"></script>
 </body>

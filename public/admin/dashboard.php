@@ -16,13 +16,13 @@ login_as_employee();
     <?php head_css()?>
     <?php before_js()?>
 </head>
-<body>
+<body class="bg-non">
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container" style="margin-top: 15vh;">
+    <div class="container before-footer" style="margin-top: 100px">
         <div class="flex-col flex-md-row justify-content-center mt-5">
             <div class="col-12 text-center p-2">
-                <h1>DASHBOARD</h1>
+                <h1>ADMIN DASHBOARD</h1>
             </div>
 
             <div class="card p-4 mx-0 my-2">
@@ -188,7 +188,6 @@ login_as_employee();
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -196,5 +195,6 @@ login_as_employee();
     <script src="./../asset/js/popper.min.js"></script>
     <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/dashboard_admin.js"></script>
+    <?php include_once "./../includes/footer.php"; ?>
 </body>
 </html>

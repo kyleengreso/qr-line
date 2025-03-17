@@ -5,12 +5,24 @@
 }
 
 
-
 /* Body */
 .bg {
     background: url('./../images/background.jpg') no-repeat center fixed;
     background-size: cover;
     position: relative;
+}
+
+.bg-non {
+    position: relative;
+}
+
+.container-set {
+    min-height: 100px;
+    height: 80vh;
+}
+
+.before-footer {
+    margin-bottom: 100px;
 }
 
 /* SECTION: TEXT */
@@ -76,6 +88,20 @@
     color: black;
 }
 
+.footer {
+    border-top: 4px solid rgb(255, 110, 55);
+    background-color: whitesmoke;
+    color: black;
+    text-align: center;
+    padding: 10px;
+    bottom: 0;
+    width: 100%;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* put to always bottom and not fixed*/
+    position: relative;
+}
 
 
 /* SECTION */

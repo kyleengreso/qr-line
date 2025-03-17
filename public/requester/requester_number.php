@@ -27,8 +27,7 @@ session_start();
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-
-    <div class="container col d-flex justify-content-center align-items-center" style="margin-top: 15vh;flex-direction:column">
+    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:180px;flex-direction:column">
         <div class="row circle text-center">
             <div>
                 <img src="./../asset/images/logo_blk.png" alt="logo" width="75px" style="margin-top: -15px;">
@@ -45,15 +44,16 @@ session_start();
             </div>
             <p class="current-number">Current number: <strong><span id="currentQueueNumber"></span></strong></p>
         </div>
-    </div>
-    <div class="container d-flex justify-content-center align-items-center">
-        <!-- set white div -->
-        <div class="mt-4 rounded-start p-4 d-flex justify-content-center" style="width: 100%">
-            <a class="btn btn-primary text-white fw-bold" id="btnCancelRequest">Cancel Request</a>
+        <div class="d-flex justify-content-center align-items-center">
+            <!-- set white div -->
+            <div class="mt-4 rounded-start p-4 d-flex justify-content-center" style="width: 100%">
+                <a class="btn btn-primary text-white fw-bold" id="btnCancelRequest">Cancel Request</a>
+            </div>
         </div>
     </div>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/user_number.js"></script>
 </body>
+<?php include_once "./../includes/footer.php"; ?>
 </html>

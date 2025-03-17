@@ -1,10 +1,14 @@
 <?php
 
+// Project Information
 $project_name = "QR-Line";
 $project_name_full = "QR-Line: Palawan State University";
+$project_description = "QR-Line is a web-based queue management system utilizing QR codes for efficient and streamlined queue handling.";
+
 // Project Support
+$project_address = "Tiniguiban Heights, Puerto Princesa City, Palawan, Philippines";
 $project_email = "marcsysman@gmail.com";
-$project_phone = "0909-123-4567";
+$project_phone = "+63909-123-4567";
 
 // Email Feature setup
 $email_feature = TRUE;
@@ -16,7 +20,7 @@ $smtp_email = "marcsysman@gmail.com";
 $smtp_password = "zgojyaysdylvdlnh";
 
 // PATHS
-$root_path = "/QR-Line/";
+$root_path = "/public/";
 $auth_path = $root_path . "auth/";
 $admin_path = $root_path . "admin/";
 $employee_path = $root_path . "employee/";

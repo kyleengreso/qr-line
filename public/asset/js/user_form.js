@@ -19,7 +19,7 @@ $(document).ready(function() {
                     var requester_token = localStorage.getItem('requester_token');
                     // console.log(requester_token);
                     setTimeout(function() {
-                        window.location.href = "./user_number.php?requester_token=" + requester_token;
+                        window.location.href = "./requester_number.php?requester_token=" + requester_token;
                     }, 1000);
                 } else {
                     message_error(form, response.message);
@@ -57,7 +57,7 @@ $(document).ready(function() {
             name: $('#name').val(),
             email: $('#email').val(),
             payment: payment,
-            website: domain + '/QR-Line/user/user_number.php'
+            website: domain + '/public/user/requester_number.php'
         };
         sumbitUserForm(user);
     });

@@ -19,16 +19,15 @@ login_as_employee();
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container">
+    <div class="container before-footer" style="margin-top:100px">
         <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh;">
-
             <div class="col-md-6">
                 <div class="card shadow-sm p-4">
                     <div class="row align-center my-4">
                         <div class="col d-flex justify-content-center">
                             <button class="btn btn-primary" onclick="window.location.href='./dashboard.php'">Back Dashboard</button>
                         </div>
-                        <div class="col" >
+                        <div class="col">
                             <h4 class="text-center my-1">Counters</h4>
                         </div>
                         <div class="col d-flex justify-content-center">
@@ -36,13 +35,14 @@ login_as_employee();
                         </div>
                     </div>
                     <div class="row align-center my-4">
-                            <div class="mb-3">
-                                <label class="form-label">Search</label>
-                                <div class="input-group">
+                        <div class="mb-3">
+                            <label class="form-label">Search</label>
+                            <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 <input type="text" name="search" id="search-counter" class="form-control" placeholder="Enter username">
                             </div>
-                    </div>
+                        </div>
+                    </div> <!-- Missing closing div for row -->
                     <table class="table table-striped table-members" id="table-counters">
                         <tr>
                             <th>#</th>
@@ -55,6 +55,7 @@ login_as_employee();
             </div>
         </div>
     </div>
+    <?php include_once './../includes/footer.php'; ?>
     <?php after_js()?>
     <script src="./../asset/js/counters.js"></script>
 </body>

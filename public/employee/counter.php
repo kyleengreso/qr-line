@@ -19,7 +19,7 @@ login_as_employee();
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
+    <div class="container d-flex justify-content-center align-items-center before-footer container-set" style="margin-top: 50px">
         <div class="text-center w-100" style="max-width: 400px;" id="employeeDashboard">
             <h3 class="fw-bold">COUNTER <span id="employee-counter-number"></span></h3>
 
@@ -38,4 +38,5 @@ login_as_employee();
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/dashboard_cashier.js"></script>
 </body>
+<?php include_once "./../includes/footer.php"; ?>
 </html>

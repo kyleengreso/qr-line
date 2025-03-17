@@ -12,7 +12,7 @@ login_as_employee();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php head_icon()?>
-    <title>Register | <?php echo $project_name?></title>
+    <title>Setup Wizard | <?php echo $project_name?></title>
     <?php head_css()?>
     <?php before_js()?>
 </head>
@@ -21,9 +21,9 @@ login_as_employee();
 
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh">
         <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
-            <h4 class="text-center mb-4">Employee Register</h4>
+            <h4 class="text-center mb-4">Setup Wizard</h4>
 
-            <form method="POST" id="frmRegister">
+            <form method="POST" id="frmRegisterAdmin">
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
                     <div class="input-group">
@@ -46,13 +46,13 @@ login_as_employee();
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Register</button>
-                <p class="text-center mt-3"><a class="register text-decoration-none" href="login.php">Login</a></p>
             </form>
         </div>
     </div>
 
-<?php after_js()?>
+    <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/authenticate.js"></script>
 </body>
+<?php include_once "./../includes/footer.php"; ?>
 </html>
