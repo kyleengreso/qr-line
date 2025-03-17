@@ -1,5 +1,4 @@
 <?php
-session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
 

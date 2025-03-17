@@ -1,6 +1,6 @@
 <?php
 include "./../includes/db_conn.php";
-session_start();
+include "./../base.php";
 
 function employee_check($employee_id) {
     global $conn;

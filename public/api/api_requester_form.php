@@ -10,8 +10,6 @@ require "./../../vendor/autoload.php";
 header("Content-Type: application/json");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Get the POST data
-    session_start();
     $data = json_decode(file_get_contents("php://input"));
 
     if (!isset($data->name) || !isset($data->email) || !isset($data->payment) || !isset($data->website)) {

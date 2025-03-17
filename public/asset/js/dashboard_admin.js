@@ -345,65 +345,34 @@ $(document).ready(function() {
         }
     }
 
+    // Display transaction records every 5 seconds
     setInterval(
         displayTransctionRecords, 5000
     );
     
-    // At Transaction History can do filter
-    var btn_transaction_history_filter_corporate_none = $('#transaction-history-filter-corporate-none');
-    var btn_transaction_history_filter_corporate = $('#transaction-history-filter-corporate');
-    var btn_transaction_history_filter_non_corporate = $('#transaction-history-filter-non-corporate');
-    var transaction_history_filter_email = $('#transaction-history-filter-email');
 
-    btn_transaction_history_filter_corporate_none.click(function() {
-        transaction_corporate = "none";
-        transaction_history_filter_email.text("All");
+    // Transaction History if corporate or not
+    $('#transaction-email-select').change(function() {
+        var email = $(this).val();
+        transaction_corporate = email;
         getTransactions();
     });
 
-    btn_transaction_history_filter_corporate.click(function() {
-        transaction_corporate = "true";
-        transaction_history_filter_email.text("Corporate");
+    $('#transaction-history-filter-payment').change(function() {
+        var payment = $(this).val();
+        transaction_payment = payment;
         getTransactions();
     });
-
-    btn_transaction_history_filter_non_corporate.click(function() {
-        transaction_corporate = "false";
-        transaction_history_filter_email.text("Non-Corporate");
-        getTransactions();
-    });
-
-    var btn_transaction_history_payment_none = $('#transaction-history-filter-payment-none');
-    var btn_payment_registrar = $('#transaction-history-filter-registrar');
-    var btn_payment_assessment = $('#transaction-history-filter-assessment');
-    var btn_transaction_history_filter_payment = $('#transaction-history-filter-payment');
-
-    btn_transaction_history_payment_none.click(function() {
-        transaction_payment = "none";
-        btn_transaction_history_filter_payment.text("All");
-        getTransactions();
-    });
-
-    btn_payment_registrar.click(function() {
-        transaction_payment = "registrar";
-        btn_transaction_history_filter_payment.text("Registrar");
-        getTransactions();
-    });
-
-    btn_payment_assessment.click(function() {
-        transaction_payment = "assessment";
-        btn_transaction_history_filter_payment.text("Assessment");
-        getTransactions();
-    });
-
 
     // Generate Report
-
     var year = 2024;
     var month = 1;
-
+    var months = ['January', 'February', 'March',
+                    'April', 'May', 'June',
+                    'July', 'August', 'September',
+                    'October', 'November', 'December'];
     var dd_year = $('#year');
-    for (var y = 2020; y <= 2060; y++) {
+    for (var y = 2020; y <= 2040; y++) {
         dd_year.append('<option value="' + y + '">' + y + '</option>');
     }
 
@@ -414,7 +383,7 @@ $(document).ready(function() {
 
     var dd_month = $('#month');
     for (var m = 1; m <= 12; m++) {
-        dd_month.append('<option value="' + m + '">' + m + '</option>');
+        dd_month.append('<option value="' + m + '">' + months[m-1] + '</option>');
     }
     dd_month.change(function() {
         month = $(this).val();

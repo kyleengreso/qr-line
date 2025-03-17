@@ -1,5 +1,4 @@
 <?php
-session_start();
 include "./../includes/db_conn.php";
 include "./../base.php";
 
@@ -29,19 +28,19 @@ login_as_employee();
                 <div class="row text-center">
                     <div class="col-6 col-md-3">
                         <h5 class="text-center" style="font-size: 2vh">TRANSACTIONS TODAY</h5>
-                        <h1 class="text-center" id="transactions-total">0</h1>
+                        <h1 class="text-center" id="transactions-total">N/A</h1>
                     </div>
                     <div class="col-6 col-md-3">
                         <h5 class="text-center" style="font-size: 2vh">PENDING</h5>
-                        <h1 class="text-center" id="transactions-pending">0</h1>
+                        <h1 class="text-center" id="transactions-pending">N/A</h1>
                     </div>
                     <div class="col-6 col-md-3">
                         <h5 class="text-center" style="font-size: 2vh">COMPLETED</h5>
-                        <h1 class="text-center" id="transactions-completed">0</h1>
+                        <h1 class="text-center" id="transactions-completed">N/A</h1>
                     </div>
                     <div class="col-6 col-md-3">
                         <h5 class="text-center" style="font-size: 2vh">CANCELLED</h5>
-                        <h1 class="text-center" id="transactions-canceled">0</h1>
+                        <h1 class="text-center" id="transactions-canceled">N/A</h1>
                     </div>
                 </div>
             </div>
@@ -56,35 +55,25 @@ login_as_employee();
                             <div class="row my-2">
                                 <div class="col-6">
                                     <div class="row">
-                                        <div class="col-6" stlye="font-size: 1.5vw;">Email</div>
-                                        <div class="col-6 px-0">
-                                            <div class="dropdown">
-                                                <button class="btn btn-secondary dropdown-toggle" type="button" id="transaction-history-filter-email" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    All
-                                                </button>
-                                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" id="transaction-history-filter-corporate-none" value="none">All</a>
-                                                    <a class="dropdown-item" id="transaction-history-filter-corporate" value="true">Corporate Email</a>
-                                                    <a class="dropdown-item" id="transaction-history-filter-non-corporate" value="false">Non-corporate</a>
-                                                </div>
-                                            </div>
+                                        <div class="col-5 px-0" stlye="font-size: 1.5vw;">Email</div>
+                                        <div class="col-6 px-0 mx-1">
+                                            <select style="width:100%;padding:10px" name="transaction-email-select" id="transaction-email-select">
+                                                <option value="none" id="transaction-history-filter-corporate-none">All</option>
+                                                <option value="true" id="transaction-history-filter-corporate">Corporate</option>
+                                                <option value="false" id="transaction-history-filter-non-corporate">Non-Corporate</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="row">
-                                        <div class="col-6" stlye="font-size: 1.5vw">Payment</div>
-                                        <div class="col-6 px-0">
-                                            <div class="dropdown">
-                                                <button class="btn btn-secondary dropdown-toggle" type="button" id="transaction-history-filter-payment" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    All
-                                                </button>
-                                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" id="transaction-history-filter-payment-none" value="none">All</a>
-                                                    <a class="dropdown-item" id="transaction-history-filter-registrar" value="registrar">Registrar</a>
-                                                    <a class="dropdown-item" id="transaction-history-filter-assessment" value="assessment">Assessment</a>
-                                                </div>
-                                            </div>
+                                        <div class="col-5 px-0" stlye="font-size: 1.5vw">Payment</div>
+                                        <div class="col-6 px-0 mx-1">
+                                            <select style="width:100%;padding:10px" name="transaction-history-filter-payment" id="transaction-history-filter-payment">
+                                                <option value="none" id="transaction-history-filter-payment-none">All</option>
+                                                <option value="registrar" id="transaction-history-filter-registrar">Registrar</option>
+                                                <option value="assessment" id="transaction-history-filter-assessment">Assessment</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>

@@ -5,7 +5,10 @@ $(document).ready(function() {
     var url = window.location.protocol + '//' + window.location.hostname;
     // var url = window.location.href;
     console.log(url);
+
     function sumbitUserForm(user) {
+        // console.log(user);
+        // return;
         $.ajax({
             url: './../api/api_requester_form.php',
             type: 'POST',
@@ -17,7 +20,6 @@ $(document).ready(function() {
                     message_success(form, response.message);
                     localStorage.setItem('requester_token', response.token_number);
                     var requester_token = localStorage.getItem('requester_token');
-                    // console.log(requester_token);
                     setTimeout(function() {
                         window.location.href = "./requester_number.php?requester_token=" + requester_token;
                     }, 1000);
@@ -32,14 +34,13 @@ $(document).ready(function() {
     }
 
     var payment = null;
-    $('#transaction-history-filter-assessment').click(function() {
-        payment = 'assessment';
-        $('#transaction-history-filter-payment').text('Assessment');
-    });
-    
-    $('#transaction-history-filter-registrar').click(function() {
-        payment = 'registrar';
-        $('#transaction-history-filter-payment').text('Registrar');
+    $('#transaction-history-payment').change(function() {
+        payment = $(this).val();
+        if (payment == 'null') {
+            payment = null;
+            // console.log(payment);
+        }
+        console.log(payment);
     });
 
     $('#frmUserForm').submit(function(e) {

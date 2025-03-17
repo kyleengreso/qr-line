@@ -4,8 +4,6 @@ include './../../vendor/autoload.php';
 
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
-
-session_start();
 ?>
 
 <!DOCTYPE html>

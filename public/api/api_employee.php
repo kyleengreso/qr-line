@@ -1,4 +1,5 @@
 <?php
+include "./../base.php";
 include "./../includes/db_conn.php";
 header("Content-Type: application/json");   
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

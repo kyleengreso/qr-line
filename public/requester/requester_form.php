@@ -38,15 +38,12 @@ include "./../base.php"
 
                 <div class="mb-3">
                 <label for="email" class="form-label fw-bold">Payment</label>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle col-12" type="button" id="transaction-history-filter-payment" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Payment
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" id="transaction-history-filter-registrar" value="registrar">Registrar</a>
-                            <a class="dropdown-item" id="transaction-history-filter-assessment" value="assessment">Assessment</a>
-                        </div>
-                    </div>
+                <br>
+                <select style="width:100%;padding:10px;border-radius:5px" name="transaction-history-payment" id="transaction-history-payment">
+                    <option value="null">Payment</option>
+                    <option value="registrar">Registrar</option>
+                    <option value="assessment">Assessment</option>
+                </select>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">Next</button>

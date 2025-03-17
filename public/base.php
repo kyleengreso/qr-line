@@ -30,7 +30,10 @@ $api_path = $root_path . "apif/";
 $system_development_mode = true;
 $enable_register_employee = false;
 
-
+// Session Control: Start Session
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 function login_as_employee() {
     // global $auth_path, $admin_path, $employee_path;

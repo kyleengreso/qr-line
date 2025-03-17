@@ -1,6 +1,6 @@
 <?php
+include './../base.php';
 include './../includes/db_conn.php';
-session_start();
 header("Content-Type: application/json");
 // POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

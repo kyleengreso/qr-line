@@ -1,5 +1,5 @@
 <?php
-session_start();
+include "./../base.php";
 include "./../includes/db_conn.php";
 include "./../asset/php/message.php";
 

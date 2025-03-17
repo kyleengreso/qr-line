@@ -7,7 +7,6 @@ include './../includes/fpdf186/fpdf.php';
 include './../includes/db_conn.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
-    session_start();
     if (!isset($_GET['year']) && !isset($_GET['month'])) {
         echo json_encode(array(
             "status" => "error",
