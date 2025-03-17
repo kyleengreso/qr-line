@@ -24,7 +24,7 @@ $(document).ready(function() {
                         localStorage.setItem('authSuccessNotify', 0);
                     }
                     var displayCounterNumber = $('#employee-counter-number');
-                    displayCounterNumber.text(response.data[0].idcounter);
+                    displayCounterNumber.text(response.data[0].counterNumber);
                 } else {
                     // console.log('Error:', response.message);
                 }
