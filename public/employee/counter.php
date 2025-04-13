@@ -27,7 +27,7 @@ $counterNumber = $token->counterNumber;
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
-
+    <div></div>
     <div class="container d-flex justify-content-center align-items-center before-footer container-set" style="margin-top: 50px">
         <div class="text-center w-100" style="max-width: 400px;" id="employeeDashboard">
             <h3 class="fw-bold">COUNTER <span id="employee-counter-number"><?php echo $counterNumber?></span></h3>
@@ -38,8 +38,27 @@ $counterNumber = $token->counterNumber;
             </div>
             <form method="POST" id="frmNextTransaction">
                 <button type="submit" name="next_queue" id="btn-counter-success"class="btn btn-warning text-white fw-bold px-4">NEXT</button>
-                <button type="submit" name="next_queue" id="btn-counter-skip"class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+                <button type="submit" name="skip_queue" id="btn-counter-skip"class="btn btn-warning text-white fw-bold px-4">SKIP</button>
             </form>
+            <div class="py-3">
+                <a class="btn btn-info fw-bold text-white" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">Cut Off</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
+                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Employee: <?php echo $username?> is cut off</h5>
+                </div>
+                <div class="modal-body py-4 px-6 fw-bold" id="viewEmployeeBody">
+                    You are cut off for temporary.
+                </div>
+                <div class="modal-footer col" id="viewEmployeeFooter">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="employee-resume">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -78,7 +97,6 @@ $counterNumber = $token->counterNumber;
 
         let btn_counter_success = document.getElementById('btn-counter-success');
         let btn_counter_skip = document.getElementById('btn-counter-skip');
-
         btn_counter_success.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
@@ -103,6 +121,7 @@ $counterNumber = $token->counterNumber;
             });
         });
 
+        
         btn_counter_skip.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
@@ -128,15 +147,27 @@ $counterNumber = $token->counterNumber;
         });
 
         // Cut Off Feature
+        var operational = true;
         let cutOff = document.getElementById('employee-cut-off');
+        let btn_counter_resume = document.getElementById('employee-resume');
+        
+        cutOff.addEventListener('click', function(e) {
+            e.preventDefault();
+            operational = false;
+        });
+        
+        btn_counter_resume.addEventListener('click', function(e) {
+            e.preventDefault();
+            operational = true;
+        });
 
 
-
-        // Launch Session
         fetchTransaction();
 
         setInterval(() => {
-            fetchTransaction();
+            if (operational) {
+                fetchTransaction();
+            }
         }, 5000);
 
 

@@ -100,7 +100,7 @@ restrictAdminMode();
                     <div class="col mx-0 my-2">
                         <div class="card shadow-sm p-2 p-md-4" style="border-radius:30px">
                             <div class="row w-100 mb-4">
-                                <h4 class="text-center">Transaction History</h4>
+                                <h4 class="text-center fw-bold">Transaction History</h4>
                             </div>
                             <div class="row my-2">
                                 <div class="col-6">
