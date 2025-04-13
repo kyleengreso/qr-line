@@ -112,7 +112,7 @@ function getCounterAvailable() {
         },
         error: function(xhr, status, error) {
             console.error('AJAX Error:', {xhr, status, error});
-            alert('Network Error: Please check your connection');
+            // alert('Network Error: Please check your connection');
         }
     });
     return resp;
@@ -137,7 +137,7 @@ function getCounterRegistered() {
         },
         error: function(xhr, status, error) {
             console.error('AJAX Error:', {xhr, status, error});
-            alert('Network Error: Please check your connection');
+            // alert('Network Error: Please check your connection');
         }
     });
     return resp;
