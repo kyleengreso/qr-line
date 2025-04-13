@@ -177,8 +177,8 @@ function displayCounterRegistered(response) {
                     ${employee.queue_count}
                 </td>
                 <td>
-                    <a class="btn btn-primary" id="update-counter-${employee.idcounter}" data-toggle="modal" data-target="#updateCounterModal" >Update</a>
-                    <a id="delete-counter-${employee.idcounter}" class="btn btn-danger delete-counter" data-toggle="modal" data-target="#deleteCounterModal">Delete</a>
+                    <a class="btn btn-outline-primary text-primary" id="update-counter-${employee.idcounter}" data-toggle="modal" data-target="#updateCounterModal" style="border-top-right-radius:0px;border-bottom-right-radius:0px">Update</a>
+                    <a id="delete-counter-${employee.idcounter}" class="btn btn-outline-danger delete-counter" data-toggle="modal" data-target="#deleteCounterModal" style="border-top-left-radius:0px;border-bottom-left-radius:0px">Delete</a>
                 </td>
             </tr>
         `;

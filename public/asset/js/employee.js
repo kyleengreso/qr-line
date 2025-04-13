@@ -152,9 +152,9 @@ $(document).ready(function() {
                                     </strong>
                                 </td>
                                 <td>
-                                    <a class="btn btn-outline-info" id="view-employee-${element.id}" data-toggle="modal" data-target="#viewEmployeeModal" style="border-top-right-radius:0px;border-bottom-right-radius:0px">View</a>
-                                    <a class="btn btn-outline-primary" id="update-employee-${element.id}" data-toggle="modal" data-target="#updateEmployeeModal" style="border-top-right-radius:0px;border-bottom-right-radius:0px;border-top-left-radius:0px;border-bottom-left-radius:0px">Update</a>
-                                    <a class="btn btn-outline-danger" id="delete-employee-${element.id}" data-toggle="modal" data-target="#deleteEmployeeModal" style="border-top-left-radius:0px;border-bottom-left-radius:0px">Delete</a>
+                                    <a class="btn btn-outline-info text-info" id="view-employee-${element.id}" data-toggle="modal" data-target="#viewEmployeeModal" style="border-top-right-radius:0px;border-bottom-right-radius:0px">View</a>
+                                    <a class="btn btn-outline-primary text-primary" id="update-employee-${element.id}" data-toggle="modal" data-target="#updateEmployeeModal" style="border-top-right-radius:0px;border-bottom-right-radius:0px;border-top-left-radius:0px;border-bottom-left-radius:0px">Update</a>
+                                    <a class="btn btn-outline-danger text-danger" id="delete-employee-${element.id}" data-toggle="modal" data-target="#deleteEmployeeModal" style="border-top-left-radius:0px;border-bottom-left-radius:0px">Delete</a>
                                 </td>
                             </tr>`);
                     });

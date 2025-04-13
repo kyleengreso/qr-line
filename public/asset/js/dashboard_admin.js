@@ -264,42 +264,33 @@ $(document).ready(function() {
         return resp;
     }
 
-    // Example usage
-    // var dash = getDashboardStat().transactions;
+    // Monitor
+    function rtTransaction() {
+        $.ajax({
+            url: './../api/api_endpoint.php?dashboard_stats',
+            type: 'GET',
+            success: function(response) {
+                let stat = response.data[0]
+                console.log(stat);
+                if (response.status === 'success') {
 
-    // // dash.forEach when using this... the element has transaction time so you can count
-    // const ctx = document.getElementById('dashboard-chart').getContext('2d');
-    // const myLineChart = new Chart(ctx, {
-    //     type: 'line',
-    //     data: {
-    //         labels: ['January', 'February', 'March', 'April', 'May'],
-    //         datasets: [{
-    //             label: 'Sales',
-    //             data: dash,
-    //             borderColor: 'rgba(75, 192, 192, 1)',
-    //             backgroundColor: 'rgba(75, 192, 192, 0.2)',
-    //             borderWidth: 2
-    //         }]
-    //     },
-    //     options: {
-    //         plugins: {
-    //             title: {
-    //                 display: true,
-    //                 text: 'Transactions Stats',
-    //                 color: 'royalblue',
-    //                 font: {
-    //                     size: 20,
-    //                     family: 'Arial',
-    //                     weight: 'bold'
-    //                 },
-    //                 position: 'top',
-    //                 padding: {
-    //                     top: 10,
-    //                     bottom: 10
-    //                 }
-    //             }
-    //         },
-    //         responsive: true
-    //     }
-    // });
+                    $('#transactions-total').text(stat.transaction_total_today);
+                    $('#transactions-pending').text(stat.transaction_total_pending);
+                    $('#transactions-completed').text(stat.transaction_total_completed);
+                    $('#transactions-cancelled').text(stat.transaction_total_cancelled);
+                } else {
+                    $('#transaction-today').text('N/A');
+                }
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    }
+    rtTransaction();
+
+    setInterval(function() {
+        rtTransaction();
+        // getTransactions();
+    }, 5000);
 });

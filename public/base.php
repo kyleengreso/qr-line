@@ -51,29 +51,18 @@ $enable_register_employee = false;
 $form_label_state = "hidden";
 
 
-
-
-
-// Session Control: Redirect
-function checkAuth() {
-    global $auth_path, $master_key;
-    if (isset($_COOKIE['token'])) {
-        $encryptToken = $_COOKIE['token'];
-        $decryptToken = decryptToken($encryptToken, $master_key);
-        // $token = json_decode($decryptToken);
-    }
-    if (!isset($_COOKIE['token'])) {
-        header("Location: ./../auth/login.php");
-        exit();
-    }
-}
-
+// Authers
 function restrictAdminMode() {
-    // Action for admin only
-    global $auth_path, $admin_path, $employee_path;
+    global $auth_path, $admin_path, $employee_path, $master_key;
     if (isset($_COOKIE['token'])) {
         $encryptToken = $_COOKIE['token'];
         $decryptToken = decryptToken($encryptToken, $master_key);
+
+        // Ensure $decryptToken is a JSON string
+        if (is_array($decryptToken)) {
+            $decryptToken = json_encode($decryptToken);
+        }
+
         $token = json_decode($decryptToken);
         if ($token->role_type != "admin") {
             header("Location: ./../employee/counter.php");
@@ -86,11 +75,16 @@ function restrictAdminMode() {
 }
 
 function restrictEmployeeMode() {
-    // Action for employee only
     global $auth_path, $admin_path, $employee_path, $master_key;
     if (isset($_COOKIE['token'])) {
         $encryptToken = $_COOKIE['token'];
         $decryptToken = decryptToken($encryptToken, $master_key);
+
+        // Ensure $decryptToken is a JSON string
+        if (is_array($decryptToken)) {
+            $decryptToken = json_encode($decryptToken);
+        }
+
         $token = json_decode($decryptToken);
         if ($token->role_type != "employee") {
             header("Location: ./../admin/dashboard.php");
@@ -101,6 +95,7 @@ function restrictEmployeeMode() {
         exit();
     }
 }
+
 // checkAuth();
 
 // Transaction System

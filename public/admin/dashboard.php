@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__ . "/../base.php";
-checkAuth();
+
+restrictAdminMode();
 ?>
 
 <!DOCTYPE html>
@@ -89,7 +90,7 @@ checkAuth();
                     </div>
                     <div class="col-6 col-md-3">
                         <h5 class="text-center" style="font-size: 2vh">CANCELLED</h5>
-                        <h1 class="text-center" id="transactions-canceled">N/A</h1>
+                        <h1 class="text-center" id="transactions-cancelled">N/A</h1>
                     </div>
                 </div>
             </div>

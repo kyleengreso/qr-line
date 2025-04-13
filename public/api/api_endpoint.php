@@ -1360,37 +1360,54 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 } else if ($_SERVER["REQUEST_METHOD"] === "GET") {
     if (isset($_GET['dashboard_stats'])) {
-        $sql_cmd = "";
-        $stmt = null;
+
+        $sql_cmd = "SELECT 
+                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE()) as transaction_total_today,
+                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'pending')  as transaction_total_pending,
+                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'completed') as transaction_total_completed,
+                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'missed')  as transaction_total_cancelled"; // Temporary fix
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stats = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Dashboard stats successfully retrieved",
+            "data" => $stats
+        ));
+        exit;
+        // $sql_cmd = "";
+        // $stmt = null;
         
-        if (isset($_GET['day'])) {
-            // Query for today's transactions (12AM to 11:59PM)
-            $sql_cmd = "SELECT *
-                        FROM transactions t
-                        WHERE DATE(t.transaction_time) = CURDATE()";
-        } else if (isset($_GET['week'])) {
-            // Query for the last 7 days' transactions
-            $sql_cmd = "SELECT *
-                        FROM transactions t
-                        WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
-        } else if (isset($_GET['month'])) {
-            // Query for the last 30 days' transactions
-            $sql_cmd = "SELECT *
-                        FROM transactions t
-                        WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
-        } else if (isset($_GET['year'])) {
-            // Query for the last 12 months' transactions
-            $sql_cmd = "SELECT *
-                        FROM transactions t
-                        WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 12 MONTH)";
-        } else {
-            // Invalid request handling
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Invalid request"
-            ));
-            exit;
-        }
+        // if (isset($_GET['day'])) {
+        //     // Query for today's transactions (12AM to 11:59PM)
+        //     $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 WHERE DATE(t.transaction_time) = CURDATE()";
+        // } else if (isset($_GET['week'])) {
+        //     // Query for the last 7 days' transactions
+        //     $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        // } else if (isset($_GET['month'])) {
+        //     // Query for the last 30 days' transactions
+        //     $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+        // } else if (isset($_GET['year'])) {
+        //     // Query for the last 12 months' transactions
+        //     $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 12 MONTH)";
+        // } else {
+        //     // Invalid request handling
+        //     echo json_encode(array(
+        //         "status" => "error",
+        //         "message" => "Invalid request"
+        //     ));
+        //     exit;
+        // }
         
         // Execute the query and return results
         if (!empty($sql_cmd)) {

@@ -52,6 +52,11 @@
 
 
 /* SECTION: BUTTON */
+.btn:hover {
+    background-color: rgb(255, 110, 55) !important;
+    border-color: rgb(255, 110, 55) !important;
+    color: white !important;
+}
 .btn-primary {
     background-color: rgb(255, 110, 55);
     border-color: rgb(255, 110, 55);
@@ -74,23 +79,27 @@
     border-radius: 20px;
 }
 .bg-orange-custom {
-    background-color: rgb(255, 110, 55);
-    border-color: rgb(255, 110, 55);
+    background-color: rgb(255, 110, 55) !important;
+    border-color: rgb(255, 110, 55) !important;
 }
 
 .btn-primary:hover {
-    background-color: rgb(230, 100, 50);
-    border-color: rgb(230, 100, 50);
+    background-color: rgb(230, 100, 50) !important;
+    border-color: rgb(230, 100, 50) !important;
 }
 
 .btn-primary:active {
-    background-color: rgb(230, 100, 50);
-    border-color: rgb(230, 100, 50);
+    background-color: rgb(230, 100, 50) !important;
+    border-color: rgb(230, 100, 50) !important;
 }
 
 .btn-primary:focus {
-    background-color: rgb(230, 100, 50);
-    border-color: rgb(230, 100, 50);
+    background-color: rgb(230, 100, 50) !important;
+    border-color: rgb(230, 100, 50) !important;
+}
+
+.text-primary {
+    color: rgb(255, 110, 55) !important;
 }
 
 /* SECTION: TEXTBOX with/without property*/

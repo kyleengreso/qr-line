@@ -1,8 +1,7 @@
 <?php
-include "./../includes/db_conn.php";
-include "./../base.php";
 
-// restrictEmployeeMode();
+include_once __DIR__ . "/../base.php";
+restrictEmployeeMode();
 
 $token = $_COOKIE['token'];
 $token = decryptToken($token, $master_key);
