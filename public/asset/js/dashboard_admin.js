@@ -73,7 +73,7 @@ $(document).ready(function() {
                     response.transactions.forEach(element => {
                         table_transactions.append(`
                             <tr>
-                                <td>${element.idtransaction}</td>
+                                <td>${element.queue_number}</td>
                                 <td>${element.email}</td>
                                 <td>${element.payment}</td>
                             </tr>`);
@@ -289,8 +289,22 @@ $(document).ready(function() {
     }
     rtTransaction();
 
+    var operational = true;
+    var cutOff = document.getElementById('employee-cut-off');
+    var btn_counter_resume = document.getElementById('employee-resume');
+    cutOff.addEventListener('click', function(e) {
+        e.preventDefault();
+        operational = false;
+    });
+    
+    btn_counter_resume.addEventListener('click', function(e) {
+        e.preventDefault();
+        operational = true;
+    });
     setInterval(function() {
-        rtTransaction();
-        // getTransactions();
+        if (operational) {
+            rtTransaction();
+            getTransactions();
+        }
     }, 5000);
 });

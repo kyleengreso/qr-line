@@ -2,6 +2,17 @@
 include_once __DIR__ . "/../base.php";
 
 restrictAdminMode();
+
+$token = $_COOKIE['token'];
+$token = decryptToken($token, $master_key);
+$token = json_encode($token);
+$token = json_decode($token);
+
+$id = $token->id;
+$username = $token->username;
+$role_type = $token->role_type;
+$email = $token->email;
+$counterNumber = $token->counterNumber;
 ?>
 
 <!DOCTYPE html>
@@ -19,61 +30,19 @@ restrictAdminMode();
     <?php include "./../includes/navbar.php"; ?>
     <div class="container before-footer" style="margin-top: 100px">
         <div class="flex-col flex-md-row justify-content-center mt-5">
-            <div class="col-12 text-center p-2">
-                <h1>ADMIN DASHBOARD</h1>
+            <div class="row">
+
+                <div class="col-9 text-center p-2">
+                    <h1>ADMIN DASHBOARD</h1>
+                </div>
+            <div class="col-3 card shadow-sm p-4 mx-0 my-2" style="border-radius:30px">
+                <div class="row text-center">
+                <div class="w-100">
+                        <a class="btn btn-outline-primary w-100 h-100" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">CUT OFF</a>
+                    </div>
+                </div>
             </div>
-
-            <!-- <div class="card shadow-sm p-4 mx-0 my-2" style="border-radius:30px;height:300px;max-height:500px;width:100%">
-                <canvas id="dashboard-chart" style="width:100%;height:100%">
-        
-                </canvas>
-            </div> -->
-
-            <!-- <script>
-                // Quick and Mix paraser
-                var resp = null;
-                var protocol = window.location.protocol;
-                var host = window.location.host;
-                var realHost = protocol + '//' + host;
-
-
-
-
-                const ctx = document.getElementById('dashboard-chart').getContext('2d');
-                const myLineChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['January', 'February', 'March', 'April', 'May'],
-                        datasets: [{
-                            label: 'Sales',
-                            data: [10, 20, 30, 40, 50],
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Transactions Stats',
-                                color: 'royalblue',
-                                font: {
-                                    size: 20,
-                                    family: 'Arial',
-                                    weight: 'bold'
-                                },
-                                position: 'top',
-                                padding: {
-                                    top: 10,
-                                    bottom: 10
-                                }
-                            }
-                        },
-                        responsive: true
-                    }
-                });
-            </script> -->
+        </div>
             <div class="card shadow-sm p-4 mx-0 my-2" style="border-radius:30px">
                 <div class="row text-center">
                     <div class="col-6 col-md-3">
@@ -97,7 +66,7 @@ restrictAdminMode();
 
             <div class="row flex-col flex-lg-row">
                 <div class="col col-md-7 px-0">
-                    <div class="col mx-0 my-2">
+                    <div class="col mx-0 mx-md-2 my-2">
                         <div class="card shadow-sm p-2 p-md-4" style="border-radius:30px">
                             <div class="row w-100 mb-4">
                                 <h4 class="text-center fw-bold">Transaction History</h4>
@@ -149,7 +118,7 @@ restrictAdminMode();
                             </nav>
                         </div>
                     </div>
-                    <div class="col mx-0 my-2">
+                    <div class="col mx-0 mx-md-2 my-2">
                         <div class="card shadow-sm p-4" style="border-radius:30px">
                             <div class="row w-100 mb-4 p-4">
                                 <h4 class="text-center">Generate Report</h4>
@@ -233,6 +202,21 @@ restrictAdminMode();
         </div>
     </div>
 
+    <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
+                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Employee: <?php echo $username?> is cut off</h5>
+                </div>
+                <div class="modal-body py-4 px-6 fw-bold" id="viewEmployeeBody">
+                    You are cut off for temporary.
+                </div>
+                <div class="modal-footer col" id="viewEmployeeFooter">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="employee-resume">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/popper.min.js"></script>
     <script src="./../asset/js/bootstrap.bundle.js"></script>
