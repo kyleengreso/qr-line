@@ -61,12 +61,13 @@ $counterNumber = $token->counterNumber;
                 url: `${realHost}/public/api/api_endpoint.php?${params}`,
                 type: 'GET',
                 success: function(response) {
+                    let queue_number = document.getElementById('queue-number');
                     if (response.status === 'success') {
                         resp = response;
-                        let queue_number = document.getElementById('queue-number');
                         queue_number.innerHTML = response.data.queue_number;
                         console.log(resp);
                     } else {
+                        queue_number.innerHTML = "No queue";
                         console.log('Error:', response.message);
                     }
                 },
