@@ -1252,15 +1252,99 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "message" => "Requester found",
             "data" => $requester
         ));
-
-
-
-
-
-
-
         exit;
+    
+    // Requester's cancel function
+    } else if ($method == "requester-form-cancel") {
+        if (!isset($data->token_number)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please input token number."
+            ));
+            exit;
+        }
+        $token_number = $data->token_number;
 
+        // Check exisitence
+        $sql_cmd = "SELECT *
+                    FROM transactions t 
+                    WHERE t.token_number = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $token_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Transaction was not found"
+            ));
+            exit;
+        }
+
+        // Check if the transaction was cancelled
+        $sql_cmd = "SELECT *
+                    FROM transactions t 
+                    WHERE t.token_number = ? AND t.status = 'missed'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $token_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        if ($result->num_rows > 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Transaction was already cancelled"
+            ));
+            exit;
+        }
+
+        // Complete
+        $sql_cmd = "SELECT *
+                    FROM transactions t 
+                    WHERE t.token_number = ? AND t.status = 'completed'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $token_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        if ($result->num_rows > 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Transaction was already completed"
+            ));
+            exit;
+        }
+
+        // Cancel it 
+        $sql_cmd = "UPDATE transactions
+                    SET status = 'missed'
+                    WHERE token_number = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $token_number);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction cancelled successfully"
+            ));
+        } else if ($stmt->affected_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No changes made"
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . $conn->error
+            ));
+        }
+
+
+        
     // Requster: Submit Form
     } else if ($method == "requester_form") {
         if (!isset($data->name) || !isset($data->email) || !isset($data->payment) || !isset($data->website)) {
