@@ -6,13 +6,14 @@ var realHost = protocol + '//' + host;
 function sumbitUserForm(user) {
     // console.log(user);
     // return;
+    var form = $('#frmUserForm');
+    message_info(form, 'Processing...');
     $.ajax({
         url: `${realHost}/public/api/api_endpoint.php`,
         type: 'POST',
         data: JSON.stringify(user),
         success: function(response) {
             console.log(response.data);
-            var form = $('#frmUserForm');
             if (response.status === 'success') {
                 message_success(form, response.message);
                 localStorage.setItem('requester_token', response.token_number);

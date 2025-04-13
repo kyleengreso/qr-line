@@ -101,9 +101,10 @@ $(document).ready(function() {
         });
     }
 
+    var role_type = 'none';
     function loadEmployees() {
         $.ajax({
-            url: './../api/api_endpoint.php?employees&page=' + page_employee + '&paginate=' + paginate + '&search=' + search,
+            url: './../api/api_endpoint.php?employees&page=' + page_employee + '&paginate=' + paginate + '&search=' + search + '&role_type=' + role_type,
             type: 'GET',
             success: function(response) {
                 var table_employees = $('#table-employees');
@@ -754,50 +755,17 @@ $(document).ready(function() {
         });
     }
 
-    // Deprecated
-    // if ($('#frmUpdateEmployee').length) {
-    //     id = new URLSearchParams(window.location.search).get('id');
-    //     loadEmployee(id);
-    //     $('#frmUpdateEmployee').submit(function(e) {
-    //         e.preventDefault();
-    //         username = $('#username').val();
-    //         password = $('#password').val();
-    //         confirm_password = $('#confirm_password').val();
-    //         email = $('#email').val();
-    //         role_type = $('#status').val();/
-    //         // use if checked the checkbox
-    //         c_status = $('#status').is(':checked') ? 1 : 0;
-    //         if (password !== confirm_password) {
-    //             message_error('#frmUpdateEmployee', 'Passwords do not match');
-    //             return;
-    //         }
+    $('#getRoleType').change(function() {
+        var employee_role_type = $(this).val();
+        // console.log(employee_role_type);
+        if (employee_role_type === "none") {
+            role_type = "none";
+        } else if (employee_role_type === "admin") {
+            role_type = "admin";
+        } else if (employee_role_type === "employee") {
+            role_type = "employee";
+        }
+        loadEmployees();
+    });
 
-    //         var employee = {
-    //             id: id,
-    //             username: username,
-    //             password: password,
-    //             email: email,
-    //             role_type: role_type,
-    //             active: c_status,
-    //             method: "employees-update"
-    //         };
-    //         console.log(employee);
-    //         updateEmployee(employee);
-    //     });
-    // }
-
-    // if ($('#frmDeleteEmployee').length) {
-    //     id = new URLSearchParams(window.location.search).get('id');
-    //     $('#frmDeleteEmployee').ready(function() {
-    //         loadEmployee(id);
-    //     });
-    //     $('#frmDeleteEmployee').submit(function(e) {
-    //         e.preventDefault();
-    //         var employee = {
-    //             id: id,
-    //             method: "employees-delete"
-    //         };
-    //         deleteEmployee(employee); 
-    //     });
-    // }
 });

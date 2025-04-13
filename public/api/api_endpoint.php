@@ -1640,9 +1640,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         if (isset($_GET['role_type'])) {
-            $sql_cmd .= "AND e.role_type = ? ";
-            $params[] = $_GET['role_type'];
-            $types .= "s";
+            if ($_GET['role_type'] != 'none') {
+                $sql_cmd .= "AND e.role_type = ? ";
+                $params[] = $_GET['role_type'];
+                $types .= "s";
+            }
         }
 
         if (isset($_GET['page']) && isset($_GET['paginate'])) {
