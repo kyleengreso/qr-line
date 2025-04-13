@@ -54,7 +54,7 @@ include "./../base.php"
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/user_form.js"></script>
-    <script src="./../asset/js/counters.js"></script>
+    <!-- <script src="./../asset/js/counters.js"></script> -->
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>

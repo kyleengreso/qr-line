@@ -1,6 +1,5 @@
 <?php
-include_once "./../base.php";
-include_once "./../includes/db_conn.php";
+include_once __DIR__ . "/../base.php";
 
 
 header("Content-Type: application/json");
