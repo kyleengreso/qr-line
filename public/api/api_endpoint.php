@@ -9,6 +9,7 @@ header("Content-Type: application/json");
 
 global $conn;
 
+
 if (!$conn) {
     echo json_encode(array(
         "status" => "error",
@@ -880,6 +881,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt = $conn->prepare($sql_cmd);
         $stmt->bind_param("s", $transaction[0]['idtransaction']);
         $stmt->execute();
+
+        
         if ($stmt->affected_rows > 0) {
             echo json_encode(array(
                 "status" => "success",
@@ -896,6 +899,74 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Error: " . $conn->error
             ));
         }
+
+        //////////////////////////////////////////////
+        // Reminder for future 5 queue using idtransaction
+        $sql_cmd = "SELECT *
+                    FROM transactions t
+                    WHERE t.idtransaction = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction[0]['idtransaction']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "message" => "Transaction found",
+        //     "data" => $transaction_f
+        // ));
+        
+        $sql_cmd = "SELECT *
+                    FROM transactions t
+                    WHERE t.transaction_time > ?
+                    ORDER BY t.transaction_time ASC
+                    LIMIT 4, 1";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction_f[0]['transaction_time']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Transaction found",
+            "data" => $transaction_f
+        ));
+
+        // Get information from using idrequester
+        $sql_cmd = "SELECT * 
+                    FROM requesters r
+                    WHERE r.id = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction_f[0]['idrequester']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $requester = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Requester found",
+            "data" => $requester
+        ));
+
+        include "./email_content.php";
+        
+        // $requester = $requester[0];
+        $requester = $requester[0];
+        $requester_name = $requester['name'];
+        $requester_email = $requester['email'];
+        $requester_payment = $requester['payment'];
+
+        $request_data = array(
+            "name" => $requester_name,
+            "email" => $requester_email,
+            "payment" => $requester_payment,
+            "transaction_id" => $transaction_f[0]['idtransaction'],
+            "queue_count_int" => $transaction_f[0]['queue_number']
+        );
+        send_email_notify_before_5($request_data);
         exit;
     } else if ($method == "cashier-missed") {
         // counterNumber
@@ -995,6 +1066,75 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Error: " . $conn->error
             ));
         }
+
+        
+        //////////////////////////////////////////////
+        // Reminder for future 5 queue using idtransaction
+        $sql_cmd = "SELECT *
+                    FROM transactions t
+                    WHERE t.idtransaction = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction[0]['idtransaction']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "message" => "Transaction found",
+        //     "data" => $transaction_f
+        // ));
+        
+        $sql_cmd = "SELECT *
+                    FROM transactions t
+                    WHERE t.transaction_time > ?
+                    ORDER BY t.transaction_time ASC
+                    LIMIT 4, 1";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction_f[0]['transaction_time']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Transaction found",
+            "data" => $transaction_f
+        ));
+
+        // Get information from using idrequester
+        $sql_cmd = "SELECT * 
+                    FROM requesters r
+                    WHERE r.id = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction_f[0]['idrequester']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $requester = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Requester found",
+            "data" => $requester
+        ));
+
+        include "./email_content.php";
+        
+        // $requester = $requester[0];
+        $requester = $requester[0];
+        $requester_name = $requester['name'];
+        $requester_email = $requester['email'];
+        $requester_payment = $requester['payment'];
+
+        $request_data = array(
+            "name" => $requester_name,
+            "email" => $requester_email,
+            "payment" => $requester_payment,
+            "transaction_id" => $transaction_f[0]['idtransaction'],
+            "queue_count_int" => $transaction_f[0]['queue_number']
+        );
+        send_email_notify_before_5($request_data);
         exit;
 
     // Requster: Submit Form
@@ -1864,6 +2004,79 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "currentQueueNumber" => $queue_count_int ?? "N/A"
         ));
         exit;
+    } else if (isset($_GET['transaction_reminder'])) {
+        if (!isset($_GET['idtransaction'])) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please provide the transaction id."
+            ));
+            exit;
+        }
+
+        $reminder_future = true;
+        if ($reminder_future) {
+            $sql_cmd = "SELECT *
+                        FROM requesters r
+                        WHERE r.created_at > ?
+                        ORDER BY r.created_at ASC
+                        LIMIT 4,1";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $_GET['idtransaction']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $request_get = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            $requester = $request_get[0];
+
+            // Get related from this above about requester's transaction
+            $sql_cmd = "SELECT *
+                        FROM transactions
+                        WHERE idrequester = ? AND status = 'pending'";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $requester['id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transaction_get = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            $transaction_get = $transaction_get[0];
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "data" => $transaction_get,
+            //     "message" => "Request's transaction found."
+            // ));
+            // exit;
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "data" => $request_get,
+            //     "message" => "Transaction found."
+            // ));
+            // exit;
+            include "./email_content.php";
+
+            // $requester = $requester[0];
+
+            $requester_name = $requester['name'];
+            $requester_email = $requester['email'];
+            $requester_payment = $requester['payment'];
+
+            $request_data = array(
+                "name" => $requester_name,
+                "email" => $requester_email,
+                "payment" => $requester_payment,
+                "transaction_id" => $transaction_get['idtransaction'],
+                "queue_count_int" => $transaction_get['queue_number']
+            );
+            send_email_notify_before_5($request_data);
+
+            
+        }
+
+
+
+
+
     } else {
         echo json_encode(array(
             "status" => "error",
