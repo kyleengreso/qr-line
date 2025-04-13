@@ -128,6 +128,8 @@ $counterNumber = $token->counterNumber;
             });
         });
 
+        // Cut Off Feature
+        let cutOff = document.getElementById('employee-cut-off');
 
 
 

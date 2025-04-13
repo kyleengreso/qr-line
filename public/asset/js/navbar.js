@@ -22,4 +22,18 @@ if (btnLogout) {
             }
         });
     });
+
+    // RealTimeClock
+    let rtClock = document.getElementById("rtClock");
+    if (rtClock) {
+        setInterval(function () {
+            var date = new Date();
+            rtClock.innerHTML = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+        }, 1000);
+    }
 }
