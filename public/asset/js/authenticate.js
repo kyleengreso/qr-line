@@ -26,59 +26,48 @@ $(document).ready(function() {
 
 
     function authenticate(username, password) {
-
         var data = {
             username: username,
             password: password,
-            auth_method: 'login'
+            method: 'login'
         };
 
         $.ajax({
-            url: './../api/api_authenticate.php',
+            url: './../api/api_endpoint.php',
             type: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json',
             dataType: 'json',
             success: function(response) {
                 if (response.status === 'success') {
-                    auth_success('Login successful');
-                    var token = atob(response.token);
-                    var username = token.split('!!')[0];
-                    var role = token.split('!!')[3];
-                    var user_id = token.split('!!')[4];
-                    localStorage.setItem('username', username);
-                    localStorage.setItem('user_id', user_id);
-                    localStorage.setItem('token', response.token);
-                    localStorage.setItem('authSuccessNotify', 1);
+                    auth_success(response.message);
                     setTimeout(function() {
-                        if (role === 'admin') {
+                        if (response.data.role_type === 'admin') {
                             window.location.href = "./../admin/dashboard.php";
-                        } else if (role === 'employee') {
+                        } else if (response.data.role_type === 'employee') {
                             window.location.href = "./../employee/counter.php";
                         }
                     }, 1000);
                 } else {
-                    auth_error('Invalid username or password');
+                    auth_error(response.message);
                 }
             },
         });
     }
 
-    function register(username, password, confirm_password) {
+    function register(username, password, email) {
 
         var data = {
             username: username,
             password: password,
-            confirm_password: confirm_password,
-            auth_method: 'register'
+            email: email,
+            method: 'register'
         };
 
         $.ajax({
-            url: './../api/api_authenticate.php',
+            url: './../api/api_endpoint.php',
             type: 'POST',
             data: JSON.stringify(data),
-            contentType: 'application/json',
-            dataType: 'json',
             success: function(response) {
                 if (response.status === 'success') {
                     register_success(response.message);
@@ -133,8 +122,13 @@ $(document).ready(function() {
         event.preventDefault();
         username = $('#username').val();
         password = $('#password').val();
+        email = $('#email').val();
         confirm_password = $('#confirm_password').val();
-        register(username, password, confirm_password);
+        if (password !== confirm_password) {
+            register_error('Passwords do not match');
+            return;
+        }
+        register(username, password, email);
     }); 
 
     $('#frmRegisterAdmin').on('submit', function(event) {

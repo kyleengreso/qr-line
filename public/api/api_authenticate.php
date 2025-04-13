@@ -48,6 +48,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 $token = base64_encode($username . '!!' . $date_logged_in . '!!' . $date_expiration . '!!' . $role_type . '!!' . $user_id);
 
+                // Update the last login date
+                $sql_cmd = "UPDATE employees SET employee_last_login = NOW() WHERE id = ?";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("s", $user_id);
+                $stmt->execute();
+                $stmt->close();
+
                 echo json_encode(array(
                     "status" => "success",
                     "message" => "User authenticated",

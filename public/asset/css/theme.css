@@ -25,6 +25,20 @@
     margin-bottom: 100px;
 }
 
+.footer-icon {
+    border-radius: 50%;
+    padding: 10px;
+    background-color: rgb(255, 110, 55);
+    color: white;
+    max-width: 30px;
+    max-height: 30px;
+    width: max-content;
+}
+
+
+
+
+
 /* SECTION: TEXT */
 .text-a-black {
     text-decoration: none;
@@ -41,7 +55,29 @@
 .btn-primary {
     background-color: rgb(255, 110, 55);
     border-color: rgb(255, 110, 55);
+    border-radius: 20px;
 }
+
+.btn-outline-primary {
+    background-color: white;
+    border-color: rgb(255, 110, 55);
+    color: rgb(255, 110, 55);
+    border-radius: 20px;
+}
+
+.btn-secondary, .btn-success, .btn-danger,
+.btn-warning, .btn-info, .btn-light,
+.btn-dark, .btn-link, .btn-outline-success,
+.btn-outline-danger, .btn-outline-warning,
+.btn-outline-info, .btn-outline-light,
+.btn-outline-dark, .btn-outline-link {
+    border-radius: 20px;
+}
+.bg-orange-custom {
+    background-color: rgb(255, 110, 55);
+    border-color: rgb(255, 110, 55);
+}
+
 .btn-primary:hover {
     background-color: rgb(230, 100, 50);
     border-color: rgb(230, 100, 50);
@@ -62,17 +98,68 @@
     background-color: rgb(255, 110, 55);
     color: white;
     border-color: rgb(255, 110, 55);
+    border-radius: 20px;
 }
 
-/* SECTION: TABLE */
+.form-control {
+    border-radius: 20px;
+    border-color: rgb(255, 110, 55);
+}
+
+.form-control:focus {
+    border-color: rgb(255, 110, 55);
+    box-shadow: 0 0 5px rgba(255, 110, 55, 0.5);
+}
+
+.form-control:disabled {
+    background-color: white;
+    color: black;
+    border-color: rgb(255, 110, 55);
+}
+
+.form-control:disabled:focus {
+    background-color: white;
+    color: black;
+    border-color: rgb(255, 110, 55);
+    box-shadow: 0 0 5px rgba(255, 110, 55, 0.5);
+}
+
+.form-select {
+    border-radius: 20px;
+    border-color: rgb(255, 110, 55);
+}
+
+.form-select:focus {
+    border-color: rgb(255, 110, 55);
+    box-shadow: 0 0 5px rgba(255, 110, 55, 0.5);
+}
+
+.form-select:disabled {
+    background-color: white;
+    color: black;
+    border-color: rgb(255, 110, 55);
+}
+
+.form-select:disabled:focus {
+    background-color: white;
+    color: black;
+    border-color: rgb(255, 110, 55);
+    box-shadow: 0 0 5px rgba(255, 110, 55, 0.5);
+}
+
+/* SECTION: TABLE */                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 
 .table-members {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
     background-color: white;
-    border-radius: 10px;
+    border-radius: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    table-layout: fixed;
+    overflow: hidden;
 }
 
+/* Style for table header */
 .table-members th {
     padding: 10px;
     text-align: center;
@@ -81,19 +168,22 @@
     font-weight: bold;
 }
 
+/* Style for table cells */
 .table-members td {
     text-align: center;
     padding: 6px;
     background-color: white;
     color: black;
+    vertical-align: middle !important; 
 }
+
 
 .footer {
     border-top: 4px solid rgb(255, 110, 55);
     background-color: whitesmoke;
     color: black;
     text-align: center;
-    padding: 10px;
+    padding: 0;
     bottom: 0;
     width: 100%;
     font-size: 12px;
@@ -103,5 +193,71 @@
     position: relative;
 }
 
+.footer-logo-icon {
+    max-width: 50px;
+    max-height: 50px;
+    width: max-content;
+    height: max-content;
+}
+.footer-extend {
+    background-color:rgb(230, 100, 50);
+    color: white;
+}
 
-/* SECTION */
+
+/* SECTION Role Types*/
+.role_type_admin {
+    background-color: rgb(35, 91, 187) !important;
+    border: 2px solid rgb(17, 128, 248) !important;
+    border-radius: 10px;
+    padding: 2.5px 5px !important;
+    color: white !important;
+    max-width: max-content;
+    text-align: center;
+}
+
+.role_type_admin_icon {
+    color: rgb(35, 91, 187) !important;
+}
+
+.role_type_employee {
+    /* font-size: 10px !important; */
+    background-color: hsl(165,97%,28%) !important;
+    border: 2px solid #117e2c !important;
+    border-radius: 10px;
+    padding: 2.5px 5px !important;
+    color: white !important;
+    max-width: max-content;
+    text-align: center;
+}
+
+.role_type_employee_icon {
+    color: hsl(165,97%,28%) !important;
+}
+
+.employeeActive-yes-icon {
+    color: #117e2c !important;
+    border-radius: 0px;
+}
+.employeeActive-yes {
+    background-color: hsl(165,97%,28%) !important;
+    border: 2px solid #117e2c !important;
+    border-radius: 10px;
+    padding: 2.5px 5px !important;
+    color: white !important;
+    max-width: max-content;
+    text-align: center;
+}
+
+.employeeActive-no-icon {
+    color: #d9534f !important;
+}
+.employeeActive-no {
+    background-color: #ff817c !important;
+    border: 2px solid #d9534f !important;
+    border-radius: 10px;
+    padding: 2.5px 5px !important;
+    color: white !important;
+    max-width: max-content;
+    text-align: center;
+}

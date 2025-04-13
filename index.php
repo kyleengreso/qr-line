@@ -1,3 +1,3 @@
 <?php
-header('Location: ./public/user/user_form.php');
+header('Location: ./public/requester/requester_form.php');
 ?>

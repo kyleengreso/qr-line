@@ -1,8 +1,5 @@
 <?php
-include "./../includes/db_conn.php";
-include "./../base.php";
-
-login_as_employee();
+include_once __DIR__ . '/../base.php';
 ?>
 
 <!DOCTYPE html>
@@ -11,40 +8,48 @@ login_as_employee();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php head_icon()?>
-    <title>Register | <?php echo $project_name?></title>
+    <title>Request Account | <?php echo $project_name?></title>
     <?php head_css()?>
     <?php before_js()?>
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
 
-    <div class="container d-flex justify-content-center align-items-center before-footer container-set" style="margin-top:50px">
-        <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
-            <h4 class="text-center mb-4">Employee Register</h4>
-
+    <div class="container d-flex justify-content-center align-items-center before-footer container-set" style="margin-top:150px">
+        <div class="card shadow-sm p-4 w-100" style="max-width: 400px;border-radius:30px">
+            <div class="w-100 py-3">
+                <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
+            </div>
+            <div class="text-center">
+                <h5 class="text-center fw-bold">Welcome to <?php echo $project_name?></h5>
+                <p>Request Account</p>
+            </div>
             <form method="POST" id="frmRegister">
                 <div class="mb-4">
-                    <label for="username" class="form-label">Username</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
-                        <input type="text" class="form-control" name="username" id="username" placeholder="Enter your username">
-                    </div>
-                </div>
-                <div class="mb-5">
-                    <label for="password" class="form-label">Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" class="form-control" name="password" id="password" placeholder="Enter your password">
+                        <input type="text" class="form-control" name="username" id="username" placeholder="Username">
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label for="confirm_password" class="form-label">Confirm Password</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" class="form-control" name="confirm_password" id="confirm_password" placeholder="Confirm your password">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control" name="email" id="email" placeholder="Email">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Register</button>
+                <div class="mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control" name="password" id="password" placeholder="Password">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control" name="confirm_password" id="confirm_password" placeholder="Confirm Password">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Request Account</button>
                 <p class="text-center mt-3"><a class="register text-decoration-none" href="login.php">Login</a></p>
             </form>
         </div>

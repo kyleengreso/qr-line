@@ -2,28 +2,30 @@
 
 include_once __DIR__ . "/../base.php";
 
-function encryptToken(string $data): string {
-    $ENCRYPTION_KEY = getenv('ENCRYPTION_KEY'); 
-    $plaintext = json_encode($data);
-    $iv = random_bytes(16); // 16 bytes for AES-256-CBC
-    $ciphertext = openssl_encrypt($plaintext, 'aes-256-cbc', $ENCRYPTION_KEY, 0, $iv);
+function encryptToken(array $data, string $key = ''): string {
+    if (!isset($key) || empty($key)) {
+        $key = getenv('ENCRYPTION_KEY');
+    }
+    $iv = openssl_random_pseudo_bytes(16);
+    $ciphertext = openssl_encrypt(json_encode($data), 'aes-256-cbc', $key, 0, $iv);
     return base64_encode($iv . $ciphertext);
 }
 
-function decryptToken(string $token): string {
-    $ENCRYPTION_KEY = getenv('ENCRYPTION_KEY'); 
-    $data = base64_decode($token);
-    $iv = substr($data, 0, 16);
-    $ciphertext = substr($data, 16);
-    $plaintext = openssl_decrypt($ciphertext, 'aes-256-cbc', $ENCRYPTION_KEY, 0, $iv);
-
-    return $plaintext ? json_decode($plaintext, true) : null;
+function decryptToken(string $token, string $key): array {
+    if (!isset($key) || empty($key)) {
+        $key = getenv('ENCRYPTION_KEY');
+    }
+    $token = base64_decode($token);
+    $iv = substr($token, 0, 16);
+    $ciphertext = substr($token, 16);
+    $data = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, 0, $iv);
+    return json_decode($data, true);
 }
 
-$test = "sample";
+// $test = "sample";
 
-$e = encryptToken($test);
-echo $e . "\n";
-$d = decryptToken($e);
-echo $d . "\n"; 
+// $e = encryptToken($test);
+// echo $e . "\n";
+// $d = decryptToken($e);
+// echo $d . "\n"; 
 

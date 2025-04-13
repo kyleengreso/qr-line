@@ -1,17 +1,18 @@
 $(document).ready(function() {
-
+    var search = '';
+    var page_counter = 1;
+    var paginate = 5;
 
     function addCounter(employee_id, counter_no) {
         var data = {
-            method: "create",
-            employee_id: employee_id,
-            counter_no: counter_no,
+            method: "counter-add",
+            idemployee: employee_id,
+            counterNumber: counter_no,
         }
         $.ajax({
-            url: './../api/api_counter.php',
+            url: './../api/api_endpoint.php',
             type: 'POST',
             data: JSON.stringify(data),
-            dataType: 'json',
             success: function(response) {
                 console.log(response);
                 if (response.status == "success") {
@@ -32,20 +33,36 @@ $(document).ready(function() {
     }
 
     // Function to load employees
-    function loadEmployees(search = '') {
-        if (search.length > 0) {
-            var url = './../api/api_counter.php?available&search=' + search;
-        } else {
-            var url = './../api/api_counter.php?available';
-        }
+    function loadEmployees() {
         $.ajax({
-            url: url, // Update the path to your actual file location
+            url: './../api/api_endpoint.php?counters&available&page=' + page_counter + '&paginate=' + paginate + '&search=' + search,
             type: 'GET',
             success: function(response) {
+                console.log('Employees found:', response.counters);
+                var table = $('#table-counters');
+                table.empty();
+                table.append(`
+                    <tr>
+                        <th class="col-2"></th>
+                        <th>Employee</th>
+                        <th>Available</th>
+                    </tr>`);
                 if (response.status === 'success') {
-                    console.log('Employees found:', response.data);
-                    displayEmployees(response.data);
+                    response.counters.forEach(employee => {
+                        table.append(`
+                            <tr>
+                                <td class="col-2">
+                                    <input class="form-check-input" type="radio" name="employee" id="employee-radio" value="${employee.id}">
+                                </td>
+                                <td>${employee.username}</td>
+                                <td>${employee.availability}</td>
+                            </tr>`);
+                    });
                 } else {
+                    table.append(`
+                            <tr>
+                                <td colspan="3" class="text-center">No employees found</td>
+                            </tr>`);
                     console.log('Error:', response.message);
                 }
             },
@@ -55,44 +72,13 @@ $(document).ready(function() {
         });
     }
 
-    // Function to display employees in a table
-    function displayEmployees(employees) {
-        var tableBody = $('#table-counters');
-        tableBody.empty();
-        var tableHeader = `
-            <tr>
-                <th class="col-2"></th>
-                <th>Username</th>
-                <th>Available</th>
-            </tr>`;
-        tableBody.append(tableHeader);
-        // if counting is not available
-        if (employees.length == 0) {
-            var row = `
-                <tr>
-                    <td colspan="3" class="text-center">No employees found</td>
-                </tr>`;
-            tableBody.append(row);
-            return;
-        }
-        employees.forEach(function(employee) {
-            var row = `
-                <tr>
-                    <td style="background-color: #FFEAC1"><input class="form-check-input" type="radio" name="employee" id="employee-radio" value="${employee.id}"></td>
-                    <td class="d-xl-block">${employee.username}</td>
-                    <td>${employee.availability}</td>
-                </tr>`;
-            tableBody.append(row);
-        });
-    }
-
     // Load all employees on page load
     loadEmployees();
 
     // Handle search input change
     $('#search').on('input', function() {
-        var search = $(this).val();
-        loadEmployees(search);
+        search = $(this).val();
+        loadEmployees();
     });
 
     $('#frmAddCounter').on('submit', function(event) {

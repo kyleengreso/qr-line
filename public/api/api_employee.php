@@ -151,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $page = $_GET['page'];
         $limit = $_GET['paginate'];
         $offset = ($page - 1) * $limit;
-        $stmt = $conn->prepare("SELECT id, username, created_at FROM employees LIMIT ? OFFSET ?");
+        $stmt = $conn->prepare("SELECT id, username, created_at, active, email, role_type, employee_last_login FROM employees LIMIT ? OFFSET ?");
         $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
