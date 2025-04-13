@@ -24,7 +24,6 @@ $(document).ready(function() {
         $form.prepend('<div class="alert alert-danger">'+message+'</div>');
     }
 
-
     function authenticate(username, password) {
         var data = {
             username: username,
@@ -138,4 +137,5 @@ $(document).ready(function() {
         confirm_password = $('#confirm_password').val();
         registerAdmin(username, password, confirm_password);
     }); 
+
 });

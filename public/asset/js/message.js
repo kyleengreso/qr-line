@@ -10,6 +10,17 @@ function message_error(form, message) {
     $form.prepend('<div class="alert alert-danger">' + message + '</div>');
 }
 
+function message_warning(form, message) {
+    $form = $(form);
+    $form.find('.alert').remove();
+    $form.prepend('<div class="alert alert-warning">' + message + '</div>');
+}
+
+function message_info(form, message) {
+    $form = $(form);
+    $form.find('.alert').remove();
+    $form.prepend('<div class="alert alert-info">' + message + '</div>');
+}
 // 
 function userStatusIcon(username, role_type, active) {
     if (role_type == 'admin') {

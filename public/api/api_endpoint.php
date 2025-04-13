@@ -231,6 +231,73 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         exit;
     
+    } else if ($method == "forgot-password") {
+        if (!isset($data->username)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Input username!"
+            ));
+            exit;
+        }
+
+        // Find the username 
+        $username = $data->username;
+
+        $sql_cmd = "SELECT e.id, e.username, e.email
+                    FROM employees e
+                    WHERE e.username = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employee = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Username not found"
+            ));
+            exit;
+        }
+
+        // Generate 12 digit password
+        $password = bin2hex(random_bytes(6));
+        $hash_password = password_hash($password, PASSWORD_DEFAULT);
+        $sql_cmd = "UPDATE employees
+                    SET password = ?
+                    WHERE username = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("ss", $hash_password, $username);
+        $stmt->execute();
+        // if affected_row
+        if ($stmt->affected_rows > 0) {
+            include_once __DIR__ . '/email_content.php';
+            $employee = array(
+                "username" => $username,
+                "email" => $employee[0]['email'],
+                "password" => $password
+            );
+            send_forgot_passwd($employee);
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Password reset successfully",
+                "new_password" => $password
+            ));
+            exit;
+        } else if ($stmt->affected_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No changes made"
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . $conn->error
+            ));
+            exit;
+        }
+
     // EMPLOYEES
     } else if ($method == "employees-add") {
         if (!isset($data->username) || !isset($data->password) || !isset($data->email) || !isset($data->role_type)) {
@@ -1088,9 +1155,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         
         $sql_cmd = "SELECT *
                     FROM transactions t
-                    WHERE t.transaction_time > ?
+                    WHERE t.transaction_time < ?
                     ORDER BY t.transaction_time ASC
-                    LIMIT 4, 1";
+                    LIMIT 2, 1";
         $stmt = $conn->prepare($sql_cmd);
         $stmt->bind_param("s", $transaction_f[0]['transaction_time']);
         $stmt->execute();
@@ -1135,6 +1202,63 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "queue_count_int" => $transaction_f[0]['queue_number']
         );
         send_email_notify_before_5($request_data);
+        //////////////////////////////////////////////
+        // Put to cancelled for past 3 queue using idtransaction
+        $sql_cmd = "SELECT *
+                    FROM transactions t
+                    WHERE t.idtransaction = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction[0]['idtransaction']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "message" => "Transaction found",
+        //     "data" => $transaction_f
+        // ));
+        
+        $sql_cmd = "SELECT *
+                    FROM transactions t
+                    WHERE t.transaction_time < ? AND t.status = 'missed'
+                    ORDER BY t.transaction_time ASC
+                    LIMIT 2, 1";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction_f[0]['transaction_time']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Transaction found",
+            "data" => $transaction_f
+        ));
+
+        // Get information from using idrequester
+        $sql_cmd = "SELECT * 
+                    FROM requesters r
+                    WHERE r.id = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction_f[0]['idrequester']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $requester = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Requester found",
+            "data" => $requester
+        ));
+
+
+
+
+
+
+
         exit;
 
     // Requster: Submit Form

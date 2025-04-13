@@ -41,6 +41,7 @@ include_once __DIR__ . '/../base.php';
                 </div>
                 <div class="mb-2">
                     <button type="submit" class="btn btn-primary w-100">Login</button>
+                    <p class="text-center mt-3"><a class="forgot-password text-decoration-none" href="forgot_password.php">Forgot Password?</a></p>
                     <?php if ($enable_register_employee) : ?>
                     <p class="text-center mt-3"><a class="register text-decoration-none" href="register.php">Request Account</a></p>
                     <?php endif; ?>
