@@ -33,14 +33,14 @@ use chillerlan\QRCode\QROptions;
             <div class="info-container">
                 <div class="info-box">
                     <p class="label">Number:</p>
-                    <p class="value" id="queueNumber"></p>
+                    <p class="value" id="queueNumber">N/A</p>
                 </div>
                 <div class="info-box">
                     <p class="label">Counter:</p>
-                    <p class="value" id="counterNumber"></p>
+                    <p class="value" id="counterNumber">N/A</p>
                 </div>
             </div>
-            <p class="current-number">Current number: <strong><span id="currentQueueNumber"></span></strong></p>
+            <p class="current-number">Current number: <strong><span id="currentQueueNumber">N/A</span></strong></p>
         </div>
         <div class="d-flex justify-content-center align-items-center">
             <!-- set white div -->

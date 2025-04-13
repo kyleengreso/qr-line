@@ -1805,6 +1805,65 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } else if (isset($_GET['dashboard_admin'])) {
         // Admin Dashboard
         $sql_cmd = "SELECT COUNT(id) as today_transactions";
+
+    // Requester Number Monitor
+    } else if (isset($_GET['requester_number'])) {
+        // F
+
+        if (!isset($_GET['requester_token'])) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please provide the requester token that you submitted."
+            ));
+            exit;
+        }
+    
+        // 
+        $requester_token = $_GET['requester_token'];
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "requester_token" => $requester_token
+        // ));
+        // exit;
+    
+        // Get your counter number based from token
+        $stmt = $conn->prepare("SELECT t.queue_number, c.counterNumber, t.idcounter, c.queue_count
+                                FROM transactions t
+                                LEFT JOIN counters c ON t.idcounter = c.idcounter
+                                WHERE t.token_number = ?
+                                ORDER BY t.transaction_time DESC LIMIT 1");
+        $stmt->bind_param("s", $requester_token);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        // Get the highest queue_count from transaction where who are served
+        $sql_cmd = "SELECT MAX(t.queue_number) AS queue_number
+                    FROM transactions t
+                    WHERE DATE(t.transaction_time) = CURDATE() AND t.status = 'serve'
+                    ORDER BY t.transaction_time DESC";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $setup_row = $result->fetch_assoc();
+        $stmt->close();
+        $queue_count_int = $setup_row['queue_number'];
+    
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "queue_count_int" => $setup_row,
+        // ));
+
+
+
+        echo json_encode(array(
+            "status" => "success",
+            "queueNumber" => $row['queue_number'] ?? "N/A",
+            "counterNumber" => $row['counterNumber'] ?? "N/A",
+            "currentQueueNumber" => $queue_count_int ?? "N/A"
+        ));
+        exit;
     } else {
         echo json_encode(array(
             "status" => "error",
