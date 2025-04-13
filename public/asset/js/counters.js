@@ -166,6 +166,9 @@ function displayCounterRegistered(response) {
 
     if (data && data.counters) {
         data.counters.forEach(employee => {
+                // <td style="min-width:20px;max-width:35px">
+                //     ${employee.queue_count}
+                // </td>
             let row = table_counter_registered.insertRow(-1);
             row.innerHTML = `
             <tr>
@@ -173,9 +176,7 @@ function displayCounterRegistered(response) {
                 <td class="fw-bold role_type_employee_icon" style="min-width:40px">
                     <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
                 </td>
-                <td style="min-width:20px;max-width:35px">
-                    ${employee.queue_count}
-                </td>
+
                 <td>
                     <a class="btn btn-outline-primary text-primary" id="update-counter-${employee.idcounter}" data-toggle="modal" data-target="#updateCounterModal" style="border-top-right-radius:0px;border-bottom-right-radius:0px">Update</a>
                     <a id="delete-counter-${employee.idcounter}" class="btn btn-outline-danger delete-counter" data-toggle="modal" data-target="#deleteCounterModal" style="border-top-left-radius:0px;border-bottom-left-radius:0px">Delete</a>

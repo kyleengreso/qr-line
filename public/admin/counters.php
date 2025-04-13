@@ -56,7 +56,7 @@ restrictAdminMode();
                         <tr>
                             <th>#</th>
                             <th>Employee</th>
-                            <th>Queue Count</th>
+                            <!-- <th>Queue Count</th> -->
                             <th>Action</th>
                         </tr>
                     </table>
