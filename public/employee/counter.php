@@ -30,7 +30,8 @@ $counterNumber = $token->counterNumber;
     <div></div>
     <div class="container d-flex justify-content-center align-items-center before-footer container-set" style="margin-top: 50px">
         <div class="text-center w-100" style="max-width: 400px;" id="employeeDashboard">
-            <h3 class="fw-bold">COUNTER <span id="employee-counter-number"><?php echo $counterNumber?></span></h3>
+            <div class="alert text-start alert-success d-none" id="cutOffNotification">Operational</div>
+            <h3 class="fw-bold">COUNTER <span id="employee-counter-number"><?php echo $counterNumber?></span> <span class="text-danger d-none" id="cutOffState">(Cut-Off)</span></h3>
 
             <p class="mb-3">Current Serving</p>
             <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
@@ -41,7 +42,7 @@ $counterNumber = $token->counterNumber;
                 <button type="submit" name="skip_queue" id="btn-counter-skip"class="btn btn-warning text-white fw-bold px-4">SKIP</button>
             </form>
             <div class="py-3">
-                <a class="btn btn-info fw-bold text-white" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">Cut Off</a>
+                <a class="btn btn-danger fw-bold text-white" id="employee-cut-off">Cut Off</a>
             </div>
         </div>
     </div>
@@ -147,20 +148,128 @@ $counterNumber = $token->counterNumber;
         });
 
         // Cut Off Feature
-        var operational = true;
-        let cutOff = document.getElementById('employee-cut-off');
+
+        var operational = false;
         let btn_counter_resume = document.getElementById('employee-resume');
+        let cutOff = document.getElementById('employee-cut-off');
+        let cutOffNotification = document.getElementById('cutOffNotification');
         
+        let cutOffState = document.getElementById('cutOffState');
+
+        const params = new URLSearchParams({
+            employeeCutOff: true,
+            id: <?php echo $id?>
+        });
+        $.ajax({
+            url: `${realHost}/public/api/api_endpoint.php?${params}`,
+            type: 'GET',
+            success: function(response) {
+                console.log(response);
+                if (response.status == "success") {
+                    console.log(response.cut_off);
+                    if (response.cut_off_state == 1) {
+                        operational = false;
+                        cutOffNotification.classList.remove('alert-success');
+                        cutOffNotification.classList.add('alert-danger');
+                        cutOffNotification.innerHTML = 'You have been cut-off';
+                        cutOff.classList.remove('btn-danger');
+                        cutOff.innerText = "Resume";
+                        cutOff.classList.add('btn-success');
+                        cutOffState.classList.remove('d-none');
+                        btn_counter_success.disabled = true;
+                        btn_counter_skip.disabled = true;
+                        // setTimeout(() => {
+                        //     cutOffNotification.classList.add('d-none');
+                        // }, 5000);  
+                    } else {
+                        operational = true;
+                        cutOffNotification.classList.remove('alert-danger');
+                        cutOffNotification.classList.add('alert-success');
+                        cutOffNotification.innerHTML = 'You are back to operational';
+                        cutOff.classList.remove('btn-success');
+                        cutOff.innerText = "Cut Off";
+                        cutOff.classList.add('btn-danger');
+                        cutOffState.classList.add('d-none');
+                        btn_counter_success.disabled = false;
+                        btn_counter_skip.disabled = false;
+
+                        // setTimeout(() => {
+                        //     cutOffNotification.classList.add('d-none');
+                        // }, 5000);
+                    }
+                }
+            }
+
+        })
+
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
-            operational = false;
+            if (operational) {
+                $.ajax({
+                    url: `${realHost}/public/api/api_endpoint.php`,
+                    type: 'POST',
+                    data: JSON.stringify({
+                        method: 'employee-cut-off',
+                        id: <?php echo $id?>,
+                    }),
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            operational = false;
+                            cutOffNotification.classList.remove('alert-success', 'd-none');
+                            cutOffNotification.classList.add('alert-danger');
+                            cutOffNotification.innerHTML = 'You have been cut-off';
+                            cutOff.classList.remove('btn-danger');
+                            cutOff.innerText = "Resume";
+                            cutOff.classList.add('btn-success');
+                            cutOffState.classList.remove('d-none');
+                            btn_counter_success.disabled = true;
+                            btn_counter_skip.disabled = true;
+                            setTimeout(() => {
+                                cutOffNotification.classList.add('d-none');
+                            }, 5000);      
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                    }
+                });
+            } else {
+                $.ajax({
+                    url: `${realHost}/public/api/api_endpoint.php`,
+                    type: 'POST',
+                    data: JSON.stringify({
+                        method: 'employee-cut-off',
+                        id: <?php echo $id?>,
+                    }),
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            operational = true;
+                            cutOffNotification.classList.remove('alert-danger', 'd-none');
+                            cutOffNotification.classList.add('alert-success');
+                            cutOffNotification.innerHTML = 'You are back to operational';
+                            cutOff.classList.remove('btn-success');
+                            cutOff.innerText = "Cut Off";
+                            cutOff.classList.add('btn-danger');
+                            cutOffState.classList.add('d-none');
+                            btn_counter_success.disabled = false;
+                            btn_counter_skip.disabled = false;
+                            setTimeout(() => {
+                                cutOffNotification.classList.add('d-none');
+                            }, 5000);
+                        } else {
+                            console.log('Error:', response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                    }
+                })
+            }
         });
         
-        btn_counter_resume.addEventListener('click', function(e) {
-            e.preventDefault();
-            operational = true;
-        });
-
+        // btn_counter_resume.addEventListener('click', function(e) {
+        //     e.preventDefault();
+        // });
 
         fetchTransaction();
 

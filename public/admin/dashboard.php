@@ -212,7 +212,7 @@ $counterNumber = $token->counterNumber;
                     You are cut off for temporary.
                 </div>
                 <div class="modal-footer col" id="viewEmployeeFooter">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="employee-resume">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="employee-resume">Start Working</button>
                 </div>
             </div>
         </div>

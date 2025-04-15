@@ -1,5 +1,5 @@
 <?php
-// QR-LINE Endpoint v2
+// QR-LINE Self-Endpoint v2
 // (c) aceday. All Rights Reserved 2025
 
 require_once __DIR__ . '/./../base.php';
@@ -107,6 +107,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $result = $stmt->get_result();
             $counter = $result->fetch_all(MYSQLI_ASSOC);
             $stmt->close();
+
+            if (!$counter) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Cashier was not assigned yet"
+                ));
+                exit;
+            }
 
             $token = array(
                 "id" => $employee[0]['id'],
@@ -299,6 +307,64 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
     // EMPLOYEES
+    } else if ($method == "employee-cut-off") {
+        if ($data->id == null) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Input id!"
+            ));
+            exit;
+        }
+        
+        $sql_cmd = "SELECT *
+                    FROM employees
+                    WHERE id = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $data->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employee = $result->fetch_all(MYSQLI_ASSOC);
+
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee not found"
+            ));
+            exit;
+        }
+
+        $employee = $employee[0];
+        $cut_off = 0;
+        if ($employee['cut_off_state'] == 0) {
+            $cut_off = 1;
+        } else {
+            $cut_off = 0;
+        }
+
+        // Toggle cut off
+        $sql_cmd = "UPDATE employees
+                    SET cut_off_state = ?
+                    WHERE id = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("ss", $cut_off, $data->id);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            if ($cut_off == 1) {
+                $message = "Employee " . $employee['username'] . " is cut off";
+            } else {
+                $message = "Employee " . $employee['username'] . " is resume";
+            }
+            echo json_encode(array(
+                "status" => "success",
+                "cut_off" => $cut_off,
+                "message" => $message
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . $conn->error
+            ));
+        }
     } else if ($method == "employees-add") {
         if (!isset($data->username) || !isset($data->password) || !isset($data->email) || !isset($data->role_type)) {
             echo json_encode(array(
@@ -2299,7 +2365,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             
         }
+    } else if (isset($_GET['employeeCutOff'])) {
+        if (!isset($_GET['id'])) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please provide the employee id."
+            ));
+            exit;
+        }
 
+        $sql_cmd = "SELECT e.cut_off_state
+                    FROM employees e
+                    WHERE e.id = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $_GET['id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employee = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee not found"
+            ));
+            exit;
+        } else {
+            echo json_encode(array(
+                "status" => "success",
+                "cut_off_state" => $employee[0]['cut_off_state'],
+                "message" => "Employee found"
+            ));
+        }
 
 
 

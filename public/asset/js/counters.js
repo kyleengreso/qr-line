@@ -78,7 +78,7 @@ function getCounterById(id) {
     });
     let resp = null;
     $.ajax({
-        url: `${realHost}/public/api/api_endpoint.php?${params}`,
+        url: `./../public/api/api_endpoint.php?${params}`,
         type: 'GET',
         async: false,
         success: function(response) {
