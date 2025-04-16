@@ -60,7 +60,7 @@
 .btn-primary {
     background-color: rgb(255, 110, 55);
     border-color: rgb(255, 110, 55);
-    border-radius: 20px;
+    /* border-radius: 20px; */
 }
 
 .btn-outline-primary {
@@ -70,14 +70,14 @@
     border-radius: 20px;
 }
 
-.btn-secondary, .btn-success, .btn-danger,
+/* .btn-secondary, .btn-success, .btn-danger,
 .btn-warning, .btn-info, .btn-light,
 .btn-dark, .btn-link, .btn-outline-success,
 .btn-outline-danger, .btn-outline-warning,
 .btn-outline-info, .btn-outline-light,
 .btn-outline-dark, .btn-outline-link {
     border-radius: 20px;
-}
+} */
 .bg-orange-custom {
     background-color: rgb(255, 110, 55) !important;
     border-color: rgb(255, 110, 55) !important;
@@ -107,11 +107,11 @@
     background-color: rgb(255, 110, 55);
     color: white;
     border-color: rgb(255, 110, 55);
-    border-radius: 20px;
+    /* border-radius: 20px; */
 }
 
 .form-control {
-    border-radius: 20px;
+    /* border-radius: 20px; */
     border-color: rgb(255, 110, 55);
 }
 
@@ -134,7 +134,7 @@
 }
 
 .form-select {
-    border-radius: 20px;
+    /* border-radius: 20px; */
     border-color: rgb(255, 110, 55);
 }
 
@@ -163,8 +163,8 @@
     border-spacing: 0;
     width: 100%;
     background-color: white;
-    border-radius: 20px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
     overflow: hidden;
 }
 
@@ -172,8 +172,10 @@
 .table-members th {
     padding: 10px;
     text-align: center;
-    background-color: rgb(255, 110, 55);
-    color: white;
+    background-color: #F5F5F5;
+    /* add border */
+    border: 2px solid #E3E6F0;
+    color: #121212;
     font-weight: bold;
 }
 
@@ -182,6 +184,7 @@
     text-align: center;
     padding: 6px;
     background-color: white;
+    border-bottom: 2px solid #E3E6F0;
     color: black;
     vertical-align: middle !important; 
 }
@@ -269,4 +272,17 @@
     color: white !important;
     max-width: max-content;
     text-align: center;
+}
+
+/* Text */
+.text-white {
+    color: #F5F5F5;
+}
+
+/* Card */
+.card-header {
+    background-color: rgb(255, 110, 55);
+    color: white;
+    font-weight: bold;
+    /* text-align: center; */
 }
