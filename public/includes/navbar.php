@@ -14,7 +14,7 @@ if (isset($_COOKIE['token'])) {
             <span class="fs-5 fw-normal fs-4"><?php echo $project_name_full?></span>
         </span>
     </div>
-    <a class="fw-bold text-white text-decoration-none" style="margin-right:10px" id="rtClock"></a>
+    <a class="fw-bold d-none d-md-block text-white text-decoration-none" style="margin-right:10px" id="rtClock"></a>
     <?php if (isset($token) && $token) : ?>
     <a class="text-white fw-bold text-decoration-none" href="#" style="">
         <?php echo htmlspecialchars($token->username); ?>

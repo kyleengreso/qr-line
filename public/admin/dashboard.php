@@ -32,34 +32,78 @@ $counterNumber = $token->counterNumber;
         <div class="flex-col flex-md-row justify-content-center mt-5">
             <div class="row">
 
-                <div class="col-9 text-center p-2">
-                    <h1>ADMIN DASHBOARD</h1>
+                <div class="col-12 col-md-9 px-4 text-center text-md-start p-2">
+                    <h1>DASHBOARD</h1>
                 </div>
-            <div class="col-3 card shadow-sm p-4 mx-0 my-2" style="border-radius:30px">
-                <div class="row text-center">
-                <div class="w-100">
-                        <a class="btn btn-outline-primary w-100 h-100" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">CUT OFF</a>
+                <div class="col-3 d-none d-md-block card shadow-sm p-4 mx-0 my-2" style="border-radius:30px;min-width:150px">
+                    <div class="row text-center">
+                        <div class="w-100">
+                            <a class="btn btn-outline-primary w-100 h-100" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">CUT OFF</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-            <div class="card shadow-sm p-4 mx-0 my-2" style="border-radius:30px">
+            <div class="p-0 mx-0 my-2">
                 <div class="row text-center">
                     <div class="col-6 col-md-3">
-                        <h5 class="text-center" style="font-size: 2vh">TRANSACTIONS TODAY</h5>
-                        <h1 class="text-center" id="transactions-total">N/A</h1>
+                        <div class="card shadow m-2 p-2 col-12" style="border:5px solid #00a;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                            <div class="w-100" style="margin-left:10px;height:max-content">
+                                <h5 class="text-start mb-0" style="font-size: 2vh;color:#00a">TRANSACTIONS TODAY</h5>
+                            </div>
+                            <div class="w-100 d-flex flex-row" style="margin-left:10px">
+                                <div class="w-50">
+                                    <h1 class="text-start" id="transactions-total">N/A</h1>
+                                </div>
+                                <div class="w-50 p-2">
+                                    <i class="fa-solid fa-users-line fs-1"></i>                                
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <h5 class="text-center" style="font-size: 2vh">PENDING</h5>
-                        <h1 class="text-center" id="transactions-pending">N/A</h1>
+                        <div class="card shadow m-2 p-2 col-12" style="border:5px solid #aa0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                        <div class="w-100" style="margin-left:10px;height:max-content">
+                            <h5 class="text-start mb-0" style="font-size: 2vh;color:#aa0">PENDING</h5>
+                        </div>
+                        <div class="w-100 d-flex flex-row" style="margin-left:10px">
+                            <div class="w-50">
+                                <h1 class="text-start" id="transactions-pending">N/A</h1>
+                            </div>
+                            <div class="w-50 p-2">
+                                <i class="fa-regular fa-hourglass-half fs-1"></i>
+                            </div>
+                        </div>
+                        </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <h5 class="text-center" style="font-size: 2vh">COMPLETED</h5>
-                        <h1 class="text-center" id="transactions-completed">N/A</h1>
+                        <div class="card shadow m-2 p-2 col-12" style="border:5px solid #0a0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                            <div class="w-100 d-flex flex-row" style="margin-left:10px;height:max-content">
+                                <h5 class="text-start mb-0" style="font-size: 2vh;color:#0a0">COMPLETED</h5>
+                            </div>
+                            <div class="w-100 d-flex flex-row" style="margin-left:10px">
+                                <div class="w-50">
+                                    <h1 class="text-start" id="transactions-completed">N/A</h1>
+                                </div>
+                                <div class="w-50 p-2">
+                                    <i class="fa-solid fa-check fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <h5 class="text-center" style="font-size: 2vh">CANCELLED</h5>
-                        <h1 class="text-center" id="transactions-cancelled">N/A</h1>
+                        <div class="card shadow m-2 p-2 col-12" style="border:5px solid #a00;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                            <div class="w-100" style="margin-left:10px;height:max-content">
+                                <h5 class="text-start mb-0" style="font-size: 2vh;color:#a00">CANCELLED</h5>
+                            </div>
+                            <div class="w-100 d-flex flex-row" style="margin-left:10px">
+                                <div class="w-50">
+                                    <h1 class="text-start" id="transactions-cancelled">N/A</h1>
+                                </div>
+                                <div class="w-50 p-2">
+                                    <i class="fa-solid fa-xmark fs-1"></i>                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -67,12 +111,15 @@ $counterNumber = $token->counterNumber;
             <div class="row flex-col flex-lg-row">
                 <div class="col col-md-7 px-0">
                     <div class="col mx-0 mx-md-2 my-2">
-                        <div class="card shadow-sm p-2 p-md-4" style="border-radius:30px">
-                            <div class="row w-100 mb-4">
-                                <h4 class="text-center fw-bold">Transaction History</h4>
+                        <div class="card shadow">
+                            <div class="card-header text-center text-md-start">
+                                Transaction History
                             </div>
-                            <div class="row my-2">
-                                <div class="col-6">
+                            <div class="card-body">
+
+                                
+                                <div class="row">
+                                    <div class="col-6">
                                     <div class="row">
                                         <div class="col-5 px-0" stlye="font-size: 1.5vw;">Filter</div>
                                         <div class="col-6 px-0 mx-1">
@@ -86,6 +133,7 @@ $counterNumber = $token->counterNumber;
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                                 <!-- <div class="col-6">
                                     <div class="row">
                                         <div class="col-5 px-0" stlye="font-size: 1.5vw">Payment</div>

@@ -37,7 +37,7 @@ $(document).ready(function() {
                             <tr>
                                 <td>${element.idcounter}</td>
                                 <td>
-                                    <strong>
+                                    <strong class="p-0">
                                     ${userStatusIcon(element.username, element.role_type, element.active)}</td>
                                     </strong>
                                 <td>${element.queue_count}</td>
@@ -106,7 +106,7 @@ $(document).ready(function() {
                             <tr>
                                 <td class="col-2">${element.id}</td>
                                 <td>
-                                    <strong>
+                                    <strong class="p-0">
                                     ${userStatusIcon(element.username, element.role_type, element.active)}
                                     </strong>
                                 </td>
