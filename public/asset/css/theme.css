@@ -168,7 +168,6 @@
     overflow: hidden;
 }
 
-/* Style for table header */
 .table-members th {
     padding: 10px;
     text-align: center;
@@ -179,7 +178,6 @@
     font-weight: bold;
 }
 
-/* Style for table cells */
 .table-members td {
     text-align: center;
     padding: 6px;

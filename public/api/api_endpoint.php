@@ -1493,8 +1493,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "website_cancel" => $website_cancel,
                 "queue_count_int" => $queue_count_int
             );
-            include "./email_content.php";
-            send_email_request_submit($request_data);
+            // include "./email_content.php";
+            // send_email_request_submit($request_data);
         } catch (Exception $e) {
             $conn->rollback();
             echo json_encode(array(
@@ -2204,8 +2204,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 exit;
             }
         }
-
         exit;
+
     // REQUESTER
     } else if (isset($_GET['requesters'])) {
         // Display Requester Number
@@ -2397,9 +2397,135 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Employee found"
             ));
         }
+    
+    // Transaction Stats
+    } else if (isset($_GET['transaction-stats'])) {
+        // too lazy to sort :>
 
+        // DAY
+        if (isset($_GET['day'])) {
+            // Get the current day and group by hour
+            $sql_cmd = "SELECT HOUR(transaction_time) as hour,  COUNT(idtransaction) as total_transactions
+                        FROM transactions
+                        WHERE DATE(transaction_time) = CURDATE()
+                        GROUP BY HOUR(transaction_time)";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transactions = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction stats successfully retrieved",
+                "stats" => $transactions
+            ));
 
-
+        // WEEK
+        } else if (isset($_GET['week'])) {
+            // Get the current week and group by day
+            $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
+                        FROM transactions
+                        WHERE WEEK(transaction_time) = WEEK(CURDATE())
+                        GROUP BY DATE(transaction_time)";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transactions = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction stats successfully retrieved",
+                "stats" => $transactions
+            ));
+        
+        // THIS MONTH
+        } else if (isset($_GET['month'])) {
+            // Get the current month and group by day
+            $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
+                        FROM transactions
+                        WHERE MONTH(transaction_time) = MONTH(CURDATE())
+                        GROUP BY DATE(transaction_time)";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transactions = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction stats successfully retrieved",
+                "stats" => $transactions
+            ));
+        // Last 30 days
+        } else if (isset($_GET['last-30-days'])) {
+            $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
+                        FROM transactions
+                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                        GROUP BY DATE(transaction_time)";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transactions = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction stats successfully retrieved",
+                "stats" => $transactions
+            ));
+        } else if (isset($_GET['last-3-months'])) {
+            // Last 3 months
+            $sql_cmd = "SELECT DATE_FORMAT(transaction_time, '%Y-%m') as month, COUNT(idtransaction) as total_transactions
+                        FROM transactions
+                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                        GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transactions = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction stats successfully retrieved",
+                "stats" => $transactions
+            ));
+        // Last 12 months
+        } else if (isset($_GET['last-12-months'])) {
+            // Get the last 12 months and group by month
+            $sql_cmd = "SELECT DATE_FORMAT(transaction_time, '%Y-%m') as month, COUNT(idtransaction) as total_transactions
+                        FROM transactions
+                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                        GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transactions = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction stats successfully retrieved",
+                "stats" => $transactions
+            ));
+        // This year
+        } else if (isset($_GET['year'])) {
+            $sql_cmd = "SELECT MONTH(transaction_time) as month, COUNT(idtransaction) as total_transactions
+                        FROM transactions
+                        WHERE YEAR(transaction_time) = YEAR(CURDATE())
+                        GROUP BY MONTH(transaction_time)";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transactions = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction stats successfully retrieved",
+                "stats" => $transactions
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Invalid request"
+            ));
+        }
 
     } else {
         echo json_encode(array(

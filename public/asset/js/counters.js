@@ -154,21 +154,16 @@ function displayCounterRegistered(response) {
         });
     }
 
-    let table_counter_registered = document.querySelector('.table-counter-registered');
-    if (!table_counter_registered) {
-        console.error('Table with class "table-counter-registered" not found.');
-        return;
-    }
-
+    let table_counter_registered = document.getElementById('table-counter-registered');
     while (table_counter_registered.rows.length > 1) {
         table_counter_registered.deleteRow(-1);
     }
 
     if (data && data.counters) {
         data.counters.forEach(employee => {
-                // <td style="min-width:20px;max-width:35px">
-                //     ${employee.queue_count}
-                // </td>
+            // <td style="min-width:20px;max-width:35px">
+            //     ${employee.queue_count}
+            // </td>
             let row = table_counter_registered.insertRow(-1);
             row.innerHTML = `
             <tr>
@@ -190,6 +185,7 @@ function displayCounterRegistered(response) {
             <td colspan="4" class="text-center fw-bold">No data available</td>
         `;
     }
+
 }
 
 function displayCounterAvailable(response) {

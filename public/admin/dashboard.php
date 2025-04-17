@@ -35,13 +35,13 @@ $counterNumber = $token->counterNumber;
                 <div class="col-12 col-md-9 px-4 text-center text-md-start p-2">
                     <h1>DASHBOARD</h1>
                 </div>
-                <div class="col-3 d-none d-md-block card shadow p-4 mx-0 my-2" style="border-radius:30px;min-width:150px">
+                <!-- <div class="col-3 d-none d-md-block card shadow p-4 mx-0 my-2" style="border-radius:30px;min-width:150px">
                     <div class="row text-center">
                         <div class="w-100">
                             <a class="btn btn-outline-primary w-100 h-100" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">CUT OFF</a>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
             <div class="p-0 mx-0 my-2">
@@ -115,6 +115,19 @@ $counterNumber = $token->counterNumber;
             </div>
 
             <div class="w-100 row flex-col flex-lg-row">
+                <div class="col-12">
+                    <div class="col mx-0 mx-md-2 my-2">
+                        <div class="card shadow w-100" id="transaction-chart-area">
+                            <div class="card-header">
+                                Transactions Overview
+                            </div>
+                            <div class="card-body">
+                                Chart onworking
+                                <canvas id="transaction-chart" style="max-width:100%; height:300px;max-height:320px"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-lg-6">
                     <div class="col mx-0 mx-md-2 my-2">
                         <div class="card shadow">
@@ -136,7 +149,7 @@ $counterNumber = $token->counterNumber;
                                         </div>
                                     </div>
                                     <div class="col p-2">
-                                        <table class="table table-striped table-members" id="table-transaction-history">
+                                        <table class="w-100 table table-striped table-members" id="table-transaction-history">
                                             <tr>
                                                 <th class="col-3">#</th>
                                                 <th>Email</th>
@@ -176,7 +189,7 @@ $counterNumber = $token->counterNumber;
                                         </select>
                                     </div>
                                     <div class="col-12 col-md-4 mb-2 d-flex justify-content-center">
-                                        <button class="btn btn-primary rounded" type="button" id="btnGenerateReport">Generate Report</button>
+                                        <button class="btn btn-primary rounded" type="button" id="btnGenerateReport">Generate</button>
                                     </div>
                                 </div>
                             </div>
@@ -184,63 +197,65 @@ $counterNumber = $token->counterNumber;
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="col mx-0 mx-md-2 my-2">
-                        <div class="card shadow">
-                            <div class="card-header">
-                                Employees
-                            </div>
-                            <div class="card-body">
-                                <table class="table table-striped table-members" id="table-employees">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Username</th>
-                                        <th>Created At</th>
-                                    </tr>
-                                </table>
-                                <nav aria-label="Page navigation example">
-                                    <ul class="pagination justify-content-center">
-                                        <li class="page-item">
-                                            <a class="page-link" id="pagePrevEmployees">Previous</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" id="pageNextEmployees">Next</a>
-                                        </li>
-                                    </ul>
-                                </nav>
-                                <div style="width:100%">
-                                    <a class="btn btn-primary" href="./employees.php" style="width:100%">View all employees</a>
+                    <div class="row">
+                        <div class="col-lg-12 col-xl-6 mx-0 my-2">
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    Employees
+                                </div>
+                                <div class="card-body">
+                                    <div id="table-employees">
+    
+                                    </div>
+                                    <!-- <table class="table table-striped table-members" id="table-employees">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Username</th>
+                                            <th>Created At</th>
+                                        </tr>
+                                    </table> -->
+                                    <nav aria-label="Page navigation example">
+                                        <ul class="pagination justify-content-center">
+                                            <li class="page-item">
+                                                <a class="page-link" id="pagePrevEmployees">Previous</a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link" id="pageNextEmployees">Next</a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                    <div style="width:100%">
+                                        <a class="btn btn-primary" href="./employees.php" style="width:100%">View all employees</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col mx-0 mx-md-2 my-2">
-                        <div class="card shadow">
-                            <div class="card-header">
-                                Counters
-                            </div>
-                            <div class="card-body">
-                                <table class="table table-striped table-members" id="table-counters">
-                                    <tr>
-                                        <th class="col-3">#</th>    
-                                        <th>Employee</th>
-                                        <th>Queue Count</th>
-                                    </tr>
-                                </table>
-                                <nav aria-label="Page navigation example">
-                                    <ul class="pagination justify-content-center">
-                                        <li class="page-item">
-                                            <a class="page-link" id="pagePrevCounters">Previous</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link"id="pageNextCounters">Next</a>
-                                        </li>
-                                    </ul>
-                                </nav>
-                                <div style="width:100%">
-                                    <a class="btn btn-primary" href="./counters.php" style="width:100%">View all counters</a>
+                        <div class="col-lg-12 col-xl-6 mx-0 my-2">
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    Counters
+                                </div>
+                                <div class="card-body">
+                                    <div id="table-counters">
+
+                                    </div>
+                                    <nav aria-label="Page navigation example">
+                                        <ul class="pagination justify-content-center">
+                                            <li class="page-item">
+                                                <a class="page-link" id="pagePrevCounters">Previous</a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link"id="pageNextCounters">Next</a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                    <div style="width:100%">
+                                        <a class="btn btn-primary" href="./counters.php" style="width:100%">View all counters</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>

@@ -11,41 +11,47 @@ $(document).ready(function() {
     var transaction_corporate = "none";
     var transaction_payment = "none";
 
+    function displayCounters(response) {
+        let data = response;
+        let table_counters = $('#table-counters');
+        table_counters.empty();
+        console.log(data);
+        let pagePrevCounters = document.getElementById('pagePrevCounters');
+        let pageNextCounters = document.getElementById('pageNextCounters');
+        if (data.status === 'success' && data.counters) {
+            pagePrevCounters.style.display = 'block';
+            pageNextCounters.style.display = 'block';
+            data.counters.forEach(counter => {
+                table_counters.append(`
+                    <div class="card shadow-sm w-100 p-2 mb-2 d-flex flex-row">
+                        <div class="col-1" style="min-width:50px;min-height:50px;max-width:50px;max-height:50px">
+                            <h2 class="w-100 h-100 m-0 text-center">${counter.counterNumber}</h2>
+                        </div>
+                        <div class="px-2">
+                        <strong class="p-0">
+                            ${userStatusIcon(counter.username, counter.role_type, counter.active)}
+                        </strong>
+                        </div>
+                    </div>
+                `);
+            });
+        } else {
+            pagePrevCounters.style.display = 'none';
+            pageNextCounters.style.display = 'none';
+            table_counters.append(`
+                <div class="w-100 fw-bold text-center p-4">
+                    No counters assigned
+                </div>
+            `);
+        }
+    }
+
     function getCounter() {
         $.ajax({
             url: './../api/api_endpoint.php?counters&page=' + page_counter + '&paginate=' + paginate,
             type: 'GET',
             success: function(response) {
-                // console.log(response);)
-                var table_counters = $('#table-counters');
-                table_counters.empty();
-                table_counters.append(`
-                    <tr>
-                        <th class="col-3">#</th>
-                        <th>Employee</th>
-                        <th>Queue Count</th>
-                    </tr>`);
-                if (response.status === 'success') {
-                    // SORT ASSENDING
-                    if (response && response.counters) {
-                        response.counters.sort((a,b) => {
-                            return a.counterNumber = b.counterNumber;
-                        });
-                    }
-                    response.counters.forEach(element => {
-                        table_counters.append(`
-                            <tr>
-                                <td>${element.idcounter}</td>
-                                <td>
-                                    <strong class="p-0">
-                                    ${userStatusIcon(element.username, element.role_type, element.active)}</td>
-                                    </strong>
-                                <td>${element.queue_count}</td>
-                            </tr>`);
-                    });
-                } else {
-                    table_counters.append('<tr><td colspan="3">No data available</td></tr>');
-                }
+                displayCounters(response);
             },
             error: function(response) {
                 console.log(response);
@@ -53,39 +59,77 @@ $(document).ready(function() {
         });
     }
 
+    function displayTransactions(response) {
+        let data = response;
+        console.log(data);
+        let table_transactions = document.getElementById('table-transaction-history');
+        while (table_transactions.rows.length > 1) {
+            table_transactions.deleteRow(-1);
+        }
+        let pagePrevEmployees = document.getElementById('pagePrevEmployees');
+        let pageNextEmployees = document.getElementById('pageNextEmployees');
+        if (data.status === 'success' && data.transactions) {
+            pagePrevEmployees.style.display = 'block';
+            pageNextEmployees.style.display = 'block';
+            data.transactions.forEach(transaction => {
+                let row = table_transactions.insertRow(-1);
+                console.log(transaction);
+                row.innerHTML = `
+                    <tr>
+                        <td>${transaction.queue_number}</td>
+                        <td>${transaction.email}</td>
+                        <td>${transaction.payment}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            pagePrevEmployees.style.display = 'none';
+            pageNextEmployees.style.display = 'none';
+            let row = table_employees.insertRow(-1);
+            row.innerHTML = `
+                <td colspan="3" class="text-center fw-bold">No transaction for today</td>
+            `;
+        }
+    
+    }
     function getTransactions() {
         $.ajax({
             url: './../api/api_endpoint.php?transactions&today&desc&page=' + page_transaction + '&paginate=' + paginate + '&email=' + transaction_corporate + '&payment=' + transaction_payment,
             type: 'GET',
             success: function(response) {
-                console.log(response);
-                var table_transactions = $('#table-transaction-history');
-                table_transactions.empty();
-                table_transactions.append(`
-                    <tr>
-                        <th class="col-3">#</th> 
-                        <th>Email</th>
-                        <th>Payment</th>
-                    </tr>`);
-                var data = response.transactions;
-                if (response.status === 'success') {
-                    // use foreach
-                    response.transactions.forEach(element => {
-                        table_transactions.append(`
-                            <tr>
-                                <td>${element.queue_number}</td>
-                                <td>${element.email}</td>
-                                <td>${element.payment}</td>
-                            </tr>`);
-                    });
-                } else {
-                    table_transactions.append(`<tr>
-                        <td colspan="3">No data available</td>
-                        </tr>`);
-                }
+                displayTransactions(response);
             },
 
         });
+    }
+
+    function displayEmployees(response) {
+        let data = response;
+        console.log(data);
+        let table_employees = $('#table-employees');
+        table_employees.empty();
+        if (data.status === 'success' && data.employees) {
+            data.employees.forEach(employee => {
+                table_employees.append(`
+                    <div class="card shadow-sm w-100 p-2 mb-2 d-flex flex-row">
+                        <div class="col-1" style="min-width:50px;min-height:50px;max-width:50px;max-height:50px">
+                            <img class="w-100 h-100 border rounded-circle" src="/public/asset/images/user_icon.png" alt="${employee.username}"">
+                        </div>
+                        <div class="px-2">
+                        <span class="d-none">${employee.id}</span>
+                        <strong class="p-0">
+                            ${userStatusIcon(employee.username, employee.role_type, employee.active)}
+                        </strong>
+                        </div>
+                    </div>
+                `);
+            });
+        } else {
+            let row = table_employees.insertRow(-1);
+            row.innerHTML = `
+                No data available
+            `;
+        }
     }
 
     function getEmployees() {
@@ -93,30 +137,7 @@ $(document).ready(function() {
             url: './../api/api_endpoint.php?employees&page=' + page_employee + '&paginate=' + paginate,
             type: 'GET',
             success: function(response) {
-                var table_employees = $('#table-employees');
-                table_employees.empty();
-                table_employees.append(`
-                    <tr>
-                        <th class="col-3">#</th>
-                        <th>Employee</th>
-                    </tr>`);
-                if (response.status === 'success') {
-                    response.employees.forEach(element => {
-                        table_employees.append(`
-                            <tr>
-                                <td class="col-2">${element.id}</td>
-                                <td>
-                                    <strong class="p-0">
-                                    ${userStatusIcon(element.username, element.role_type, element.active)}
-                                    </strong>
-                                </td>
-                            </tr>`);
-                    });
-                } else {
-                    table_employees.append(`<tr>
-                        <td colspan="3">No data available</td>
-                    </tr>`);
-                }
+                displayEmployees(response);
             },
             error: function(response) {
                 console.log(response);
@@ -183,32 +204,7 @@ $(document).ready(function() {
             transaction_payment = "assessment";
         }
         getTransactions();
-        // if (transaction === 'corporate') {
-        //     $('#transaction-email-select').show();
-        //     $('#transaction-history-filter-payment').show();
-        //     transaction_corporate = "none";
-        //     transaction_payment = "none";
-        // } else {
-        //     $('#transaction-email-select').hide();
-        //     $('#transaction-history-filter-payment').hide();
-        //     transaction_corporate = "none";
-        //     transaction_payment = "none";
-        // }
-        // getTransactions();
     });
-
-    // Status: Merged
-    // $('#transaction-email-select').change(function() {
-    //     var email = $(this).val();
-    //     transaction_corporate = email;
-    //     getTransactions();
-    // });
-
-    // $('#transaction-history-filter-payment').change(function() {
-    //     var payment = $(this).val();
-    //     transaction_payment = payment;
-    //     getTransactions();
-    // });
 
     // Generate Report
     var year = 2024;
@@ -292,15 +288,106 @@ $(document).ready(function() {
     var operational = true;
     var cutOff = document.getElementById('employee-cut-off');
     var btn_counter_resume = document.getElementById('employee-resume');
-    cutOff.addEventListener('click', function(e) {
-        e.preventDefault();
-        operational = false;
-    });
+    // cutOff.addEventListener('click', function(e) {
+    //     e.preventDefault();
+    //     operational = false;
+    // });
     
     btn_counter_resume.addEventListener('click', function(e) {
         e.preventDefault();
         operational = true;
     });
+
+    // Chart System
+    let transaction_chart = document.getElementById('transaction-chart');
+    var myLineChart = new Chart(transaction_chart, {
+        type: 'line',
+        data: {
+        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        datasets: [{
+            label: "Transactions",
+            lineTension: 0.3,
+            backgroundColor: "rgba(78, 115, 223, 0.05)",
+            borderColor: "rgba(78, 115, 223, 1)",
+            pointRadius: 3,
+            pointBackgroundColor: "rgba(78, 115, 223, 1)",
+            pointBorderColor: "rgba(78, 115, 223, 1)",
+            pointHoverRadius: 3,
+            pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+            pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+            pointHitRadius: 10,
+            pointBorderWidth: 2,
+            data: [0, 10000, 5000, 15000, 10000, 20000, 15000, 25000, 20000, 30000, 25000, 40000],
+        }],
+        },
+        options: {
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+            left: 10,
+            right: 25,
+            top: 25,
+            bottom: 0
+            }
+        },
+        scales: {
+            xAxes: [{
+            time: {
+                unit: 'date'
+            },
+            gridLines: {
+                display: false,
+                drawBorder: false
+            },
+            ticks: {
+                maxTicksLimit: 7
+            }
+            }],
+            yAxes: [{
+            ticks: {
+                maxTicksLimit: 5,
+                padding: 10,
+                // Include a dollar sign in the ticks
+                callback: function(value, index, values) {
+                return '$' + number_format(value);
+                }
+            },
+            gridLines: {
+                color: "rgb(234, 236, 244)",
+                zeroLineColor: "rgb(234, 236, 244)",
+                drawBorder: false,
+                borderDash: [2],
+                zeroLineBorderDash: [2]
+            }
+            }],
+        },
+        legend: {
+            display: true
+        },
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            caretPadding: 10,
+            callbacks: {
+            label: function(tooltipItem, chart) {
+                var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                return datasetLabel + ': $' + number_format(tooltipItem.yLabel);
+            }
+            }
+        }
+        }
+    });
+
     setInterval(function() {
         if (operational) {
             rtTransaction();

@@ -51,8 +51,8 @@ restrictAdminMode();
                                 <input type="text" name="search" id="search-counter" class="form-control searchBarCounterRegistered" placeholder="Enter username">
                             </div>
                         </div>
-                    </div> <!-- Missing closing div for row -->
-                    <table class="table table-striped table-members table-counter-registered">
+                    </div>
+                    <table class="table table-striped table-members" id="table-counter-registered">
                         <tr>
                             <th>#</th>
                             <th>Employee</th>
@@ -180,7 +180,7 @@ restrictAdminMode();
                         <div class="mb-3">
                             <label class="form-label">Employees Available</label>
                             <div class="w-100">
-                                <table class="table table-striped table-members table-counter-available">
+                                <table class="table table-striped table-members">
                                     <tr>
                                         <th class="col-2"></th>
                                         <th>Username</th>
