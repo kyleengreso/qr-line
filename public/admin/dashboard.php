@@ -128,7 +128,7 @@ $counterNumber = $token->counterNumber;
                                             <span>Data Range: </span>
                                         </div>
                                         <div class="col-9">
-                                            <select class="custom-select custom-select-sm form-control form-control-sm" name="dateRange" id="dateRange-select">
+                                            <select class="form-select" name="dateRange" id="dateRange-select">
                                                 <option value="day">Today</option>
                                                 <option value="week">This Week</option>
                                                 <option value="last-week">Last Week</option>
@@ -159,7 +159,7 @@ $counterNumber = $token->counterNumber;
                                     <div class="row">
                                         <span class="fs-6 w-25">Filter</span>
                                         <div class="col-6 px-0 mx-1">
-                                            <select class="custom-select custom-select-sm form-control form-control-sm" name="transactionselect" id="transaction-select">
+                                            <select class="form-select" name="transactionselect" id="transaction-select">
                                                 <option value="none" id="transaction-history-filter-corporate-none">All</option>
                                                 <option value="psu.palawan.edu.ph" id="transaction-history-filter-corporate">Corporate</option>
                                                 <option value="none" id="transaction-history-filter-non-corporate">Non-Corporate</option>
@@ -199,12 +199,12 @@ $counterNumber = $token->counterNumber;
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-6 col-md-4 mb-2 align-middle">
-                                        <select class="custom-select custom-select-sm form-control form-control-sm" name="month" id="month">
+                                        <select class="form-select" name="month" id="month">
                                             <option value="01">Month</option>
                                         </select>
                                     </div>
                                     <div class="col-6 col-md-4 mb-2">
-                                        <select class="custom-select custom-select-sm form-control form-control-sm" name="year" id="year">
+                                        <select class="form-select" name="year" id="year">
                                             <option value="2023">Year</option>
                                         </select>
                                     </div>

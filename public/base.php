@@ -127,6 +127,7 @@ function before_js() {
 
 function after_js() {
     echo '
+    <script src="./../asset/js/base.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/popper.min.js" ></script>
     <script src="./../asset/js/bootstrap.bundle.js"></script>
@@ -140,5 +141,18 @@ function project_year() {
     $today = date("Y-m-d"); // Gets today's date in "YYYY-MM-DD" format
     $year = date("Y", strtotime($today)); // Extracts the year from the date
     return $year; // Returns the year
+}
+
+
+
+
+
+// COUNTER TEXT
+function counter_no_assigned() {
+    return "No counter assigned";
+}
+
+function counter_no_available() {
+    return "No counter available";
 }
 ?>

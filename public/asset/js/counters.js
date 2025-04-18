@@ -6,14 +6,7 @@ var paginate = 5;
 var counterAdd_search = '';
 var page_counterModal = 1;
 
-
-
-// Get the host using JS
-var protocol = window.location.protocol;
-var host = window.location.host;
-var realHost = protocol + '//' + host;
-
-console.log('Host: ' + realHost);
+// console.log('Host: ' + realHost);
 
 let table_counter_available = document.querySelectorAll('.table-counter-available');
 
@@ -78,7 +71,7 @@ function getCounterById(id) {
     });
     let resp = null;
     $.ajax({
-        url: `./../public/api/api_endpoint.php?${params}`,
+        url: realHost + '/public/api/api_endpoint.php?' + params,
         type: 'GET',
         async: false,
         success: function(response) {
@@ -104,7 +97,7 @@ function getCounterAvailable() {
     let resp = null;
 
     $.ajax({
-        url: `${realHost}/public/api/api_endpoint.php?${params}`,
+        url: realHost + '/public/api/api_endpoint.php?' + params,
         type: 'GET',
         async: false,
         success: function(response) {
@@ -129,7 +122,7 @@ function getCounterRegistered() {
     let resp = null;
 
     $.ajax({
-        url: `${realHost}/public/api/api_endpoint.php?${params}`,
+        url: realHost + '/public/api/api_endpoint.php?' + params,
         type: 'GET',
         async: false,
         success: function(response) {
@@ -173,8 +166,8 @@ function displayCounterRegistered(response) {
                 </td>
 
                 <td>
-                    <a class="btn btn-outline-primary text-primary" id="update-counter-${employee.idcounter}" data-toggle="modal" data-target="#updateCounterModal" style="border-top-right-radius:0px;border-bottom-right-radius:0px">Update</a>
-                    <a id="delete-counter-${employee.idcounter}" class="btn btn-outline-danger delete-counter" data-toggle="modal" data-target="#deleteCounterModal" style="border-top-left-radius:0px;border-bottom-left-radius:0px">Delete</a>
+                    <a class="btn btn-outline-primary text-primary" id="update-counter-${employee.idcounter}" data-toggle="modal" data-target="#updateCounterModal">Update</a>
+                    <a id="delete-counter-${employee.idcounter}" class="btn btn-outline-danger delete-counter" data-toggle="modal" data-target="#deleteCounterModal">Delete</a>
                 </td>
             </tr>
         `;
@@ -182,7 +175,7 @@ function displayCounterRegistered(response) {
     } else {
         let row = table_counter_registered.insertRow(-1);
         row.innerHTML = `
-            <td colspan="4" class="text-center fw-bold">No data available</td>
+            <td colspan="4" class="text-center fw-bold">No counter assigned</td>
         `;
     }
 
@@ -191,12 +184,12 @@ function displayCounterRegistered(response) {
 function displayCounterAvailable(response) {
     let data = response;
     console.log(response);
-    let tables = document.querySelectorAll('.table-counter-available'); // Use querySelectorAll to get all matching tables
+    let tables = document.querySelectorAll('.table-counter-available');
 
-    if (!tables || tables.length === 0) {
-        console.error('No tables with class "table-counter-available" found.');
-        return;
-    }
+    // Maintenance part
+    // if (!tables || tables.length === 0) {
+    //     return;
+    // }
 
     // Loop through each table
     tables.forEach((table) => {
@@ -245,15 +238,13 @@ if (btn_add_counter) {
 
 $('#frmAddCounter').on('submit', function(event) {
     event.preventDefault();
-
-    // To get value from name of te radio
     var employee_id = null;
     var counter_no = document.querySelector('input[name="counter_no_add"]').value;
-    console.log(employee_id, counter_no);
+    // console.log(employee_id, counter_no);
 
     if (document.querySelector('input[name="employee-counter-set"]:checked') && counter_no) {
         employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
-        console.log(employee_id);
+        // console.log(employee_id);
         addCounter(employee_id, counter_no);
     } else {
         message_error($('#frmAddCounter'), 'Please select an employee.');
@@ -267,7 +258,7 @@ function addCounter(employee_id, counter_no) {
         counterNumber: counter_no,
     }
     $.ajax({
-        url: './../api/api_endpoint.php',
+        url: realHost + '/public/api/api_endpoint.php',
         type: 'POST',
         data: JSON.stringify(data),
         success: function(response) {
@@ -389,16 +380,20 @@ var counter_id_update = null;
 $(document).on('click', '[id^="update-counter-"]', function () {
     const counterId = this.id.split('-')[2];
     const counterData = getCounterById(counterId);
+    console.log(counterData);
     page_counterModal = 1;
+    pagePrevCounterAvailableUpdate.classList.add('disabled');
+    pageNextCounterAvailableUpdate.classList.remove('disabled');
 
-    // Update Modal Property
-    // Title
-    const updateCounterTitle = document.getElementById('updateCounterTitle');
+    let updateCounterTitle = document.getElementById('updateCounterTitle');
+    let updateCounterUsername = document.getElementById('updateCounterUsername');
+    let updateCounterNumber = document.getElementById('updateCounterNumber');
     updateCounterTitle.innerText = `Update Counter: ${counterData.counter.counterNumber}`;
+    updateCounterUsername.innerText = counterData.counter.username;
+    updateCounterNumber.innerText = counterData.counter.counterNumber;
 
 
     counter_id_update = counterData.counter.idcounter;
-    
     const update_idcounter = document.getElementById('update-idcounter');
     if (update_idcounter) {
         update_idcounter.textContent = counterData.counter.idcounter; // Correctly set the text content
@@ -418,9 +413,8 @@ $(document).on('click', '[id^="update-counter-"]', function () {
 $('#frmUpdateCounter').on('submit', function(event) {
     event.preventDefault();
 
-    // To get value from name of te radio
     const counterId = counter_id_update;
-    console.log('COunter Id:', counterId);
+    console.log('Counter Id:', counterId);
     let employee_id = null;
     const counter_no_update = document.getElementById('counter_no_update').value;
     console.log(employee_id, counter_no_update);
@@ -434,6 +428,7 @@ $('#frmUpdateCounter').on('submit', function(event) {
     }
 
 });
+
 function updateCounter(idcounter, employee_id, counterNumber) {
     console.log('updateCounter called with:', { idcounter, employee_id, counterNumber });
     let data = {
@@ -445,7 +440,7 @@ function updateCounter(idcounter, employee_id, counterNumber) {
     };
 
     $.ajax({
-        url: `${realHost}/public/api/api_endpoint.php`,
+        url: realHost + '/public/api/api_endpoint.php',
         type: 'POST',
         async: false,
         data: JSON.stringify(data),
@@ -491,7 +486,7 @@ function deleteCounter(idcounter) {
     }
 
     $.ajax({
-        url: `${realHost}/public/api/api_endpoint.php`,
+        url: realHost + '/public/api/api_endpoint.php',
         type: 'POST',
         async: false,
         data: JSON.stringify(data),

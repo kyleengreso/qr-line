@@ -67,7 +67,7 @@
     background-color: white;
     border-color: rgb(255, 110, 55);
     color: rgb(255, 110, 55);
-    border-radius: 20px;
+    /* border-radius: 20px; */
 }
 
 /* .btn-secondary, .btn-success, .btn-danger,
