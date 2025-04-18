@@ -32,22 +32,26 @@ restrictAdminMode();
                         Employees
                     </div>
                     <div class="card-body">
-                        <div class="row align-center my-2">
-                            <div class="row">
-                                <div class="col">
-                                    <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
-                                </div>
-                                <div class="col d-flex justify-content-end p-0">
-                                    <a class="btn btn-success text-white" id="btn-add-employee" data-toggle="modal" data-target="#addEmployeeModal" ><span class="fw-bold">+</span> Add New</a>
-                                </div>
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col">
+                                <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
+                            </div>
+                            <div class="col d-flex justify-content-end">
+                                <a class="btn btn-success text-white" id="btn-add-employee" data-toggle="modal" data-target="#addEmployeeModal" ><span class="fw-bold">+</span> Add New</a>
+                                <!-- <a class="btn btn-success text-white px-4" id="btn-add-counter" data-toggle="modal" data-target="#addCounterModal" ><span class="fw-bold">+</span> Add New</a> -->
                             </div>
                         </div>
-                        <div class="mb-3 row">
-                            <div class="input-group w-75">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
+                    </div>
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-9">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
+                                </div>
                             </div>
-                            <div class="w-25">
+                            <div class="col-3">
                                 <select class="form-select" name="getRoleType" id="getRoleType">
                                     <option value="none">All</option>
                                     <option value="admin">Admin</option>
@@ -55,6 +59,7 @@ restrictAdminMode();
                                 </select>
                             </div>
                         </div>
+                    </div>
                         <table class="table table-striped table-members" id="table-employees">
                             <tr>
                                 <th>#</th>
@@ -157,7 +162,7 @@ restrictAdminMode();
             <div class="modal-content">
                 <form method="POST" id="frmAddEmployee">
                     <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="addEmployeeTitle">Modal title</h5>
+                        <h5 class="modal-title fw-bold" id="addEmployeeTitle">Add Employee</h5>
                     </div>
                     <div class="modal-body py-4 px-6" id="addEmployeeBody">
                         <div class="mb-4">
