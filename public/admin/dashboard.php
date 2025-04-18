@@ -122,8 +122,28 @@ $counterNumber = $token->counterNumber;
                                 Transactions Overview
                             </div>
                             <div class="card-body">
-                                Chart onworking
-                                <canvas id="transaction-chart" style="max-width:100%; height:300px;max-height:320px"></canvas>
+                                <div class="col-12 col-md-6">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <span>Data Range: </span>
+                                        </div>
+                                        <div class="col-9">
+                                            <select class="custom-select custom-select-sm form-control form-control-sm" name="dateRange" id="dateRange-select">
+                                                <option value="day">Today</option>
+                                                <option value="week">This Week</option>
+                                                <option value="last-week">Last Week</option>
+                                                <option value="month">This Month</option>
+                                                <option value="last-30-days">Last Month</option>
+                                                <option value="last-3-months">Last 3 months</option>
+                                                <!-- <option value="year">This year</option> -->
+                                                <option value="last-12-months">Last 12 months</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-100 h-auto">
+                                    <canvas id="transaction-chart" style="max-width:100%; height:300px;max-height:320px"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>

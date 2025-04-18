@@ -73,7 +73,7 @@ function displayTransactions(response) {
         pageNextEmployees.style.display = 'block';
         data.transactions.forEach(transaction => {
             let row = table_transactions.insertRow(-1);
-            console.log(transaction);
+            // console.log(transaction);
             row.innerHTML = `
                 <tr>
                     <td>${transaction.queue_number}</td>
@@ -206,15 +206,16 @@ $('#transaction-select').change(function() {
     getTransactions();
 });
 
-// Generate Report
-var year = 2024;
+// Generate Report :>
+var year = 2025;
 var month = 1;
 var months = ['January', 'February', 'March',
                 'April', 'May', 'June',
                 'July', 'August', 'September',
                 'October', 'November', 'December'];
 var dd_year = $('#year');
-for (var y = 2020; y <= 2040; y++) {
+for (var y = 2020; y <= (new Date().getFullYear()) + 5; y++) {
+    // This why i added automated year
     dd_year.append('<option value="' + y + '">' + y + '</option>');
 }
 
@@ -242,24 +243,6 @@ var protocol = window.location.protocol;
 var host = window.location.host;
 var realHost = protocol + '//' + host;
 
-// Dashboard Chart
-function getDashboardStat() {
-    let resp = null;
-    console.log(realHost);
-    $.ajax({
-        url: realHost + "/public/api/api_endpoint.php?dashboard_stats&day",
-        type: "GET",
-        async: false,
-        success: function(response) {
-            resp = response;
-        },
-        error: function(xhr, status, error) {
-            console.error("Error fetching dashboard stats:", error); // Handle errors
-        }
-    });
-    return resp;
-}
-
 // Monitor
 function rtTransaction() {
     $.ajax({
@@ -269,7 +252,6 @@ function rtTransaction() {
             let stat = response.data[0]
             console.log(stat);
             if (response.status === 'success') {
-
                 $('#transactions-total').text(stat.transaction_total_today);
                 $('#transactions-pending').text(stat.transaction_total_pending);
                 $('#transactions-completed').text(stat.transaction_total_completed);
@@ -283,6 +265,7 @@ function rtTransaction() {
         }
     });
 }
+
 rtTransaction();
 
 var operational = true;
@@ -461,6 +444,12 @@ function updateTransactionChart(data) {
     transactionChart.data.datasets[0].data = chart_transaction_total;
     transactionChart.update();
 }
+
+$('#dateRange-select').change(function() {
+    var dataRange = $(this).val();
+    transaction_stat_data_range = dataRange;
+    // updateTransactionChart(getTransactionChart());
+});
 
 setInterval(function() {
     if (operational) {
