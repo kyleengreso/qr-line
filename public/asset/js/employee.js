@@ -15,13 +15,11 @@ search.addEventListener('keyup', (e)=> {
 });
 
 let getRoleType = document.getElementById('getRoleType');
-// getRoleType in select to change
 getRoleType.addEventListener('change', (e) => {
     page_employees = 1;
     role_type_employee = e.target.value;
     loadEmployees();
 });
-
 
 function loadEmployees() {
     let table_employees = document.getElementById('table-employees');
@@ -66,7 +64,51 @@ function loadEmployees() {
     }
 }
 
+// View Employee
+$(document).on('click', '[id^="view-employee-"]', function (e) {
+    e.preventDefault();
 
+    const elementId = $(this).attr('id');
+    const employeeId = elementId.split('-').pop();
+    console.log(employeeId);
+
+    const params = new URLSearchParams({
+        employees: true,
+        id: employeeId
+    });
+
+    $.ajax({
+        url: realHost + '/public/api/api_endpoint.php?' + params,
+        type: 'GET',
+        success: function (response) {
+            console.log(response);
+            const employee = response.employee;
+            const username = employee.username;
+            const email = employee.email;
+            const role_type = employee.role_type;
+            const active = employee.active;
+
+            let viewUsernameDisplay = document.getElementById('viewUsernameDisplay');
+            viewUsernameDisplay.innerText = username;
+            let viewEmployeeId = document.getElementById('viewEmployeeId');
+            viewEmployeeId.innerText = employeeId;
+            let viewEmployeeUsername = document.getElementById('viewEmployeeUsername');
+            viewEmployeeUsername.innerText = username;
+            let viewEmployeeEmail = document.getElementById('viewEmployeeEmail');
+            viewEmployeeEmail.innerText = email ? email : 'Not present';
+            let viewEmployeeRoleType = document.getElementById('viewEmployeeRoleType');
+            viewEmployeeRoleType.innerText = role_type;
+            let viewEmployeeStatus = document.getElementById('viewEmployeeStatus');
+            if (active === 1) {
+                viewEmployeeStatus.innerHTML = textBadge('Active', 'success');
+            } else {
+                viewEmployeeStatus.innerHTML = textBadge('Inactive', 'danger');
+            }
+        }
+
+    });
+
+});
 
 // Add Employee
 let btnAddEmployeeModal = document.getElementById('btn-add-employee');
@@ -163,6 +205,9 @@ $(document).on('click', '[id^="update-employee-"]', function (e) {
             const email = employee.email;
             const role_type = employee.role_type;
             const active = employee.active;
+
+            let updateUsernameDisplay = document.getElementById('updateUsernameDisplay');
+            updateUsernameDisplay.innerText = username;
 
             let frmUpdateEmployee = document.getElementById('frmUpdateEmployee');
             frmUpdateEmployee.reset();
@@ -269,6 +314,10 @@ $(document).on('click', '[id^="delete-employee-"]', function (e) {
             frmDeleteEmployee.reset();
             const employee = response.employee;
             const username = employee.username;
+
+            let updateUsernameDisplay = document.getElementById('deleteUsernameDisplay');
+            updateUsernameDisplay.innerText = username;
+
             frmDeleteEmployee.elements['delete_id'].value = employeeId;
 
             let del_username = document.getElementById('delete_username');

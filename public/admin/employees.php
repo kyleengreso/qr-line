@@ -30,7 +30,6 @@ restrictAdminMode();
                 <div class="card shadow">
                     <div class="card-header">
                         Employees
-                        <button class="btn btn-danger" onclick="window.location.href='./dashboard.php'">X</button>
                     </div>
                     <div class="card-body">
                         <div class="row align-center my-2">
@@ -90,10 +89,61 @@ restrictAdminMode();
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Modal title</h5>
+                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">View Employee: <span id="viewUsernameDisplay"></span></h5>
                 </div>
                 <div class="modal-body py-4 px-6" id="viewEmployeeBody">
-
+                    <div class="col">
+                        <div class="row-12">
+                            <div class="col text-center">
+                                <h4 class="text-center my-1 fw-bold">Employee Details</h4>
+                            </div>
+                        </div>
+                        <!-- <div class="row-12">
+                            <div class="col d-flex justify-content-center" style="max-width:300px;max-height:300px;">
+                                <img class="w-100 h-100" src="./../asset/images/user_icon.png" alt="">
+                            </div>
+                        </div> -->
+                        <div class="row">
+                            <div class="col">
+                                ID
+                            </div>
+                            <div class="col">
+                                <span id="viewEmployeeId">N/A</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                Username
+                            </div>
+                            <div class="col">
+                                <span id="viewEmployeeUsername">N/A</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                Email
+                            </div>
+                            <div class="col">
+                                <span id="viewEmployeeEmail">N/A</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                Role
+                            </div>
+                            <div class="col">
+                                <span id="viewEmployeeRoleType">N/A</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                Status
+                            </div>
+                            <div class="col">
+                                <span id="viewEmployeeStatus">N/A</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer" id="viewEmployeeFooter">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -168,7 +218,7 @@ restrictAdminMode();
             <div class="modal-content">
                 <form id="frmUpdateEmployee" method="POST">
                     <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="updateEmployeeTitle">Add Employee</h5>
+                        <h5 class="modal-title fw-bold" id="updateEmployeeTitle">Update Employee: <span id="updateUsernameDisplay"></span></h5>
                     </div>
                     <div class="modal-body py-4 px-6" id="updateEmployeeBody">
                         <div class="mb-4">
@@ -230,30 +280,35 @@ restrictAdminMode();
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form method="POST" id="frmDeleteEmployee">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                    <h5 class="modal-title fw-bold" id="deleteEmployeeTitle">Modal title</h5>
-                </div>
-                <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
-                    <div class="mb-4">
-                        <div class="input-group">
-                            <div class="alert alert-danger w-100 d-none" id="deleteEmployeeAlert">
-                                <span id="deleteEmployeeAlertMsg"></span>
+                    <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
+                        <h5 class="modal-title fw-bold" id="deleteEmployeeTitle">
+                            Delete Employee: <span id="deleteUsernameDisplay"></span>
+                        </h5>
+                    </div>
+                    <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
+                        <div class="mb-4">
+                            <div class="input-group">
+                                <div class="alert alert-danger w-100 d-none" id="deleteEmployeeAlert">
+                                    <span id="deleteEmployeeAlertMsg"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-center mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16" style="color:red">
-                                <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
-                                <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
-                            </svg>
-                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16" style="color:red">
+                                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                                </svg>
+                            </div>
                             <input type="hidden" name="delete_id" id="delete_id">
-                            <label class="form-label">Do you want to delete this employee <strong><span id="delete_username"></span></strong>?</label>
-                    </div>
-                    <div class="modal-footer" id="deleteEmployeeFooter">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Delete</button>
+                            <label class="form-label">
+                                Do you want to delete this employee <strong><span id="delete_username"></span></strong>?
+                            </label>
+                        </div>
+                        <div class="modal-footer" id="deleteEmployeeFooter">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Delete</button>
+                        </div>
                     </div>
                 </form>
             </div>

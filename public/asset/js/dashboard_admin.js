@@ -239,10 +239,6 @@ $('#btnGenerateReport').click(function() {
 
 });
 
-var protocol = window.location.protocol;
-var host = window.location.host;
-var realHost = protocol + '//' + host;
-
 // Monitor
 function rtTransaction() {
     $.ajax({
@@ -400,7 +396,7 @@ function initTransactionChart(data) {
     });
 }
 
-var transaction_stat_data_range = 'last-30-days';
+var transaction_stat_data_range = 'day';
 function getTransactionChart() {
     let resp = null;
     let params = new URLSearchParams({
