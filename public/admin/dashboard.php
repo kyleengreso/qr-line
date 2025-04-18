@@ -101,7 +101,7 @@ $counterNumber = $token->counterNumber;
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#a00">
-                                            COMPLETED</div>
+                                            CANCELLED</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fw-bold" id="transactions-cancelled"></span></div>
                                     </div>
                                     <div class="col-auto">
@@ -277,11 +277,8 @@ $counterNumber = $token->counterNumber;
             </div>
         </div>
     </div>
-    <script src="./../asset/js/jquery-3.7.1.js"></script>
-    <script src="./../asset/js/popper.min.js"></script>
-    <script src="./../asset/js/bootstrap.bundle.js"></script>
-    <script src="./../asset/js/dashboard_admin.js"></script>
     <?php after_js()?>
+    <script src="./../asset/js/dashboard_admin.js"></script>
     <?php include_once "./../includes/footer.php"; ?>
 </body>
 </html>
