@@ -1730,7 +1730,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         foreach ($result as $row) {
             $d = new DateTime($row['created_at']);
             $created_at = $d->format('Y-m-d h:i:s A');
-            $pdf->Cell(50,10,$created_at,1,0,'C');
             $pdf->Cell(50,10,$row['created_at'],1,0,'C');
             $pdf->Cell(60,10,$row['name'],1,0,'C');
             $pdf->Cell(50,10,$row['email'],1,0,'C');

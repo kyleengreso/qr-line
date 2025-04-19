@@ -3,7 +3,6 @@ var employee_search = '';
 var page_employees = 1;
 var paginate = 5;
 var role_type_employee = 'none';
-var role_type_employee = 'none';
 
 // Search
 let search = document.getElementById('search');
@@ -37,7 +36,6 @@ function loadEmployees() {
             success: function (response) {
                 if (response.status === 'success') {
                     const employees = response.employees;
-                    let table = document.getElementById('table-employees');
                     while (table.rows.length > 1) {
                         table.deleteRow(-1);
                     }
@@ -159,7 +157,7 @@ frmAddEmployee.addEventListener('submit', function (e) {
                 formAlertMsg.innerText = response.message;
                 formAlert.classList.remove('d-none', 'alert-danger');
                 formAlert.classList.add('alert-success');
-                setTimeout(function() {
+                setTimeout(()=> {
                     location.reload();
                 }, 1000);
             } else {

@@ -1,510 +1,455 @@
 
 var counter_search = '';
-var page_counter = 1;
+var counter_page = 1;
 var paginate = 5;
 
-var counterAdd_search = '';
-var page_counterModal = 1;
+var counter_page_modal = 1;
 
-// console.log('Host: ' + realHost);
-
-let table_counter_available = document.querySelectorAll('.table-counter-available');
-
-let searchBar = document.querySelectorAll('.searchBar');
-if (searchBar.length > 0) {
-    searchBar.forEach((search) => {
-        search.addEventListener('keyup', function (e) {
-            page_counter = 1;
-            counter_search = e.target.value; // Update the counter_search variable
-            // console.log('Search Value:', counter_search); // Debugging log
-            console.log(getCounterAvailable()); // Call the function to fetch data
+function loadCounters() {
+    let table_counters_registered = document.getElementById('table-counters-registered');
+    if (table_counters_registered) {
+        const params = new URLSearchParams({
+            counters: true,
+            page: counter_page,
+            paginate: paginate,
+            search: counter_search,
         });
-    });
-}
-
-let searchBarCounterAvailableAdd = document.querySelector('.searchBarCounterAvailableAdd');
-if (searchBarCounterAvailableAdd) {
-    searchBarCounterAvailableAdd.addEventListener('keyup', function (e) {
-        page_counter = 1;
-        counter_search = e.target.value;
-        console.log('Search Value:', counter_search);
-        console.log(getCounterAvailable());
-        displayCounterAvailable(getCounterAvailable());
-    });
-}
-
-let searchBarCounterAvailableUpdate = document.querySelector('.searchBarCounterAvailableUpdate');
-if (searchBarCounterAvailableUpdate) {
-    searchBarCounterAvailableUpdate.addEventListener('keyup', function (e) {
-        page_counter = 1;
-        counter_search = e.target.value;
-        console.log('Search Value:', counter_search);
-        console.log(getCounterAvailable());
-        displayCounterAvailable(getCounterAvailable());
-    });
-}
-
-let searchBarCounterRegistered = document.querySelector('.searchBarCounterRegistered');
-if (searchBarCounterRegistered) {
-    searchBarCounterRegistered.addEventListener('keyup', function (e) {
-        counter_search = e.target.value;
-        console.log('Search Value:', counter_search);
-        console.log(getCounterRegistered());
-        displayCounterRegistered(getCounterRegistered());
-    });
-}
-
-function getCounterById(id) {
-    // id that means for the following
-    // idcounter = YES
-    // counterNumber = NO
-    // idemployee = NO
-
-    if (!id) {
-        console.error('ID is null or undefined');
-        return null;
+        $.ajax({
+            url: realHost + '/public/api/api_endpoint.php?' + params,
+            type: 'GET',
+            success: function(response) {
+                while (table_counters_registered.rows.length > 1) {
+                    table_counters_registered.deleteRow(-1);
+                }
+                if (response.status === 'success') {
+                    const counters = response.counters;
+                    counters.forEach(counter => {
+                        let row = table_counters_registered.insertRow(-1);
+                        row.innerHTML = `
+                            <tr>
+                                <td style="min-width:20px;max-width:35px">${counter.counterNumber}</td>
+                                <td class="fw-bold role_type_employee_icon" style="min-width:40px">
+                                    <span>${userStatusIcon(counter.username, counter.role_type, counter.active)}</span>
+                                </td>
+                                <td>
+                                    <a class="btn btn-outline-primary text-primary" id="update-counter-${counter.idcounter}" data-toggle="modal" data-target="#updateCounterModal">Update</a>
+                                    <a id="delete-counter-${counter.idcounter}" class="btn btn-outline-danger" id="delete-counter" data-toggle="modal" data-target="#deleteCounterModal">Delete</a>
+                                </td>
+                            </tr>    
+                        `;
+                    });
+                } else {
+                    let row = table_counters_registered.insertRow(-1);
+                    row.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="fw-bold text-center">No counters assigned</td>
+                        </tr>
+                    `;
+                }
+            }
+        })
     }
-
-    const params = new URLSearchParams({
-        counters: true,
-        id: id
-    });
-    let resp = null;
-    $.ajax({
-        url: realHost + '/public/api/api_endpoint.php?' + params,
-        type: 'GET',
-        async: false,
-        success: function(response) {
-            resp = response;
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', {xhr, status, error});
-            // alert('Network Error: Please check your connection');
-        }
-    });
-    return resp;
 }
 
-function getCounterAvailable() {
-    const params = new URLSearchParams({
-        counters: true,
-        available: true,
-        page: page_counterModal,
-        paginate: paginate,
-        search: counter_search
-    });
+loadCounters();
 
-    let resp = null;
+// Add Counter
+let btnAddCounterModal = document.getElementById('btn-add-counter');
+btnAddCounterModal.addEventListener('click', function(e) {
+    counter_page_modal = 1;
+    e.preventDefault();
 
-    $.ajax({
-        url: realHost + '/public/api/api_endpoint.php?' + params,
-        type: 'GET',
-        async: false,
-        success: function(response) {
-            resp = response;
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', {xhr, status, error});
-            alert('Network Error: Please check your connection');
-        }
-    });
-    return resp;
-}
-
-function getCounterRegistered() {
-    const params = new URLSearchParams({
-        counters: true,
-        page: page_counter,
-        paginate: paginate,
-        search: counter_search
-    });
-
-    let resp = null;
-
-    $.ajax({
-        url: realHost + '/public/api/api_endpoint.php?' + params,
-        type: 'GET',
-        async: false,
-        success: function(response) {
-            resp = response;
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', {xhr, status, error});
-            alert('Network Error: Please check your connection');
-        }
-    });
-    return resp;
-}
-
-
-function displayCounterRegistered(response) {
-    let data = response;
-
-    // Sort in ascending order
-    if (data && data.counters) {
-        data.counters.sort((a, b) => {
-            return a.counterNumber - b.counterNumber;
-        });
-    }
-
-    let table_counter_registered = document.getElementById('table-counter-registered');
-    while (table_counter_registered.rows.length > 1) {
-        table_counter_registered.deleteRow(-1);
-    }
-
-    if (data && data.counters) {
-        data.counters.forEach(employee => {
-            // <td style="min-width:20px;max-width:35px">
-            //     ${employee.queue_count}
-            // </td>
-            let row = table_counter_registered.insertRow(-1);
-            row.innerHTML = `
-            <tr>
-                <td style="min-width:20px;max-width:35px">${employee.counterNumber}</td>
-                <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                    <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
-                </td>
-
-                <td>
-                    <a class="btn btn-outline-primary text-primary" id="update-counter-${employee.idcounter}" data-toggle="modal" data-target="#updateCounterModal">Update</a>
-                    <a id="delete-counter-${employee.idcounter}" class="btn btn-outline-danger delete-counter" data-toggle="modal" data-target="#deleteCounterModal">Delete</a>
-                </td>
-            </tr>
-        `;
-        });
-    } else {
-        let row = table_counter_registered.insertRow(-1);
-        row.innerHTML = `
-            <td colspan="4" class="text-center fw-bold">No counter assigned</td>
-        `;
-    }
-
-}
-
-function displayCounterAvailable(response) {
-    let data = response;
-    console.log(response);
-    let tables = document.querySelectorAll('.table-counter-available');
-
-    // Maintenance part
-    // if (!tables || tables.length === 0) {
-    //     return;
-    // }
-
-    // Loop through each table
-    tables.forEach((table) => {
-        // Clear existing rows except the header
-        while (table.rows.length > 1) {
-            table.deleteRow(-1);
-        }
-
-        // Populate the table with new data
-        if (data && data.counters) {
-            data.counters.forEach(employee => {
-                let row = table.insertRow(-1);
-
-                row.innerHTML = `
-                    <tr>
-                        <td style="min-width:20px;max-width:35px">
-                            <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-${employee.id}" value="${employee.id}">
-                        </td>
-                        <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                            <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
-                        </td>
-                        <td style="min-width:20px;max-width:35px">
-                            ${textBadge(employee.availability, employee.availability == 'Available' ? 'success' : employee.availability == 'Assigned' ? 'danger' : 'warning')}
-                        </td>
-                    </tr>
-                `;
-
-            });
-        } else {
-            let row = table.insertRow(-1);
-            row.innerHTML = `
-                <td colspan="3" class="text-center fw-bold">No data available</td>
-            `;
-        }
-    });
-}
-
-// ADD COUNTER
-let btn_add_counter = document.getElementById('btn-add-counter');
-if (btn_add_counter) {
-    btn_add_counter.addEventListener('click', function () {
-        const employees = getCounterAvailable();
-        displayCounterAvailable(employees);
-    });
-}
-
-$('#frmAddCounter').on('submit', function(event) {
-    event.preventDefault();
-    var employee_id = null;
-    var counter_no = document.querySelector('input[name="counter_no_add"]').value;
-    // console.log(employee_id, counter_no);
-
-    if (document.querySelector('input[name="employee-counter-set"]:checked') && counter_no) {
-        employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
-        // console.log(employee_id);
-        addCounter(employee_id, counter_no);
-    } else {
-        message_error($('#frmAddCounter'), 'Please select an employee.');
-    }
+    let form = document.getElementById('frmAddCounter');
+    form.reset();
+    loadAddEmployees();
 });
 
-function addCounter(employee_id, counter_no) {
-    var data = {
-        method: "counter-add",
-        idemployee: employee_id,
-        counterNumber: counter_no,
+function loadAddEmployees() {
+    let table_counters_available = document.getElementById('table-add-counter-available');
+    if (table_counters_available) {
+        const params = new URLSearchParams({
+            counters: true,
+            available: true,
+            search: counter_search,
+            page: counter_page_modal,
+            paginate: paginate,
+        });
+        $.ajax({
+            url: realHost + '/public/api/api_endpoint.php?' + params,
+            type: 'GET',
+            success: function (response) {
+                while (table_counters_available.rows.length > 1) {
+                    table_counters_available.deleteRow(-1);
+                }
+                if (response.status === 'success') {
+                    const employees = response.counters;
+                    employees.forEach(employee => {
+                        let row = table_counters_available.insertRow(-1);
+                        row.innerHTML = `
+                            <tr>
+                                <td style="min-width:20px;max-width:35px">
+                                    <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}">
+                                </td>
+                                <td class="fw-bold role_type_employee_icon" style="min-width:40px">
+                                    <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
+                                </td>
+                                <td style="min-width:20px;max-width:35px">
+                                    ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    let row = table_counters_available.insertRow(-1);
+                    row.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="fw-bold text-center fw-bold">No employee available</td> 
+                        </tr>
+                    `;
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading employees:', error);
+            }
+        });
     }
-    $.ajax({
-        url: realHost + '/public/api/api_endpoint.php',
-        type: 'POST',
-        data: JSON.stringify(data),
-        success: function(response) {
-            $form = $('#frmAddCounter');
-            console.log(response);
-            if (response.status == "success") {
-                message_success($form, response.message);
-                setTimeout(function() {
-                    window.location.href = "./counters.php";
-                }, 1000);
-            } else {
-                message_error($form, response.message);
-            }
-        },
-        error: function(status) {
-            console.error('AJAX Error:', status);
-        }
-    });
-}
-
-// PAGINATE: PREV and NEXT
-let pagePrevCounterRegistered = document.getElementById('pagePrevCounterRegistered');
-let pageNextCounterRegistered = document.getElementById('pageNextCounterRegistered');
-
-if (pagePrevCounterRegistered) {
-    pagePrevCounterRegistered.addEventListener('click', function () {
-        if (page_counter > 1) {
-            page_counter--;
-            const counterRegistered = getCounterRegistered();
-            if (counterRegistered.status == 'error' || counterRegistered.counters.length < paginate || page_counter == 1) {
-                pagePrevCounterRegistered.classList.add('disabled');
-            }
-            pageNextCounterRegistered.classList.remove('disabled');
-            displayCounterRegistered(counterRegistered);
-        }
-    });
-}
-
-if (pageNextCounterRegistered) {
-    pageNextCounterRegistered.addEventListener('click', function () {
-        page_counter++;
-        const counterRegistered = getCounterRegistered();
-        console.log(counterRegistered);
-        if (counterRegistered.status == 'error') {
-            pageNextCounterRegistered.classList.add('disabled');
-        } else if (counterRegistered.counters.length < paginate) {
-            pageNextCounterRegistered.classList.add('disabled');
-        }
-        pagePrevCounterRegistered.classList.remove('disabled');
-        displayCounterRegistered(counterRegistered);
-    });
 }
 
 let pagePrevCounterAvailableAdd = document.getElementById('pagePrevCounterAvailableAdd');
-let pageNextCounterAvailableAdd = document.getElementById('pageNextCounterAvailableAdd');
+pagePrevCounterAvailableAdd.addEventListener('click', function(e) {
+    if (counter_page_modal > 1) {
+        counter_page_modal--;
+        if (counter_page_modal === 1) {
+            pagePrevCounterAvailableAdd.classList.add('disabled');
+        }
+        loadAddEmployees();
+    }
+});
 
-if (pagePrevCounterAvailableAdd) {
-    pagePrevCounterAvailableAdd.addEventListener('click', function () {
-        if (page_counterModal > 1) {
-            page_counterModal--;
-            const counterAvailable = getCounterAvailable();
-            if (counterAvailable.status == 'error' || counterAvailable.counters.length < paginate || page_counter == 1) {
-                pagePrevCounterAvailableAdd.classList.add('disabled');
+let pageNextCounterAvailableAdd = document.getElementById('pageNextCounterAvailableAdd');
+pageNextCounterAvailableAdd.addEventListener('click', function(e) {
+    pagePrevCounterAvailableAdd.classList.remove('disabled');
+    e.preventDefault();
+    counter_page_modal++;
+    loadAddEmployees();
+});
+
+
+let addSearchUsername = document.getElementById('addSearchUsername');
+addSearchUsername.addEventListener('keyup', function(e) {
+    page_counterModal = 1;
+    pagePrevCounterAvailableAdd.classList.add('disabled');
+    e.preventDefault();
+    counter_search = this.value;
+    loadAddEmployees();
+});
+
+let frmAddEmployee = document.getElementById('frmAddCounter');
+frmAddEmployee.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    let formAlert = document.getElementById('addCounterAlert');
+    let formAlertMsg = document.getElementById('addCounterAlertMsg');
+    const formData = new FormData(this);
+    const employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
+    const counter_number = formData.get('counter_no_add');
+
+    // console.log(employee_id, counter_number);
+
+    $.ajax({
+        url: realHost + '/public/api/api_endpoint.php',
+        type: 'POST',
+        data: JSON.stringify({
+            method: "counter-add",
+            idemployee: employee_id,
+            counterNumber: counter_number,
+        }),
+        success: function(response) {
+            console.log(response);
+            if (response.status === 'success') {
+                formAlertMsg.innerText = response.message;
+                formAlert.classList.remove('d-none', 'alert-danger');
+                formAlert.classList.add('alert-success');
+                setTimeout(()=>{
+                    location.reload();
+                }, 1000);
+            } else {
+                formAlertMsg.innerText = response.message;
+                formAlert.classList.add('alert-danger');
+                formAlert.classList.remove('d-none', 'alert-success');
+                setTimeout(()=>{
+                    formAlert.classList.add('d-none');
+                }, 5000);
             }
-            pageNextCounterAvailableAdd.classList.remove('disabled');
-            displayCounterAvailable(counterAvailable);
-        }
-    })
-}
-if (pageNextCounterAvailableAdd) {
-    pageNextCounterAvailableAdd.addEventListener('click', function () {
-        page_counterModal++;
-        const counterAvailable = getCounterAvailable();
-        if (counterAvailable.status == 'error' || counterAvailable.counters.length < paginate) {
-            pageNextCounterAvailableAdd.classList.add('disabled');
-        }
-        pagePrevCounterAvailableAdd.classList.remove('disabled');
-        displayCounterAvailable(counterAvailable);
+        },
     });
-}
+});
+
+$(document).on('click', '[id^="update-counter-"]', function (e) {
+    counter_search = '';
+    counter_page_modal = 1;
+    e.preventDefault();
+
+    const counterId = this.id.split('-')[2];
+    console.log(counterId);
+
+    const params = new URLSearchParams({
+        counters: true,
+        id: counterId,
+        page: counter_page_modal,
+        paginate: paginate,
+    });
+    let frmUpdateCounter = document.getElementById('frmUpdateCounter');
+
+    $.ajax({
+        url: realHost + '/public/api/api_endpoint.php?' + params,
+        type: 'GET',
+        success: function (response) {
+        console.log(response);
+        if (response.status === 'success') {
+            const counter = response.counter;
+            let updateCounterDisplay = document.getElementById('updateCounterDisplay');
+            updateCounterDisplay.innerText = counter.counterNumber;
+            let updateCounterUsername = document.getElementById('updateCounterUsername');
+            updateCounterUsername.innerText = counter.username;
+            let updateCounterNumber = document.getElementById('updateCounterNumber');
+            updateCounterNumber.innerText = counter.counterNumber;
+            let update_id = document.getElementById('update_id');
+            update_id.value = counter.idcounter;
+            console.log(counter);
+            loadUpdateEmployees();
+
+            frmUpdateCounter.reset();
+            frmUpdateCounter.elements['update_id'].value = counter.idcounter;
+            frmUpdateCounter.elements['update_counter_no'].value = counter.counterNumber;
+        }
+        },
+    
+    });
+});
 
 let pagePrevCounterAvailableUpdate = document.getElementById('pagePrevCounterAvailableUpdate');
+pagePrevCounterAvailableUpdate.addEventListener('click', function(e) {
+    if (counter_page_modal > 1) {
+        counter_page_modal--;
+        if (counter_page_modal === 1) {
+            pagePrevCounterAvailableUpdate.classList.add('disabled');
+        }
+        loadUpdateEmployees();
+    }
+});
+
 let pageNextCounterAvailableUpdate = document.getElementById('pageNextCounterAvailableUpdate');
+pageNextCounterAvailableUpdate.addEventListener('click', function(e) {
+    pagePrevCounterAvailableUpdate.classList.remove('disabled');
+    e.preventDefault();
+    counter_page_modal++;
+    loadUpdateEmployees();
+});
 
-if (pagePrevCounterAvailableUpdate) {
-    pagePrevCounterAvailableUpdate.addEventListener('click', function () {
-        if (page_counterModal > 1) {
-            page_counterModal--;
-            const counterAvailable = getCounterAvailable();
-            if (counterAvailable.status == 'error' || counterAvailable.counters.length < paginate) {
-                pagePrevCounterAvailableUpdate.classList.add('disabled');
-            } else {
-                pageNextCounterAvailableUpdate.classList.remove('disabled');
-            }
-            displayCounterAvailable(counterAvailable);
-        }
-    })
-}
-
-if (pageNextCounterAvailableUpdate) {
-    pageNextCounterAvailableUpdate.addEventListener('click', function () {
-        page_counterModal++;
-        const counterAvailable = getCounterAvailable();
-        if (counterAvailable.status == 'error' || counterAvailable.counters.length < paginate) {
-            pageNextCounterAvailableUpdate.classList.add('disabled');
-        }
-        pagePrevCounterAvailableUpdate.classList.remove('disabled');
-        displayCounterAvailable(counterAvailable);
-    });
-}
-// // PAGINATE (Beta)
-// $(document).on('click', '[id^="page-array-"]', function () {
-//     const page = this.id.split('-')[2];
-    
-// });
-
-// UPDATE COUNTER
-var counter_id_update = null;
-$(document).on('click', '[id^="update-counter-"]', function () {
-    const counterId = this.id.split('-')[2];
-    const counterData = getCounterById(counterId);
-    console.log(counterData);
+let updateSearchUsername = document.getElementById('updateSearchUsername');
+updateSearchUsername.addEventListener('keyup', function(e) {
     page_counterModal = 1;
     pagePrevCounterAvailableUpdate.classList.add('disabled');
-    pageNextCounterAvailableUpdate.classList.remove('disabled');
-
-    let updateCounterTitle = document.getElementById('updateCounterTitle');
-    let updateCounterUsername = document.getElementById('updateCounterUsername');
-    let updateCounterNumber = document.getElementById('updateCounterNumber');
-    updateCounterTitle.innerText = `Update Counter: ${counterData.counter.counterNumber}`;
-    updateCounterUsername.innerText = counterData.counter.username;
-    updateCounterNumber.innerText = counterData.counter.counterNumber;
-
-
-    counter_id_update = counterData.counter.idcounter;
-    const update_idcounter = document.getElementById('update-idcounter');
-    if (update_idcounter) {
-        update_idcounter.textContent = counterData.counter.idcounter; // Correctly set the text content
-        console.log('Updated ID Counter:', update_idcounter.textContent);
-    } else {
-        console.error('Element with ID "update-idcounter" not found.');
-    }
-
-    const employees = getCounterAvailable();
-
-    const counter_no_update = document.getElementById('counter_no_update');
-    counter_no_update.value = counterData.counter.counterNumber;
-    displayCounterAvailable(employees);
-    console.log(counterData);
+    e.preventDefault();
+    counter_search = this.value;
+    loadUpdateEmployees();
 });
 
-$('#frmUpdateCounter').on('submit', function(event) {
-    event.preventDefault();
-
-    const counterId = counter_id_update;
-    console.log('Counter Id:', counterId);
-    let employee_id = null;
-    const counter_no_update = document.getElementById('counter_no_update').value;
-    console.log(employee_id, counter_no_update);
-
-    if (document.querySelector('input[name="employee-counter-set"]:checked') && counter_no_update) {
-        employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
-        console.log(`Counter ID: ${counterId} | Employee ID: ${employee_id} | Counter No: ${counter_no_update}`);
-        updateCounter(counterId, employee_id, counter_no_update);
-    } else {
-        message_error($('#frmUpdateCounter'), 'Please select an employee.');
+function loadUpdateEmployees() {
+    let table_counters_available = document.getElementById('table-update-counter-available');
+    if (table_counters_available) {
+        const params = new URLSearchParams({
+            counters: true,
+            available: true,
+            search: counter_search,
+            page: counter_page_modal,
+            paginate: paginate,
+        });
+        $.ajax({
+            url: realHost + '/public/api/api_endpoint.php?' + params,
+            type: 'GET',
+            success: function (response) {
+                while (table_counters_available.rows.length > 1) {
+                    table_counters_available.deleteRow(-1);
+                }
+                if (response.status === 'success') {
+                    const employees = response.counters;
+                    employees.forEach(employee => {
+                        let row = table_counters_available.insertRow(-1);
+                        row.innerHTML = `
+                            <tr>
+                                <td style="min-width:20px;max-width:35px">
+                                    <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}">
+                                </td>
+                                <td class="fw-bold role_type_employee_icon" style="min-width:40px">
+                                    <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
+                                </td>
+                                <td style="min-width:20px;max-width:35px">
+                                    ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    let row = table_counters_available.insertRow(-1);
+                    row.innerHTML = `
+                        <tr>
+                                <td colspan="3" class="text-center fw-bold">No employee available</td> 
+                        </tr>
+                    `;
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading employees:', error);
+            }
+        });
     }
+}
+let frmUpdateCounter = document.getElementById('frmUpdateCounter');
+frmUpdateCounter.addEventListener('submit', function(e) {
+    e.preventDefault();
 
-});
+    let formAlert = document.getElementById('updateCounterAlert');
+    let formAlertMsg = document.getElementById('updateCounterAlertMsg');
 
-function updateCounter(idcounter, employee_id, counterNumber) {
-    console.log('updateCounter called with:', { idcounter, employee_id, counterNumber });
-    let data = {
-        method: "counters-update",
-        id: idcounter,
-        idemployee: employee_id,
-        counterNumber: counterNumber,
-        counter_pwd: false
-    };
+    const formData = new FormData(this);    // RESERVE :>
+
+    const idcounter = formData.get('update_id');
+    const employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
+    const counter_number = formData.get('update_counter_no');
+    console.log(employee_id);
 
     $.ajax({
         url: realHost + '/public/api/api_endpoint.php',
-        type: 'POST',
-        async: false,
-        data: JSON.stringify(data),
+        method: 'POST',
+        data: JSON.stringify({
+            method: "counters-update",
+            id: idcounter,
+            counterNumber: counter_number,
+            counter_pwd: false,
+            idemployee: employee_id,
+        }),
         success: function(response) {
             console.log(response);
-            if (response.status == "success") {
-                message_success($('#frmUpdateCounter'), response.message);
-                setTimeout(function() {
-                    window.location.href = "./counters.php";
+            if (response.status === 'success') {
+                formAlertMsg.innerText = response.message;
+                formAlert.classList.remove('d-none', 'alert-danger');
+                formAlert.classList.add('alert-success');
+                setTimeout(()=>{
+                    location.reload();
                 }, 1000);
             } else {
-                message_error($('#frmUpdateCounter'), response.message);
+                formAlertMsg.innerText = response.message;
+                formAlert.classList.add('alert-danger');
+                formAlert.classList.remove('d-none', 'alert-success');
+                setTimeout(()=>{
+                    formAlert.classList.add('d-none');
+                }, 5000);
             }
-        },
+        }
     });
-}
 
-// DELETE COUNTER
-var counter_id_delete = null;
-$(document).on('click', '[id^="delete-counter-"]', function () {
-    const deleteCounterId = this.id.split('-')[2];
-    counter_id_delete = deleteCounterId;
-    const counterData = getCounterById(deleteCounterId);
-    console.log(counterData);
 
-    const deleteCounterTitle = document.getElementById('deleteCounterTitle');
-    deleteCounterTitle.innerText = `Delete Counter: ${counterData.counter.counterNumber}`;
 
-    
 });
 
-$('#frmDeleteCounter').on('submit', function(event) {
-    event.preventDefault();
-    console.log('Counter Id for delete:', counter_id_delete);
-    deleteCounter(counter_id_delete);
+$(document).on('click', '[id^="delete-counter-"]', function (e) {
+    e.preventDefault();
+
+    const counterId = this.id.split('-')[2];
+    console.log(counterId);
+
+    let frmDeleteCounter = document.getElementById('frmDeleteCounter');
+    const params = new URLSearchParams({
+        counters: true,
+        id: counterId,
+    });
+
+    $.ajax({
+        url: realHost + '/public/api/api_endpoint.php?' + params,
+        type: 'GET',
+        success: function (response) {
+            console.log(response);
+            let deleteCounterDisplay = document.getElementById('deleteCounterDisplay');
+            deleteCounterDisplay.innerText = response.counter.counterNumber;
+            let deleteCounterUsername = document.getElementById('deleteCounterUsername');
+            deleteCounterUsername.innerText = response.counter.username;
+            let deleteCounterNumber = document.getElementById('deleteCounterNumber');
+            deleteCounterNumber.innerText = response.counter.counterNumber;
+            frmDeleteCounter.reset();
+            frmDeleteCounter.elements['delete_id'].value = response.counter.idcounter;
+        }
+    });
 });
 
-function deleteCounter(idcounter) {
-    console.log(idcounter);
-    let data = {
-        method: "counters-delete",
-        id: idcounter
-    }
+let frmDeleteCounter = document.getElementById('frmDeleteCounter');
+frmDeleteCounter.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    let formAlert = document.getElementById('deleteCounterAlert');
+    let formAlertMsg = document.getElementById('deleteCounterAlertMsg');
+
+    const formData = new FormData(this);
+    const idcounter = formData.get('delete_id');
 
     $.ajax({
         url: realHost + '/public/api/api_endpoint.php',
-        type: 'POST',
-        async: false,
-        data: JSON.stringify(data),
+        method: 'POST',
+        data: JSON.stringify({
+            method: "counters-delete",
+            id: idcounter,
+        }),
         success: function(response) {
             console.log(response);
-            if (response.status == "success") {
-                message_success($('#frmDeleteCounter'), response.message);
-                setTimeout(function() {
-                    window.location.href = "./counters.php";
+            if (response.status === 'success') {
+                formAlertMsg.innerText = response.message;
+                formAlert.classList.remove('d-none', 'alert-danger');
+                formAlert.classList.add('alert-success');
+                setTimeout(()=>{
+                    location.reload();
                 }, 1000);
             } else {
-                message_error($('#frmDeleteCounter'), response.message);
+                formAlertMsg.innerText = response.message;
+                formAlert.classList.add('alert-danger');
+                formAlert.classList.remove('d-none', 'alert-success');
+                setTimeout(()=>{
+                    formAlert.classList.add('d-none');
+                }, 5000);
             }
-        },
+        }
     });
+});
+
+let pagePrevCounterRegistered = document.getElementById('pagePrevCounterRegistered');
+pagePrevCounterRegistered.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log(counter_search);
+    if (counter_page > 1) {
+        counter_page--;
+        if (counter_page === 1) {
+            pagePrevCounterRegistered.classList.add('disabled');
+        }
+        loadCounters();
+    }
+});
+
+let pageNextCounterRegistered = document.getElementById('pageNextCounterRegistered');
+pageNextCounterRegistered.addEventListener('click', function(e) {
+    pagePrevCounterRegistered.classList.remove('disabled');
+    e.preventDefault();
+    counter_page++;
+    loadCounters();
+});
+
+let searchCounterRegistered = document.getElementById('searchCounterRegistered');
+searchCounterRegistered.addEventListener('keyup', function(e) {
+    console.log(this.value);
+    counter_page = 1;
+    pagePrevCounterRegistered.classList.add('disabled');
+    e.preventDefault();
+    counter_search = this.value;
+    loadCounters();
+});
 
 
-}
-// At last call them :)
-console.log(getCounterRegistered());
-displayCounterRegistered(getCounterRegistered());

@@ -18,68 +18,70 @@ restrictAdminMode();
 
     <div class="container before-footer" style="margin-top:100px">
         <div class="row justify-content-center mt-5">
-            <div class="col-12" style="min-width:450px;max-width: 900px;">
-                <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
-                    <nav aria-label="breadcrumb mx-4">
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item"><a href="./dashboard.php" style="text-decoration:none;color:black">Dashboard</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Employees</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="card shadow">
-                    <div class="card-header">
-                        Employees
+            <div class="col-md-6">
+                <div class="col-12" style="min-width:450px;max-width: 900px;">
+                    <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
+                        <nav aria-label="breadcrumb mx-4">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="./dashboard.php" style="text-decoration:none;color:black">Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Employees</li>
+                            </ol>
+                        </nav>
                     </div>
-                    <div class="card-body">
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col">
-                                <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
-                            </div>
-                            <div class="col d-flex justify-content-end">
-                                <a class="btn btn-success text-white" id="btn-add-employee" data-toggle="modal" data-target="#addEmployeeModal" ><span class="fw-bold">+</span> Add New</a>
-                                <!-- <a class="btn btn-success text-white px-4" id="btn-add-counter" data-toggle="modal" data-target="#addCounterModal" ><span class="fw-bold">+</span> Add New</a> -->
-                            </div>
+                    <div class="card shadow">
+                        <div class="card-header">
+                            Employees
                         </div>
-                    </div>
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col-9">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
+                        <div class="card-body">
+                        <div class="col-12 mb-4">
+                            <div class="row">
+                                <div class="col">
+                                    <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
+                                </div>
+                                <div class="col d-flex justify-content-end">
+                                    <a class="btn btn-success text-white" id="btn-add-employee" data-toggle="modal" data-target="#addEmployeeModal" ><span class="fw-bold">+</span> Add New</a>
+                                    <!-- <a class="btn btn-success text-white px-4" id="btn-add-counter" data-toggle="modal" data-target="#addCounterModal" ><span class="fw-bold">+</span> Add New</a> -->
                                 </div>
                             </div>
-                            <div class="col-3">
-                                <select class="form-select" name="getRoleType" id="getRoleType">
-                                    <option value="none">All</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="employee">Cashier</option>
-                                </select>
+                        </div>
+                        <div class="col-12 mb-4">
+                            <div class="row">
+                                <div class="col-9">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <select class="form-select" name="getRoleType" id="getRoleType">
+                                        <option value="none">All</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="employee">Cashier</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                        <table class="table table-striped table-members" id="table-employees">
-                            <tr>
-                                <th>#</th>
-                                <th>Username</th>
-                                <th>Action</th>
-                            </tr>
-                        </table>
-                        <nav aria-label="Page navigation example">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item">
-                                <a class="page-link" id="pagePrevEmployees">Previous</a>
-                                </li>
-                                <!-- page number -->
+                            <table class="table table-striped table-members" id="table-employees">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Username</th>
+                                    <th>Action</th>
+                                </tr>
+                            </table>
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item">
+                                    <a class="page-link" id="pagePrevEmployees">Previous</a>
+                                    </li>
+                                    <!-- page number -->
+        
+                                    <li class="page-item">
+                                    <a class="page-link" id="pageNextEmployees">Next</a>
+                                    </li>
+                                </ul>
+                            </nav>
     
-                                <li class="page-item">
-                                <a class="page-link" id="pageNextEmployees">Next</a>
-                                </li>
-                            </ul>
-                        </nav>
-
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,9 +241,9 @@ restrictAdminMode();
                                 <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
                             </div>
                         </div>
-                        <div class="mb-4">
+                        <!-- <div class="mb-4"> -->
                             <input type="hidden" name="update_id" id="update_id">
-                        </div>
+                        <!-- </div> -->
                         <div class="mb-4">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>

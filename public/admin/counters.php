@@ -54,11 +54,11 @@ restrictAdminMode();
                                 <div class="row">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                        <input type="text" name="search" id="search-counter" class="form-control searchBarCounterRegistered" placeholder="Search username">
+                                        <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
                                     </div>
                                 </div>
                             </div>
-                            <table class="table table-striped table-members" id="table-counter-registered">
+                            <table class="table table-striped table-members" id="table-counters-registered">
                                 <tr>
                                     <th>#</th>
                                     <th>Employee</th>
@@ -105,21 +105,25 @@ restrictAdminMode();
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="addCounterTitle">Add Counter</h5>
+                    <h5 class="modal-title fw-bold" id="addCounterTitle">Add Counter</h5>
                 </div>
                 <div class="modal-body py-4 px-6" id="addCounterBody">
-                <form method="POST" id="frmAddCounter">
-                        <div class="mb-3">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control searchBarCounterAvailableAdd" placeholder="Search Username">
+                    <form method="POST" id="frmAddCounter">
+                        <div class="input-group">
+                            <div class="alert alert-danger w-100 d-none" id="addCounterAlert">
+                                <span id="addCounterAlertMsg"></span>
                             </div>
                         </div>
-
-                        <div class="mb-3">
+                        <div class="mb-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
+                            </div>
+                        </div>
+                        <div class="mb-4">
                             <label class="form-label">Employees Available</label>
                             <div class="w-100">
-                                <table class="table table-striped table-members table-counter-available">
+                                <table class="table table-striped table-members" id="table-add-counter-available">
                                     <tr>
                                         <th class="col-2"></th>
                                         <th>Username</th>
@@ -130,31 +134,30 @@ restrictAdminMode();
                                     <nav class="w-100" aria-label="Page navigation example">
                                         <ul class="pagination justify-content-center">
                                             <li class="page-item">
-                                            <a class="page-link disabled" id="pagePrevCounterAvailableAdd">Previous</a>
+                                                <a class="page-link disabled" id="pagePrevCounterAvailableAdd">Previous</a>
                                             </li>
                                             <li class="page-item">
-                                            <a class="page-link" id="pageNextCounterAvailableAdd">Next</a>
+                                                <a class="page-link" id="pageNextCounterAvailableAdd">Next</a>
                                             </li>
                                         </ul>
                                     </nav>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-sort-numeric-up"></i></span>
                                 <input type="number" name="counter_no_add" id="counter_no_add" class="form-control" placeholder="Counter Number" required>
                             </div>
                         </div>
-                        <div class="modal-footer row">
+                        <div class="modal-footer">
                             <div class="d-flex justify-content-end">
                                 <a class="btn btn-secondary" style="width:max-content;margin-right:10px" data-dismiss="modal">Cancel</a>
                                 <button type="submit" class="btn btn-primary" style="width:max-content;margin-right:10px">Add Counter</button>
                             </div>
                         </div>
                     </form>
-                </div>
+                </div> <!-- Closing modal-body -->
             </div>
         </div>
     </div>
@@ -164,11 +167,18 @@ restrictAdminMode();
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="updateCounterTitle">Modal title</h5>
+                <h5 class="modal-title fw-bold" id="updateCounterTitle">Update Counter: <span id="updateCounterDisplay"></span></h5>
                 </div>
                 <div class="modal-body py-4 px-6" id="updateCounterBody">
                     <form method="POST" id="frmUpdateCounter">
+                        <div class="input-group">
+                            <div class="alert alert-danger w-100 d-none" id="updateCounterAlert">
+                                <span id="updateCounterAlertMsg"></span>
+                            </div>
+                        </div>
                         <div class="mb-3">
+                            <input type="hidden" name="update_counter_no" id="update_counter_no">
+                            <input type="hidden" name="update_id" id="update_id">
                             <div class="w-100 pb-3">
                                 Username: <strong><span id="updateCounterUsername">NaN</span></strong>
                             </div>
@@ -182,13 +192,13 @@ restrictAdminMode();
                         <div class="mb-3">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control searchBarCounterAvailableUpdate" placeholder="Search Username">
+                                <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Employees Available</label>
                             <div class="w-100">
-                                <table class="table table-striped table-members table-counter-available">
+                                <table class="table table-striped table-members" id="table-update-counter-available">
                                     <tr>
                                         <th class="col-2"></th>
                                         <th>Username</th>
@@ -233,10 +243,16 @@ restrictAdminMode();
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="deleteCounterTitle">Modal title</h5>
+                <h5 class="modal-title fw-bold" id="deleteCounterTitle">Delete Counter: <span id="deleteCounterDisplay"></span></h5>
                 </div>
                 <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
                     <form method="POST" id="frmDeleteCounter">
+                        <div class="input-group">
+                            <div class="alert alert-danger w-100 d-none" id="deleteCounterAlert">
+                                <span id="deleteCounterAlertMsg"></span>
+                            </div>
+                        </div>
+                        <input type="hidden" name="delete_id" id="delete_id">
                         <div class="mb-4">
                             <div class="d-flex justify-content-center mb-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16" style="color:red">
@@ -249,7 +265,7 @@ restrictAdminMode();
                             </div>
                         </div>
                         <div class="p-2">
-                            <label class="form-label" style="color:#333;font-size:14px">Do you want to delete this employee <strong><span id="username"></span></strong> assigned at counter number <strong><span id="counterNumber"></span></strong>?</label>
+                            <label class="form-label" style="color:#333;font-size:14px">Do you want to delete this employee <strong><span id="deleteCounterUsername"></span></strong> assigned at counter number <strong><span id="deleteCounterNumber"></span></strong>?</label>
                         </div>
                         <div class="modal-footer row">
                             <div class="d-flex justify-content-end">
