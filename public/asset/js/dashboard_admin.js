@@ -265,8 +265,23 @@ function rtTransaction() {
 rtTransaction();
 
 var operational = true;
-var cutOff = document.getElementById('employee-cut-off');
-var btn_counter_resume = document.getElementById('employee-resume');
+let cutOff = document.getElementById('employee-cut-off');
+cutOff.addEventListener('click', function(e) {
+    e.preventDefault();
+    operational = false;
+    dashboardStatus.classList.remove('alert-success', 'd-none');
+    dashboardStatus.classList.add('alert-danger');
+    dashboardStatusMsg.innerHTML = 'You has been cut off';
+
+    setTimeout(()=> {
+        dashboardStatus.classList.add('d-none');
+    }, 5000);
+});
+
+let btn_counter_resume = document.getElementById('employee-resume');
+let dashboardStatus = document.getElementById('dashboardStatus');
+let dashboardStatusMsg = document.getElementById('dashboardStatusMsg');
+
 // cutOff.addEventListener('click', function(e) {
 //     e.preventDefault();
 //     operational = false;
@@ -275,6 +290,28 @@ var btn_counter_resume = document.getElementById('employee-resume');
 btn_counter_resume.addEventListener('click', function(e) {
     e.preventDefault();
     operational = true;
+    dashboardStatus.classList.remove('alert-danger', 'd-none');
+    dashboardStatus.classList.add('alert-success');
+    dashboardStatusMsg.innerHTML = 'You are now operational';
+
+    let employee_id = document.getElementById('employee-id').value;
+
+    $.ajax({
+        url: realHost + '/public/api/api_endpoint.php',
+        method: 'POST',
+        data: JSON.stringify({
+            method: "employee-cut-off",
+            id: employee_id,
+        }),
+        success: function(response) {
+            console.log(response);
+        },
+    });
+
+    setTimeout(()=> {
+    dashboardStatus.classList.add('d-none');
+    }, 5000);
+
 });
 
 // Chart System

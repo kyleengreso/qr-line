@@ -31,30 +31,35 @@ $counterNumber = $token->counterNumber;
     <div class="container before-footer" style="margin-top: 100px">
         <div class="flex-col flex-md-row justify-content-center mt-5">
             <div class="row">
-
-                <div class="col-12 col-md-9 px-4 text-center text-md-start p-2">
-                    <h1>DASHBOARD</h1>
+                <div class="col-12">
+                    <div class="alert alert-danger d-none" id="dashboardStatus">
+                        <span class="" id="dashboardStatusMsg">You're has been cut off.</span>
+                    </div>
                 </div>
-                <!-- <div class="col-3 d-none d-md-block card shadow p-4 mx-0 my-2" style="border-radius:30px;min-width:150px">
-                    <div class="row text-center">
+                <div class="colGenerate-12 col-md-9 text-center text-md-start">
+                    <div class="px-4">
+                        <h1>DASHBOARD</h1>
+                    </div>
+                </div>
+                <div class="col-2 col-md-3 py-2 d-none d-md-block card shadow">
+                    <div class="row">
                         <div class="w-100">
                             <a class="btn btn-outline-primary w-100 h-100" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">CUT OFF</a>
                         </div>
                     </div>
-                </div> -->
+                </div>
             </div>
         </div>
             <div class="p-0 mx-0 my-2">
                 <div class="row text-center">
-                <div class="row">
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2" style="border:5px solid #00a;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                    <div class="col-xl-3 col-md-6 mb-4 p-0">
+                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #00a;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#00a">
                                             TRANSACTIONS TODAY</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fw-bold" id="transactions-total"></span></div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-total"></span></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fa-solid fa-users-line fs-1"></i>                                
@@ -63,14 +68,14 @@ $counterNumber = $token->counterNumber;
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2" style="border:5px solid #aa0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                    <div class="col-xl-3 col-md-6 mb-4 p-0">
+                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #aa0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#aa0">
                                             PENDING</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fw-bold" id="transactions-pending"></span></div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-pending"></span></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fa-regular fa-hourglass-half fs-1"></i>
@@ -79,14 +84,14 @@ $counterNumber = $token->counterNumber;
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2" style="border:5px solid #0a0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                    <div class="col-xl-3 col-md-6 mb-4 p-0">
+                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #0a0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#0a0">
                                             COMPLETED</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fw-bold" id="transactions-completed"></span></div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-completed"></span></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fa-solid fa-check fs-1"></i>
@@ -95,14 +100,14 @@ $counterNumber = $token->counterNumber;
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2" style="border:5px solid #a00;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                    <div class="col-xl-3 col-md-6 mb-4 p-0">
+                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #a00;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#a00">
                                             CANCELLED</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fw-bold" id="transactions-cancelled"></span></div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-cancelled"></span></div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fa-solid fa-xmark fs-1"></i>  
@@ -114,15 +119,15 @@ $counterNumber = $token->counterNumber;
                 </div>
             </div>
 
-            <div class="w-100 row flex-col flex-lg-row">
-                <div class="col-12">
-                    <div class="col mx-0 mx-md-2 my-2">
-                        <div class="card shadow w-100" id="transaction-chart-area">
-                            <div class="card-header">
-                                Transactions Overview
-                            </div>
-                            <div class="card-body">
-                                <div class="col-12 col-md-6">
+            <div class="row flex-col flex-lg-row">
+                <div class="col-12 p-0 m-0">
+                    <div class="card shadow m-2" id="transaction-chart-area">
+                        <div class="card-header">
+                            Transactions Overview
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6 col-md-6">
                                     <div class="row">
                                         <div class="col-3">
                                             <span>Data Range: </span>
@@ -141,58 +146,75 @@ $counterNumber = $token->counterNumber;
                                         </div>
                                     </div>
                                 </div>
-                                <div class="w-100 h-auto">
-                                    <canvas id="transaction-chart" style="max-width:100%; height:300px;max-height:320px"></canvas>
+                                <div class="col-6 col-md-6">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <span>Data Range: </span>
+                                        </div>
+                                        <div class="col-9">
+                                            <select class="form-select" name="dateRange" id="dateRange-select">
+                                                <option value="day">Today</option>
+                                                <option value="week">This Week</option>
+                                                <option value="last-week">Last Week</option>
+                                                <option value="month">This Month</option>
+                                                <option value="last-30-days">Last Month</option>
+                                                <option value="last-3-months">Last 3 months</option>
+                                                <!-- <option value="year">This year</option> -->
+                                                <option value="last-12-months">Last 12 months</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                            <div class="w-100 h-auto">
+                                <canvas id="transaction-chart" style="max-width:100%; height:300px;max-height:320px"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                    <div class="col mx-0 mx-md-2 my-2">
-                        <div class="card shadow">
-                            <div class="card-header">
-                                Transaction History
-                            </div>
-                            <div class="card-body">
-                                <div class="col w-100 col-12 col-md-6 p-2">
-                                    <div class="row">
-                                        <span class="fs-6 w-25">Filter</span>
-                                        <div class="col-6 px-0 mx-1">
-                                            <select class="form-select" name="transactionselect" id="transaction-select">
-                                                <option value="none" id="transaction-history-filter-corporate-none">All</option>
-                                                <option value="psu.palawan.edu.ph" id="transaction-history-filter-corporate">Corporate</option>
-                                                <option value="none" id="transaction-history-filter-non-corporate">Non-Corporate</option>
-                                                <option value="registrar" id="transaction-history-filter-registrar">Registrar</option>
-                                                <option value="assessment" id="transaction-history-filter-assessment">Assessment</option>
-                                            </select>
-                                        </div>
+                <div class="col-lg-6 p-0 m-0">
+                    <div class="card shadow m-2">
+                        <div class="card-header">
+                            Transaction History
+                        </div>
+                        <div class="card-body">
+                            <div class="col w-100 col-12 col-md-6 p-2">
+                                <div class="row">
+                                    <span class="fs-6 w-25">Filter</span>
+                                    <div class="col-6 px-0 mx-1">
+                                        <select class="form-select" name="transactionselect" id="transaction-select">
+                                            <option value="none" id="transaction-history-filter-corporate-none">All</option>
+                                            <option value="psu.palawan.edu.ph" id="transaction-history-filter-corporate">Corporate</option>
+                                            <option value="none" id="transaction-history-filter-non-corporate">Non-Corporate</option>
+                                            <option value="registrar" id="transaction-history-filter-registrar">Registrar</option>
+                                            <option value="assessment" id="transaction-history-filter-assessment">Assessment</option>
+                                        </select>
                                     </div>
-                                    <div class="col p-2">
-                                        <table class="w-100 table table-striped table-members" id="table-transaction-history">
-                                            <tr>
-                                                <th class="col-3">#</th>
-                                                <th>Email</th>
-                                                <th>Payment</th>
-                                            </tr>
-                                        </table>
-                                        <nav aria-label="Page navigation example">
-                                            <ul class="pagination justify-content-center">
-                                                <li class="page-item">
-                                                    <a class="page-link" id="pagePrevTransactions">Previous</a>
-                                                </li>
-                                                <li class="page-item">
-                                                    <a class="page-link" id="pageNextTransactions">Next</a>
-                                                </li>
-                                            </ul>
-                                        </nav>
-                                    </div>
+                                </div>
+                                <div class="col p-2">
+                                    <table class="w-100 table table-striped table-members" id="table-transaction-history">
+                                        <tr>
+                                            <th class="col-3">#</th>
+                                            <th>Email</th>
+                                            <th>Payment</th>
+                                        </tr>
+                                    </table>
+                                    <nav aria-label="Page navigation example">
+                                        <ul class="pagination justify-content-center">
+                                            <li class="page-item">
+                                                <a class="page-link" id="pagePrevTransactions">Previous</a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link" id="pageNextTransactions">Next</a>
+                                            </li>
+                                        </ul>
+                                    </nav>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col mx-0 mx-md-2 my-2">
-                        <div class="card shadow">
+                    <div class="col m-0 p-0 m-0">
+                        <div class="card shadow m-2">
                             <div class="card-header">
                                 Generate Report
                             </div>
@@ -209,23 +231,21 @@ $counterNumber = $token->counterNumber;
                                         </select>
                                     </div>
                                     <div class="col-12 col-md-4 mb-2 d-flex justify-content-center">
-                                        <button class="btn btn-primary rounded" type="button" id="btnGenerateReport">Generate</button>
+                                        <button class="btn btn-primary rounded w-100 w-md-auto" type="button" id="btnGenerateReport">Generate</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                    <div class="row">
-                        <div class="col-lg-12 col-xl-6 mx-0 my-2">
-                            <div class="card shadow">
+                <div class="row col-lg-6 p-0 m-0">
+                        <div class="col-lg-12 col-xl-6 m-0 p-0">
+                            <div class="card shadow m-2">
                                 <div class="card-header">
                                     Employees
                                 </div>
                                 <div class="card-body">
                                     <div id="table-employees">
-    
                                     </div>
                                     <!-- <table class="table table-striped table-members" id="table-employees">
                                         <tr>
@@ -250,8 +270,8 @@ $counterNumber = $token->counterNumber;
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-12 col-xl-6 mx-0 my-2">
-                            <div class="card shadow">
+                        <div class="col-lg-12 col-xl-6 m-0 p-0">
+                            <div class="card shadow m-2">
                                 <div class="card-header">
                                     Counters
                                 </div>
@@ -275,8 +295,6 @@ $counterNumber = $token->counterNumber;
                                 </div>
                             </div>
                         </div>
-
-                    </div>
                 </div>
             </div>
         </div>
@@ -290,9 +308,11 @@ $counterNumber = $token->counterNumber;
                 </div>
                 <div class="modal-body py-4 px-6 fw-bold" id="viewEmployeeBody">
                     You are cut off for temporary.
+                    <input type="hidden" name="employee-id" id="employee-id" value="<?php echo $id?>">
                 </div>
                 <div class="modal-footer col" id="viewEmployeeFooter">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="employee-resume">Start Working</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" data-dismiss="modal" id="employee-resume">Resume</button>
                 </div>
             </div>
         </div>
