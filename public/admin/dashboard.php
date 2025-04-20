@@ -146,7 +146,7 @@ $counterNumber = $token->counterNumber;
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6 col-md-6">
+                                <!-- <div class="col-6 col-md-6">
                                     <div class="row">
                                         <div class="col-3">
                                             <span>Data Range: </span>
@@ -159,12 +159,12 @@ $counterNumber = $token->counterNumber;
                                                 <option value="month">This Month</option>
                                                 <option value="last-30-days">Last Month</option>
                                                 <option value="last-3-months">Last 3 months</option>
-                                                <!-- <option value="year">This year</option> -->
+                                                <option value="year">This year</option>
                                                 <option value="last-12-months">Last 12 months</option>
                                             </select>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <div class="w-100 h-auto">
                                 <canvas id="transaction-chart" style="max-width:100%; height:300px;max-height:320px"></canvas>

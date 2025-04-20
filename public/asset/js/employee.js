@@ -36,11 +36,11 @@ function loadEmployees() {
             success: function (response) {
                 if (response.status === 'success') {
                     const employees = response.employees;
-                    while (table.rows.length > 1) {
-                        table.deleteRow(-1);
+                    while (table_employees.rows.length > 1) {
+                        table_employees.deleteRow(-1);
                     }
                     employees.forEach((employee) => {
-                        let row = table.insertRow(-1);
+                        let row = table_employees.insertRow(-1);
                         row.innerHTML = `
                             <tr>
                                 <td class="col-2">${employee.id}</td>
@@ -56,6 +56,13 @@ function loadEmployees() {
                             </tr>              
                         `;
                     });
+                } else {
+                    let row = table_employees.insertRow(-1);
+                    row.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="fw-bold text-center">No employees assigned</td>
+                        </tr>            
+                    `;
                 }
             },
         });
