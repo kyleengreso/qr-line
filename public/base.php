@@ -15,6 +15,12 @@ $project_description = "QR-Line is a web-based queue management system utilizing
 $project_release = false;
 $project_version = "1.0.0";
 
+// Network Feature
+// NOTE: This feature only use for email notification
+// If your host is other than port 80, please change the port number at :80
+$serverName = getHostByName(getHostName()) . ":80"; // IP Address version
+// $serverName = "qrline.psu.edu.ph"; // Domain name version
+
 // Project Support
 $project_address = "Tiniguiban Heights, Puerto Princesa City, Palawan, Philippines";
 $project_email = "marcsysman@gmail.com";

@@ -44,10 +44,6 @@ $('#transaction-history-payment').change(function() {
 $('#frmUserForm').submit(function(e) {
     e.preventDefault();
 
-    // var domain = window.location.hostname;
-    // var domain = window.location.protocol + '//' + window.location.hostname;
-    // For payment to tell
-
     if (payment === null) {
         message_error($('#frmUserForm'), 'Please select payment type');
         return;
@@ -59,5 +55,6 @@ $('#frmUserForm').submit(function(e) {
         payment: payment,
         website: `${realHost}/public/user/requester_number.php`
     };
+    console.log(user);
     sumbitUserForm(user);
 });

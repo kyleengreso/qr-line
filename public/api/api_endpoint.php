@@ -1024,7 +1024,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Success Transaction updated successfully"
             ));
-            exit;
+            // exit;
         } else if ($stmt->affected_rows == 0) {
             // echo json_encode(array(
             //     "status" => "error",
@@ -1037,74 +1037,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             exit;
         }
-
-        //////////////////////////////////////////////
-        // Reminder for future 5 queue using idtransaction
-        $sql_cmd = "SELECT *
-                    FROM transactions t
-                    WHERE t.idtransaction = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction[0]['idtransaction']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-
-        // echo json_encode(array(
-        //     "status" => "success",
-        //     "message" => "Transaction found",
-        //     "data" => $transaction_f
-        // ));
-        
-        $sql_cmd = "SELECT *
-                    FROM transactions t
-                    WHERE t.transaction_time > ?
-                    ORDER BY t.transaction_time ASC
-                    LIMIT 4, 1";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction_f[0]['transaction_time']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        // echo json_encode(array(
-        //     "status" => "success",
-        //     "message" => "Transaction found",
-        //     "data" => $transaction_f
-        // ));
-
-        // Get information from using idrequester
-        $sql_cmd = "SELECT * 
-                    FROM requesters r
-                    WHERE r.id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction_f[0]['idrequester']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $requester = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        // echo json_encode(array(
-        //     "status" => "success",
-        //     "message" => "Requester found",
-        //     "data" => $requester
-        // ));
-
-        include "./email_content.php";
-        
-        // $requester = $requester[0];
-        $requester = $requester[0];
-        $requester_name = $requester['name'];
-        $requester_email = $requester['email'];
-        $requester_payment = $requester['payment'];
-
-        $request_data = array(
-            "name" => $requester_name,
-            "email" => $requester_email,
-            "payment" => $requester_payment,
-            "transaction_id" => $transaction_f[0]['idtransaction'],
-            "queue_count_int" => $transaction_f[0]['queue_number']
-        );
-        send_email_notify_before_5($request_data);
         exit;
     } else if ($method == "cashier-missed") {
         // counterNumber
@@ -1208,135 +1140,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             exit;
         }
-
-        
-        //////////////////////////////////////////////
-        // Reminder for future 5 queue using idtransaction
-        $sql_cmd = "SELECT *
-                    FROM transactions t
-                    WHERE t.idtransaction = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction[0]['idtransaction']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        // if ($result->num_rows == 0) {
-        //     echo json_encode(array(
-        //         "status" => "success",
-        //         "message" => "Transaction found",
-        //         "data" => $transaction_f
-        //     ));
-        //     exit;
-        // }
-        
-        $sql_cmd = "SELECT *
-                    FROM transactions t
-                    WHERE t.transaction_time < ?
-                    ORDER BY t.transaction_time ASC
-                    LIMIT 2, 1";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction_f[0]['transaction_time']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        // if ($result->num_rows == 0) {
-        //     echo json_encode(array(
-        //         "status" => "success",
-        //         "message" => "Transaction found",
-        //         "data" => $transaction_f
-        //     ));
-        //     exit;
-        // }
-
-        // Get information from using idrequester
-        $sql_cmd = "SELECT * 
-                    FROM requesters r
-                    WHERE r.id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction_f[0]['idrequester']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $requester = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        // if ($result->num_rows > 0) {
-        //     echo json_encode(array(
-        //         "status" => "success",
-        //         "message" => "Requester found",
-        //         "data" => $requester
-        //     ));
-        //     exit;
-        // }
-
-        include "./email_content.php";
-        
-        $requester = $requester[0];
-        $requester_name = $requester['name'];
-        $requester_email = $requester['email'];
-        $requester_payment = $requester['payment'];
-
-        $request_data = array(
-            "name" => $requester_name,
-            "email" => $requester_email,
-            "payment" => $requester_payment,
-            "transaction_id" => $transaction_f[0]['idtransaction'],
-            "queue_count_int" => $transaction_f[0]['queue_number']
-        );
-        send_email_notify_before_5($request_data);
-   
-        //////////////////////////////////////////////
-        // Put to cancelled for past 3 queue using idtransaction
-        $sql_cmd = "SELECT *
-                    FROM transactions t
-                    WHERE t.idtransaction = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction[0]['idtransaction']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-
-        // echo json_encode(array(
-        //     "status" => "success",
-        //     "message" => "Transaction found",
-        //     "data" => $transaction_f
-        // ));
-        
-        $sql_cmd = "SELECT *
-                    FROM transactions t
-                    WHERE t.transaction_time < ? AND t.status = 'missed'
-                    ORDER BY t.transaction_time ASC
-                    LIMIT 2, 1";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction_f[0]['transaction_time']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        // echo json_encode(array(
-        //     "status" => "success",
-        //     "message" => "Transaction found",
-        //     "data" => $transaction_f
-        // ));
-
-
-        // Get information from using idrequester
-        $sql_cmd = "SELECT * 
-                    FROM requesters r
-                    WHERE r.id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction_f[0]['idrequester']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $requester = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        // echo json_encode(array(
-        //     "status" => "success",
-        //     "message" => "Requester found",
-        //     "data" => $requester
-        // ));
-        // exit;
+        exit;
     
     // Requester's cancel function
     } else if ($method == "requester-form-cancel") {
@@ -1466,22 +1270,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt->close();
 
             $queue_count_int =  $transaction_count[0]['total_transactions'] + 1;
-            // // Get queue_count_int value from setup
-            // $sql_cmd = "SELECT setup_value_int FROM setup_system WHERE setup_key = 'queue_count'";
-            // $stmt = $conn->prepare($sql_cmd);
-            // $stmt->execute();
-            // $result = $stmt->get_result();
-            // $setup_row = $result->fetch_assoc();
-            // $queue_count_int = $setup_row['setup_value_int'];
-            // // Then increment the queue_count_int value by 1
-            // $queue_count_int++;
-            // $stmt->close();
-
-            // $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'queue_count'";
-            // $stmt = $conn->prepare($sql_cmd);
-            // $stmt->bind_param("s", $queue_count_int);
-            // $stmt->execute();
-            // $stmt->close();
 
             // Generate a random token number
             $token_number = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
@@ -1547,7 +1335,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE()) as transaction_total_today,
                     (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'pending')  as transaction_total_pending,
                     (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'completed') as transaction_total_completed,
-                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'missed')  as transaction_total_cancelled"; // Temporary fix
+                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'cancelled')  as transaction_total_cancelled"; // Temporary fix
         $stmt = $conn->prepare($sql_cmd);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -2221,16 +2009,152 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $sql_cmd = "UPDATE transactions
                             SET idcounter = ?, idemployee = ?, status = 'serve'
                             WHERE idtransaction = ?";
-                            $stmt = $conn->prepare($sql_cmd);
-                            $stmt->bind_param("sss", $counters[0]['idcounter'], $_GET['employee_id'], $transactions[0]['idtransaction']);
-                            $stmt->execute();
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("sss", $counters[0]['idcounter'], $_GET['employee_id'], $transactions[0]['idtransaction']);
+                $stmt->execute();
 
                 // This feature is optional for sending email
                 echo json_encode(array(
                     "status" => "success",
-                    "message" => "Transaction found",
+                    "message" => "Transaction found!",
                     "data" => $transactions[0]
                 ));
+
+                // Reminder before next 5
+
+                $sql_cmd = "SELECT *
+                        FROM transactions t
+                        WHERE t.transaction_time > ?
+                        ORDER BY t.transaction_time ASC
+                        LIMIT 4, 1";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("s", $transactions[0]['transaction_time']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+                // echo json_encode(array(
+                //     "status" => "success",
+                //     "message" => "Transaction found",
+                //     "data" => $transaction_f
+                // ));
+                // exit;
+                // if ($result->num_rows == 0) {
+                //     exit;
+                // }
+
+                // Get information from using idrequester
+                $sql_cmd = "SELECT * 
+                        FROM requesters r
+                        WHERE r.id = ?";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("s", $transaction_f[0]['idrequester']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $requester = $result->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+                // if ($result->num_rows > 0) {
+                //     echo json_encode(array(
+                //         "status" => "success",
+                //         "message" => "Requester found",
+                //         "data" => $requester
+                //     ));
+                //     exit;
+                // }
+
+                include "./email_content.php";
+
+                $requester = $requester[0];
+                $requester_name = $requester['name'];
+                $requester_email = $requester['email'];
+                $requester_payment = $requester['payment'];
+                $requester_token = $transaction_f[0]['token_number'];
+                $request_data = array(
+                    "name" => $requester_name,
+                    "email" => $requester_email,
+                    "payment" => $requester_payment,
+                    "transaction_id" => $transaction_f[0]['idtransaction'],
+                    "queue_count_int" => $transaction_f[0]['queue_number'],
+                    "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
+                );
+                echo json_encode($request_data);
+                send_email_notify_before_5($request_data);
+
+                //////////////////////////////////////////////
+                // Cancel the past 3
+
+                $sql_cmd = "SELECT *
+                        FROM transactions t
+                        WHERE t.transaction_time < ? AND
+                        DATE(t.transaction_time) = CURDATE() AND
+                        t.status = 'missed'
+                        ORDER BY t.transaction_time DESC
+                        LIMIT 2, 1";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("s", $transactions[0]['transaction_time']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+                if ($result->num_rows > 0) {
+                    // Didnt optimize yet..
+            
+                    // Then update it 'missed' to 'cancelled'
+                    $sql_cmd = "UPDATE transactions
+                                SET status = 'cancelled'
+                                WHERE idtransaction = ?";
+                    $stmt = $conn->prepare($sql_cmd);
+                    $stmt->bind_param("s", $transaction_f[0]['idtransaction']);
+                    $stmt->execute();
+                    $stmt->close();
+    
+                    // echo json_encode(array(
+                    //     "status" => "success",
+                    //     "message" => "Transaction found",
+                    //     "data" => $transaction_f
+                    // ));
+                    // exit;
+                    // if ($result->num_rows == 0) {
+                    //     exit;
+                    // }
+    
+                    // Get information from using idrequester
+                    $sql_cmd = "SELECT * 
+                            FROM requesters r
+                            WHERE r.id = ?";
+                    $stmt = $conn->prepare($sql_cmd);
+                    $stmt->bind_param("s", $transaction_f[0]['idrequester']);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $requester = $result->fetch_all(MYSQLI_ASSOC);
+                    $stmt->close();
+                    // if ($result->num_rows > 0) {
+                    //     echo json_encode(array(
+                    //         "status" => "success",
+                    //         "message" => "Requester found",
+                    //         "data" => $requester
+                    //     ));
+                    //     exit;
+                    // }
+    
+    
+                    $requester = $requester[0];
+                    $requester_name = $requester['name'];
+                    $requester_email = $requester['email'];
+                    $requester_payment = $requester['payment'];
+                    $requester_token = $transaction_f[0]['token_number'];
+                    $request_data = array(
+                        "name" => $requester_name,
+                        "email" => $requester_email,
+                        "payment" => $requester_payment,
+                        "transaction_id" => $transaction_f[0]['idtransaction'],
+                        "queue_count_int" => $transaction_f[0]['queue_number'],
+                        "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
+                    );
+                    echo json_encode($request_data);
+                    send_email_notify_after_3($request_data);
+
+                }
             } else {
                 echo json_encode(array(
                     "status" => "error",

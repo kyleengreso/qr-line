@@ -224,6 +224,65 @@ function send_email_request_submit($request_data) {
     }
 }
 
+function email_nofify_before_5($request_data) {
+    global $project_name, $project_name_full;
+    global $project_email, $project_phone;
+
+    $name = $request_data['name'];
+    $email = $request_data['email'];
+    $payment = $request_data['payment'];
+    $transaction_id = $request_data['transaction_id'];
+    $check_url = $request_data['website_check'];
+    $queue_count_int = $request_data['queue_count_int'];
+
+    $content = <<<HTML
+    <!DOCTYPE html>
+    <head>
+    </head>
+    <body style="font-family: Arial, sans-serif;">
+        <div>
+            <h2><strong>$project_name_full</strong></h2>
+        </div>
+        <div>
+            <div>
+                <p>Your request has been proceed. Please check the details below.</p>
+            </div>
+            <div>
+                <h3>Your queue # is <strong>$queue_count_int</strong></h3>
+            </div>
+            <div>
+                <table>
+                    <tr><td>Name</td><td>$name</td></tr>
+                    <tr><td>Email</td><td>$email</td></tr>
+                    <tr><td>Payment</td><td>$payment</td></tr>
+                </table>
+            </div>
+            <br>
+            <div>
+                If you want to visit to the request form, go to the first email that was sent to you.
+            </div>
+            <div style="display:flex; flex-direction:column">
+            </div>
+            <br>
+
+            <hr style="border: 1px solid #000;">
+
+            <div>
+                <p>Feel free to contact us if you have any question.</p>
+                <div>
+                    Email: <span><a href="mailto:$project_email">$project_email</a></span>
+                </div>
+                <div>
+                    Phone: <span><a href="tel:$project_phone">$project_phone</a></span>
+                </div>
+            </div>
+        </div>
+    </body>
+    HTML;
+
+    return $content;
+}
+
 function send_email_notify_before_5($request_data) {
     global $project_name, $project_name_full;
     global $email_feature;
@@ -263,7 +322,121 @@ function send_email_notify_before_5($request_data) {
         //Content
         $mail->isHTML(true);                                  //Set email format to HTML
         $mail->Subject = 'QR-LINE: Your Request #' . $queue_count_int . " is coming";
+        // $mail->Body    = "Wat";
         $mail->Body    = email_nofify_before_5($request_data);
+
+        // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+        $mail->send();
+        $mail->smtpClose();
+        // echo 'Message has been sent';
+    } catch (Exception $e) {
+        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+    }
+}
+
+function email_nofify_after_3($request_data) {
+    global $project_name, $project_name_full;
+    global $project_email, $project_phone;
+    global $serverName;
+    $name = $request_data['name'];
+    $email = $request_data['email'];
+    $payment = $request_data['payment'];
+    $transaction_id = $request_data['transaction_id'];
+    $check_url = $request_data['website_check'];
+    $queue_count_int = $request_data['queue_count_int'];
+
+    $content = <<<HTML
+    <!DOCTYPE html>
+    <head>
+    </head>
+    <body style="font-family: Arial, sans-serif;">
+        <div>
+            <h2><strong>$project_name_full</strong></h2>
+        </div>
+        <div>
+            <div>
+                <p>Your request has been cancelled.</p>
+            </div>
+            <div>
+                <h3>Your queue # is <strong>$queue_count_int</strong></h3>
+            </div>
+            <div>
+                <table>
+                    <tr><td>Name</td><td>$name</td></tr>
+                    <tr><td>Email</td><td>$email</td></tr>
+                    <tr><td>Payment</td><td>$payment</td></tr>
+                </table>
+            </div>
+            <br>
+            <div>
+                If you want request again, click the link below.
+                you can visit at $serverName/
+            </div>
+            <div style="display:flex; flex-direction:column">
+            </div>
+            <br>
+
+            <hr style="border: 1px solid #000;">
+
+            <div>
+                <p>Feel free to contact us if you have any question.</p>
+                <div>
+                    Email: <span><a href="mailto:$project_email">$project_email</a></span>
+                </div>
+                <div>
+                    Phone: <span><a href="tel:$project_phone">$project_phone</a></span>
+                </div>
+            </div>
+        </div>
+    </body>
+    HTML;
+
+    return $content;
+}
+
+function send_email_notify_after_3($request_data) {
+    global $project_name, $project_name_full;
+    global $email_feature;
+    global $smtp_host, $smtp_port, $smtp_email, $smtp_password;
+
+    // echo json_encode($request_data);
+    // exit;
+    $name = $request_data['name'];
+    $email = $request_data['email'];
+    $payment = $request_data['payment'];
+    $transaction_id = $request_data['transaction_id'];
+    $queue_count_int = $request_data['queue_count_int'];
+    try {
+        //Server settings
+        $mail = new PHPMailer($email_feature);
+        // $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+        $mail->isSMTP();                                            //Send using SMTP
+        $mail->Host       = $smtp_host;                            //Set the SMTP server to send through
+        $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
+        $mail->Username   = $smtp_email;                          //SMTP username
+        $mail->Password   = $smtp_password;                               //SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            //Enable implicit TLS encryption
+        $mail->Port       = $smtp_port;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+
+        //Recipients
+        $mail->setFrom($smtp_email, $project_name);
+        // $mail->addAddress('joe@example.net', 'The Requester');     //Add a recipient
+        $mail->addAddress($email);               //Name is optional
+        // $mail->addReplyTo('info@example.com', 'Information');
+        // $mail->addCC('cc@example.com');
+        // $mail->addBCC('bcc@example.com');
+
+        //Attachments
+        // $mail->addAttachment('/var/tmp/file.tar.gz');         //Add attachments
+        // $mail->addAttachment('/tmp/image.jpg', 'new.jpg');    //Optional name
+
+        //Content
+        $mail->isHTML(true);                                  //Set email format to HTML
+        $mail->Subject = 'QR-LINE: Your Request #' . $queue_count_int . " is cancelled";
+        // $mail->Body    = "Wat";
+        $mail->Body    = email_nofify_after_3($request_data);
+
         // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
 
         $mail->send();

@@ -315,6 +315,13 @@ btn_counter_resume.addEventListener('click', function(e) {
 });
 
 // Chart System
+function fmtHr(hour) {
+    const hourInt = parseInt(hour, 10);
+    const p = hourInt >= 12 ? 'PM' : 'AM';
+    const fH = hourInt % 12 || 12;
+    return `${fH} ${p}`;
+}
+
 let transaction_chart = document.getElementById('transaction-chart');
 var transactionChart = null;
 function initTransactionChart(data) {
@@ -324,7 +331,7 @@ function initTransactionChart(data) {
     if (data && data.stats && data.stats.length > 0) {
         // Current today
         if (data.stats[0].hour) {
-            chart_labels = data.stats.map(stats => stats.hour);
+            chart_labels = data.stats.map(stats => fmtHr(stats.hour));
             chart_transaction_total = data.stats.map(stat => stat.total_transactions);
             console.log('Hour present');
         // Current week
@@ -339,13 +346,9 @@ function initTransactionChart(data) {
             console.log('Month present');
         } 
     }
-    // console.log(chart_labels);
-    // console.log(chart_transaction_total);
     transactionChart = new Chart(transaction_chart, {
         type: 'line',
         data: {
-            // use for loop for labels
-
             labels: chart_labels,
             datasets: [{
                 label: "Transactions",
@@ -364,71 +367,63 @@ function initTransactionChart(data) {
             }],
         },
         options: {
-        maintainAspectRatio: false,
-        layout: {
-            padding: {
-            left: 10,
-            right: 25,
-            top: 25,
-            bottom: 0
-            }
-        },
-        scales: {
-            xAxes: [{
-            time: {
-                unit: 'date'
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
             },
-            gridLines: {
-                display: false,
-                drawBorder: false
+            scales: {
+                xAxes: [{
+                    time: {
+                        unit: 'date'
+                    },
+                    gridLines: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 7
+                    }
+                }],
+                yAxes: [{
+                    ticks: {},
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
             },
-            ticks: {
-                maxTicksLimit: 7
+            legend: {
+                display: true
+            },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                titleMarginBottom: 10,
+                titleFontColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                intersect: false,
+                mode: 'index',
+                caretPadding: 10,
+                callbacks: {
+                    label: function(tooltipItem, chart) {
+                        var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                        return datasetLabel + ': $' + number_format(tooltipItem.yLabel);
+                    }
+                }
             }
-            }],
-            yAxes: [{
-            ticks: {
-                // maxTicksLimit: 5,
-                // padding: 10,
-                // // Include a dollar sign in the ticks
-                // callback: function(value, index, values) {
-                // return '$' + number_format(value);
-                // }
-            }
-            ,
-            gridLines: {
-                color: "rgb(234, 236, 244)",
-                zeroLineColor: "rgb(234, 236, 244)",
-                drawBorder: false,
-                borderDash: [2],
-                zeroLineBorderDash: [2]
-            }
-            }],
-        },
-        legend: {
-            display: true
-        },
-        tooltips: {
-            backgroundColor: "rgb(255,255,255)",
-            bodyFontColor: "#858796",
-            titleMarginBottom: 10,
-            titleFontColor: '#6e707e',
-            titleFontSize: 14,
-            borderColor: '#dddfeb',
-            borderWidth: 1,
-            xPadding: 15,
-            yPadding: 15,
-            displayColors: false,
-            intersect: false,
-            mode: 'index',
-            caretPadding: 10,
-            callbacks: {
-            label: function(tooltipItem, chart) {
-                var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
-                return datasetLabel + ': $' + number_format(tooltipItem.yLabel);
-            }
-            }
-        }
         }
     });
 }
@@ -460,7 +455,7 @@ function updateTransactionChart(data) {
     console.log(data);
     if (data && data.stats && data.stats.length > 0) {
         if (data.stats[0].hour) {
-            chart_labels = data.stats.map(stats => stats.hour);
+            chart_labels = data.stats.map(stats => fmtHr(stats.hour));
             chart_transaction_total = data.stats.map(stat => stat.total_transactions);
             console.log('Hour present');
         } else if (data.stats[0].date) {

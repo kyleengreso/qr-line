@@ -1,9 +1,5 @@
 <?php
 include './../base.php';
-include './../../vendor/autoload.php';
-
-use chillerlan\QRCode\QRCode;
-use chillerlan\QRCode\QROptions;
 ?>
 
 <!DOCTYPE html>
