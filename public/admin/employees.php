@@ -92,7 +92,7 @@ restrictAdminMode();
     </div>
 
     
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -159,7 +159,7 @@ restrictAdminMode();
         </div>
     </div>
 
-    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form method="POST" id="frmAddEmployee">
@@ -220,7 +220,7 @@ restrictAdminMode();
         </div>
     </div>
 
-    <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+    <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form id="frmUpdateEmployee" method="POST">
@@ -283,7 +283,7 @@ restrictAdminMode();
         </div>
     </div>
 
-    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form method="POST" id="frmDeleteEmployee">

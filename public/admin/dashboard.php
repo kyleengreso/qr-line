@@ -300,7 +300,7 @@ $counterNumber = $token->counterNumber;
         </div>
     </div>
 
-    <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+    <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">

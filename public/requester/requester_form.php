@@ -14,7 +14,7 @@ include "./../base.php"
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top: 50px;">
+    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top: 100px;">
         <div class="card shadow-sm p-4" style="max-width: 400px;width: 100%;">
             <h4 class="text-center fw-bold">QR FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
@@ -39,7 +39,7 @@ include "./../base.php"
                 <div class="mb-3">
                 <label for="email" class="form-label fw-bold">Payment</label>
                 <br>
-                <select class="form-select" name="transaction-history-payment" id="transaction-history-payment">
+                <select class="form-select"  name="transaction-history-payment" id="transaction-history-payment">
                     <option value="null">Payment</option>
                     <option value="registrar">Registrar</option>
                     <option value="assessment">Assessment</option>

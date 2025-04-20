@@ -84,7 +84,7 @@ restrictAdminMode();
     </div>
 
     <!-- VIEW COUNTER -->
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -101,7 +101,7 @@ restrictAdminMode();
     </div>
 
     <!-- ADD COUNTER -->
-    <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -163,7 +163,7 @@ restrictAdminMode();
     </div>
 
     <!-- UPDATE COUNTER -->
-    <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -239,7 +239,7 @@ restrictAdminMode();
     </div>
 
     <!-- DELETE COUNTER -->
-    <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">

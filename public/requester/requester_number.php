@@ -25,7 +25,7 @@ use chillerlan\QRCode\QROptions;
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:180px;flex-direction:column">
+    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:100px;flex-direction:column">
         <div class="row circle text-center">
             <div>
                 <img src="./../asset/images/logo_blk.png" alt="logo" width="75px" style="margin-top: -15px;">
@@ -43,14 +43,29 @@ use chillerlan\QRCode\QROptions;
             <p class="current-number">Current number: <strong><span id="currentQueueNumber">N/A</span></strong></p>
         </div>
         <div class="d-flex justify-content-center align-items-center">
-            <!-- set white div -->
             <div class="mt-4 rounded-start p-4 d-flex justify-content-center" style="width: 100%">
-                <a class="btn btn-primary text-white fw-bold" id="btnCancelRequest">Cancel Request</a>
+                <a class="btn btn-primary text-white fw-bold" id="btnCancelRequestModal" data-toggle="modal" data-target="#requestCancelModal">Cancel Request</a>
             </div>
         </div>
     </div>
-    <script src="./../asset/js/jquery-3.7.1.js"></script>
-    <script src="./../asset/js/message.js"></script>
+
+    <div class="modal fade" id="requestCancelModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
+                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Cancel Transaction?</h5>
+                </div>
+                <div class="modal-body py-4 px-6 fw-bold" id="viewEmployeeBody">
+                    Do you want to cancel you current transaction?
+                </div>
+                <div class="modal-footer col" id="viewEmployeeFooter">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="btnCancelRequest">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php after_js()?>
     <script src="./../asset/js/user_number.js"></script>
 </body>
 <?php include_once "./../includes/footer.php"; ?>

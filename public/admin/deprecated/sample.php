@@ -13,7 +13,7 @@ include_once __DIR__ . "/../base.php";
 </head>
 <body>
 <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="margin-top: 100px;">
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
         <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header bg-orange-custom">

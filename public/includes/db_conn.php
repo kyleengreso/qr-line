@@ -12,7 +12,7 @@ try {
     // Set charset if needed
     $conn->set_charset("utf8mb4");
 } catch (mysqli_sql_exception $e) {
-    die("Unable to connect to the database. Please try again later.");
+    die("Unable to connect to the database or wrong password. Please try again later");
 }
 
 ?>
