@@ -98,22 +98,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (password_verify($password, $employee[0]['password'])) {
             
             // Get Counter if was assigned
-            $sql_cmd = "SELECT c.counterNumber
-                        FROM counters c
-                        WHERE c.idemployee = ?";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $employee[0]['id']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $counter = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-
-            if (!$counter) {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "Cashier was not assigned yet"
-                ));
-                exit;
+            if ($employee[0]['role_type'] == 'employee') {
+                $sql_cmd = "SELECT c.counterNumber
+                            FROM counters c
+                            WHERE c.idemployee = ?";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("s", $employee[0]['id']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $counter = $result->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+    
+                if (!$counter) {
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => "Cashier was not assigned yet"
+                    ));
+                    exit;
+                }
             }
 
             $token = array(
