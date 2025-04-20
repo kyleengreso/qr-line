@@ -1,6 +1,6 @@
 <?php
 // QR-LINE Self-Endpoint v2
-// (c) aceday. All Rights Reserved 2025
+// (c) QR-Line. All Rights Reserved 2025
 
 require_once __DIR__ . '/./../base.php';
 require_once __DIR__ . '/./../includes/system_auth.php';
@@ -1269,7 +1269,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         include "./email_content.php";
         
-        // $requester = $requester[0];
         $requester = $requester[0];
         $requester_name = $requester['name'];
         $requester_email = $requester['email'];
@@ -1454,22 +1453,34 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $requester_id = $stmt->insert_id;
             $stmt->close();
     
-            // Get queue_count_int value from setup
-            $sql_cmd = "SELECT setup_value_int FROM setup_system WHERE setup_key = 'queue_count'";
+            // Count the transactions during day
+            $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
+                        FROM transactions t
+                        WHERE DATE(t.transaction_time) = CURDATE()";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
-            $setup_row = $result->fetch_assoc();
-            $queue_count_int = $setup_row['setup_value_int'];
-            // Then increment the queue_count_int value by 1
-            $queue_count_int++;
+            $transaction_count = $result->fetch_all(MYSQLI_ASSOC);
             $stmt->close();
-            $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'queue_count'";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $queue_count_int);
-            $stmt->execute();
-            $stmt->close();
-        
+
+            $queue_count_int =  $transaction_count[0]['total_transactions'] + 1;
+            // // Get queue_count_int value from setup
+            // $sql_cmd = "SELECT setup_value_int FROM setup_system WHERE setup_key = 'queue_count'";
+            // $stmt = $conn->prepare($sql_cmd);
+            // $stmt->execute();
+            // $result = $stmt->get_result();
+            // $setup_row = $result->fetch_assoc();
+            // $queue_count_int = $setup_row['setup_value_int'];
+            // // Then increment the queue_count_int value by 1
+            // $queue_count_int++;
+            // $stmt->close();
+
+            // $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'queue_count'";
+            // $stmt = $conn->prepare($sql_cmd);
+            // $stmt->bind_param("s", $queue_count_int);
+            // $stmt->execute();
+            // $stmt->close();
+
             // Generate a random token number
             $token_number = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
     

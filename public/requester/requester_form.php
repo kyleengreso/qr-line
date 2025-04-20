@@ -39,7 +39,7 @@ include "./../base.php"
                 <div class="mb-3">
                 <label for="email" class="form-label fw-bold">Payment</label>
                 <br>
-                <select style="width:100%;padding:10px;border-radius:5px" name="transaction-history-payment" id="transaction-history-payment">
+                <select class="form-select" name="transaction-history-payment" id="transaction-history-payment">
                     <option value="null">Payment</option>
                     <option value="registrar">Registrar</option>
                     <option value="assessment">Assessment</option>
