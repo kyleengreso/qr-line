@@ -117,7 +117,7 @@ $counterNumber = $token->counterNumber;
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);
-                    console.log('Raw Response:', xhr.responseText);
+                    // console.log('Raw Response:', xhr.responseText);
                 }
             });
         });
@@ -138,11 +138,11 @@ $counterNumber = $token->counterNumber;
                         // console.log('Transaction skipped successfully');
                     } else {
                         console.log('Error:', response.message);
-                        console.log('Raw Response:', xhr.responseText);
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);
+                    // console.log('Raw Response:', xhr.responseText);
                 }
             });
         });

@@ -996,17 +996,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $transaction = $result->fetch_all(MYSQLI_ASSOC);
         if ($result->num_rows == 0) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "No transaction found"
-            ));
-            exit;
+            // echo json_encode(array(
+            //     "status" => "error",
+            //     "message" => "No transaction found"
+            // ));
+            // exit;
         } else {
-            echo json_encode(array(
-                "status" => "success",
-                "message" => "Transaction found",
-                "data" => $transaction
-            ));
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "message" => "Transaction found",
+            //     "data" => $transaction
+            // ));
+            // exit;
         }
 
         // Commit as 'serve' to 'completed'
@@ -1021,6 +1022,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Success Transaction updated successfully"
             ));
+            exit;
         } else if ($stmt->affected_rows == 0) {
             // echo json_encode(array(
             //     "status" => "error",
@@ -1031,6 +1033,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            exit;
         }
 
         //////////////////////////////////////////////
@@ -1062,11 +1065,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Transaction found",
-            "data" => $transaction_f
-        ));
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "message" => "Transaction found",
+        //     "data" => $transaction_f
+        // ));
 
         // Get information from using idrequester
         $sql_cmd = "SELECT * 
@@ -1078,11 +1081,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $requester = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Requester found",
-            "data" => $requester
-        ));
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "message" => "Requester found",
+        //     "data" => $requester
+        // ));
 
         include "./email_content.php";
         
@@ -1165,17 +1168,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $transaction = $result->fetch_all(MYSQLI_ASSOC);
         if ($result->num_rows == 0) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "No transaction found"
-            ));
-            exit;
+            // echo json_encode(array(
+            //     "status" => "error",
+            //     "message" => "No transaction found"
+            // ));
+            // exit;
         } else {
-            echo json_encode(array(
-                "status" => "success",
-                "message" => "Transaction found",
-                "data" => $transaction
-            ));
+            // echo json_encode(array(
+            //     "status" => "success",
+            //     "message" => "Transaction found",
+            //     "data" => $transaction
+            // ));
+            // exit;
         }
 
         // Commit as 'serve' to 'completed'
@@ -1188,16 +1192,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Missed Transaction updated successfully"
             ));
+            exit;
         } else if ($stmt->affected_rows == 0) {
-            // echo json_encode(array(
-            //     "status" => "error",
-            //     "message" => "No changes made"
-            // ));
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No transaction was assigned"
+            ));
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            exit;
         }
 
         
@@ -1212,12 +1219,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-
-        // echo json_encode(array(
-        //     "status" => "success",
-        //     "message" => "Transaction found",
-        //     "data" => $transaction_f
-        // ));
+        // if ($result->num_rows == 0) {
+        //     echo json_encode(array(
+        //         "status" => "success",
+        //         "message" => "Transaction found",
+        //         "data" => $transaction_f
+        //     ));
+        //     exit;
+        // }
         
         $sql_cmd = "SELECT *
                     FROM transactions t
@@ -1230,11 +1239,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Transaction found",
-            "data" => $transaction_f
-        ));
+        // if ($result->num_rows == 0) {
+        //     echo json_encode(array(
+        //         "status" => "success",
+        //         "message" => "Transaction found",
+        //         "data" => $transaction_f
+        //     ));
+        //     exit;
+        // }
 
         // Get information from using idrequester
         $sql_cmd = "SELECT * 
@@ -1246,11 +1258,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $requester = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Requester found",
-            "data" => $requester
-        ));
+        // if ($result->num_rows > 0) {
+        //     echo json_encode(array(
+        //         "status" => "success",
+        //         "message" => "Requester found",
+        //         "data" => $requester
+        //     ));
+        //     exit;
+        // }
 
         include "./email_content.php";
         
@@ -1268,6 +1283,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "queue_count_int" => $transaction_f[0]['queue_number']
         );
         send_email_notify_before_5($request_data);
+   
         //////////////////////////////////////////////
         // Put to cancelled for past 3 queue using idtransaction
         $sql_cmd = "SELECT *
@@ -1297,11 +1313,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Transaction found",
-            "data" => $transaction_f
-        ));
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "message" => "Transaction found",
+        //     "data" => $transaction_f
+        // ));
+
 
         // Get information from using idrequester
         $sql_cmd = "SELECT * 
@@ -1313,12 +1330,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $result = $stmt->get_result();
         $requester = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Requester found",
-            "data" => $requester
-        ));
-        exit;
+        // echo json_encode(array(
+        //     "status" => "success",
+        //     "message" => "Requester found",
+        //     "data" => $requester
+        // ));
+        // exit;
     
     // Requester's cancel function
     } else if ($method == "requester-form-cancel") {
@@ -1493,8 +1510,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "website_cancel" => $website_cancel,
                 "queue_count_int" => $queue_count_int
             );
-            // include "./email_content.php";
-            // send_email_request_submit($request_data);
+
+            // Send the email
+            include "./email_content.php";
+            send_email_request_submit($request_data);
         } catch (Exception $e) {
             $conn->rollback();
             echo json_encode(array(
@@ -2173,7 +2192,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Or get the transaction where can still available for today
             $sql_cmd = "SELECT *
                         FROM transactions t
-                        WHERE t.status = 'pending' AND t.idcounter IS NULL AND t.idemployee IS NULL
+                        WHERE 
+                            t.status = 'pending' AND
+                            t.idcounter IS NULL AND
+                            t.idemployee IS NULL AND
+                            DATE(t.transaction_time) = CURDATE()
                         ORDER BY t.transaction_time ASC
                         LIMIT 1";
             $stmt= $conn->prepare($sql_cmd);
@@ -2197,7 +2220,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 ));
             } else {
                 echo json_encode(array(
-                    "status" => "success",
+                    "status" => "error",
                     "message" => "No transactions available for today"
                 ));
                 exit;
