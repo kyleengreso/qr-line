@@ -54,7 +54,7 @@ $counterNumber = $token->counterNumber;
                 <div class="row text-center">
                     <div class="col-xl-3 col-md-6 mb-4 p-0">
                         <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #00a;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
-                            <div class="card-body">
+                            <div class="card-body p-4 p-md-2">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#00a">
@@ -70,7 +70,7 @@ $counterNumber = $token->counterNumber;
                     </div>
                     <div class="col-xl-3 col-md-6 mb-4 p-0">
                         <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #aa0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
-                            <div class="card-body">
+                            <div class="card-body p-4 p-md-2">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#aa0">
@@ -86,7 +86,7 @@ $counterNumber = $token->counterNumber;
                     </div>
                     <div class="col-xl-3 col-md-6 mb-4 p-0">
                         <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #0a0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
-                            <div class="card-body">
+                            <div class="card-body p-4 p-md-2">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#0a0">
@@ -102,7 +102,7 @@ $counterNumber = $token->counterNumber;
                     </div>
                     <div class="col-xl-3 col-md-6 mb-4 p-0">
                         <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #a00;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
-                            <div class="card-body">
+                            <div class="card-body p-4 p-md-2">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#a00">
@@ -245,26 +245,27 @@ $counterNumber = $token->counterNumber;
                                     Employees
                                 </div>
                                 <div class="card-body">
-                                    <div id="table-employees">
+                                    <div class="col" id="employee-nonlisting">
+                                        Employee is hidden
+                                        <div class="col text-center p-4">
+                                            <a class="fs-5 text-primary text-decoration-none" id="employee-show" style="cursor:pointer">Show List</a>
+                                        </div>
                                     </div>
-                                    <!-- <table class="table table-striped table-members" id="table-employees">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Username</th>
-                                            <th>Created At</th>
-                                        </tr>
-                                    </table> -->
-                                    <nav aria-label="Page navigation example">
-                                        <ul class="pagination justify-content-center">
-                                            <li class="page-item">
-                                                <a class="page-link" id="pagePrevEmployees">Previous</a>
-                                            </li>
-                                            <li class="page-item">
-                                                <a class="page-link" id="pageNextEmployees">Next</a>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                    <div style="width:100%">
+                                    <div class="col d-none" id="employee-listing">
+                                        <div id="table-employees">
+                                        </div>
+                                        <nav aria-label="Page navigation example">
+                                            <ul class="pagination justify-content-center">
+                                                <li class="page-item">
+                                                    <a class="page-link" id="pagePrevEmployees">Previous</a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link" id="pageNextEmployees">Next</a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                    <div class="w-100">
                                         <a class="btn btn-primary" href="./employees.php" style="width:100%">View all employees</a>
                                     </div>
                                 </div>
@@ -276,22 +277,29 @@ $counterNumber = $token->counterNumber;
                                     Counters
                                 </div>
                                 <div class="card-body">
-                                    <div id="table-counters">
-
+                                    <div class="col" id="counter-nonlisting">
+                                        Counter is hidden
+                                        <div class="col text-center p-4">
+                                            <a class="fs-5 text-primary text-decoration-none" id="counters-show" style="cursor:pointer">Show List</a>
+                                        </div>
                                     </div>
-                                    <nav aria-label="Page navigation example">
-                                        <ul class="pagination justify-content-center">
-                                            <li class="page-item">
-                                                <a class="page-link" id="pagePrevCounters">Previous</a>
-                                            </li>
-                                            <li class="page-item">
-                                                <a class="page-link"id="pageNextCounters">Next</a>
-                                            </li>
-                                        </ul>
-                                    </nav>
+                                    <div class="col d-none" id="counter-listing">
+                                        <div id="table-counters">
+                                        </div>
+                                        <nav aria-label="Page navigation example">
+                                            <ul class="pagination justify-content-center">
+                                                <li class="page-item">
+                                                    <a class="page-link" id="pagePrevCounters">Previous</a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link"id="pageNextCounters">Next</a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
                                     <div style="width:100%">
+                                        </div>
                                         <a class="btn btn-primary" href="./counters.php" style="width:100%">View all counters</a>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -306,7 +314,7 @@ $counterNumber = $token->counterNumber;
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                 <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Employee: <?php echo $username?> is cut off</h5>
                 </div>
-                <div class="modal-body py-4 px-6 fw-bold" id="viewEmployeeBody">
+                <div class="modal-body py-4 px-6" id="viewEmployeeBody">
                     You are cut off for temporary.
                     <input type="hidden" name="employee-id" id="employee-id" value="<?php echo $id?>">
                 </div>
@@ -319,6 +327,22 @@ $counterNumber = $token->counterNumber;
     </div>
     <?php after_js()?>
     <script src="./../asset/js/dashboard_admin.js"></script>
+    <script>
+        let btn_employee_show = document.getElementById("employee-show");
+        btn_employee_show.addEventListener("click", function() {
+            let employee_nonlisting = document.getElementById("employee-nonlisting");
+            employee_nonlisting.classList.add('d-none');
+            let employee_listing = document.getElementById("employee-listing");
+            employee_listing.classList.remove('d-none');
+        });
+        let counters_show = document.getElementById("counters-show");
+        counters_show.addEventListener("click", function() {
+            let counter_nonlisting = document.getElementById("counter-nonlisting");
+            counter_nonlisting.classList.add('d-none');
+            let counter_listing = document.getElementById("counter-listing");
+            counter_listing.classList.remove('d-none');
+        });
+    </script>
     <?php include_once "./../includes/footer.php"; ?>
 </body>
 </html>

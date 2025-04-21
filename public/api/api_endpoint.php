@@ -2392,7 +2392,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE WEEK(transaction_time) = WEEK(CURDATE())
-                        GROUP BY DATE(transaction_time)";
+                        GROUP BY DATE(transaction_time)
+                        ORDER BY date ASC";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2408,7 +2409,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                        GROUP BY DATE(transaction_time)";
+                        GROUP BY DATE(transaction_time)
+                        ORDER BY date ASC
+                        ";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2426,7 +2429,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE MONTH(transaction_time) = MONTH(CURDATE())
-                        GROUP BY DATE(transaction_time)";
+                        GROUP BY DATE(transaction_time)
+                        ORDER BY date ASC";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2443,7 +2447,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                        GROUP BY DATE(transaction_time)";
+                        GROUP BY DATE(transaction_time)
+                        ORDER BY date ASC";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2460,7 +2465,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT DATE_FORMAT(transaction_time, '%Y-%m') as month, COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-                        GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')";
+                        GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
+                        ORDER BY month ASC";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2477,7 +2483,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT DATE_FORMAT(transaction_time, '%Y-%m') as month, COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-                        GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')";
+                        GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
+                        ORDER BY month ASC";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2495,7 +2502,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             COUNT(idtransaction) AS total_transactions
                             FROM transactions
                             WHERE YEAR(transaction_time) = YEAR(CURDATE())
-                            GROUP BY DATE_FORMAT(transaction_time, '%Y-%m');";
+                            GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
+                            ORDER BY month ASC";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
