@@ -321,6 +321,7 @@ function fmtHr(hour) {
     const fH = hourInt % 12 || 12;
     return `${fH} ${p}`;
 }
+console.log(Chart.version);
 
 let transaction_chart = document.getElementById('transaction-chart');
 var transactionChart = null;
@@ -328,6 +329,7 @@ function initTransactionChart(data) {
     console.log(data);
     var chart_labels = [];
     var chart_transaction_total = [];
+
     if (data && data.stats && data.stats.length > 0) {
         // Current today
         if (data.stats[0].hour) {
@@ -344,8 +346,20 @@ function initTransactionChart(data) {
             chart_labels = data.stats.map(stats => stats.month);
             chart_transaction_total = data.stats.map(stats => stats.total_transactions);
             console.log('Month present');
-        } 
+        }
+    } else {
+        // No data available
+        chart_labels = ["No Data"];
+        chart_transaction_total = [0];
+        console.log("No data available");
     }
+
+    // Create gradient for the fill effect
+    var ctx = transaction_chart.getContext('2d');
+    var gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientFill.addColorStop(0, "rgba(255, 110, 55, 0.4)"); // Start color (semi-transparent)
+    gradientFill.addColorStop(1, "rgba(255, 110, 55, 0)");   // End color (fully transparent)
+
     transactionChart = new Chart(transaction_chart, {
         type: 'line',
         data: {
@@ -353,7 +367,7 @@ function initTransactionChart(data) {
             datasets: [{
                 label: "Transactions",
                 lineTension: 0.3,
-                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                backgroundColor: gradientFill,
                 borderColor: "rgba(255, 110, 55, 1)",
                 pointRadius: 3,
                 pointBackgroundColor: "rgba(255, 110, 55, 1)",
@@ -364,6 +378,7 @@ function initTransactionChart(data) {
                 pointHitRadius: 10,
                 pointBorderWidth: 2,
                 data: chart_transaction_total,
+                fill: true
             }],
         },
         options: {
@@ -390,7 +405,9 @@ function initTransactionChart(data) {
                     }
                 }],
                 yAxes: [{
-                    ticks: {},
+                    ticks: {
+                        beginAtZero: true // Ensure the y-axis starts at 0
+                    },
                     gridLines: {
                         color: "rgb(234, 236, 244)",
                         zeroLineColor: "rgb(234, 236, 244)",
@@ -417,17 +434,10 @@ function initTransactionChart(data) {
                 intersect: false,
                 mode: 'index',
                 caretPadding: 10,
-                callbacks: {
-                    label: function(tooltipItem, chart) {
-                        var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
-                        return datasetLabel + ': $' + number_format(tooltipItem.yLabel);
-                    }
-                }
             }
         }
     });
 }
-
 var transaction_stat_data_range = 'day';
 function getTransactionChart() {
     let resp = null;

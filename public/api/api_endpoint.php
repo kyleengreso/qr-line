@@ -1116,7 +1116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // exit;
         }
 
-        // Commit as 'serve' to 'completed'
+        // Commit as 'serve' to 'missed'
         $sql_cmd = "UPDATE transactions SET status = 'missed' WHERE idtransaction = ?";
         $stmt = $conn->prepare($sql_cmd);
         $stmt->bind_param("s", $transaction[0]['idtransaction']);
@@ -2094,7 +2094,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $stmt->bind_param("s", $transactions[0]['transaction_time']);
                 $stmt->execute();
                 $result = $stmt->get_result();
-                $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
+                $transaction_p = $result->fetch_all(MYSQLI_ASSOC);
                 $stmt->close();
                 if ($result->num_rows > 0) {
                     // Didnt optimize yet..
@@ -2104,7 +2104,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 SET status = 'cancelled'
                                 WHERE idtransaction = ?";
                     $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("s", $transaction_f[0]['idtransaction']);
+                    $stmt->bind_param("s", $transaction_p[0]['idtransaction']);
                     $stmt->execute();
                     $stmt->close();
     
@@ -2123,7 +2123,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             FROM requesters r
                             WHERE r.id = ?";
                     $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("s", $transaction_f[0]['idrequester']);
+                    $stmt->bind_param("s", $transaction_p[0]['idrequester']);
                     $stmt->execute();
                     $result = $stmt->get_result();
                     $requester = $result->fetch_all(MYSQLI_ASSOC);
@@ -2142,13 +2142,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $requester_name = $requester['name'];
                     $requester_email = $requester['email'];
                     $requester_payment = $requester['payment'];
-                    $requester_token = $transaction_f[0]['token_number'];
+                    $requester_token = $transaction_p[0]['token_number'];
                     $request_data = array(
                         "name" => $requester_name,
                         "email" => $requester_email,
                         "payment" => $requester_payment,
-                        "transaction_id" => $transaction_f[0]['idtransaction'],
-                        "queue_count_int" => $transaction_f[0]['queue_number'],
+                        "transaction_id" => $transaction_p[0]['idtransaction'],
+                        "queue_count_int" => $transaction_p[0]['queue_number'],
                         "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
                     );
                     echo json_encode($request_data);
@@ -2371,10 +2371,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // CURRENT DAY
         if ($data_range === "day") {
             // Get the current day and group by hour
-            $sql_cmd = "SELECT HOUR(transaction_time) as hour,  COUNT(idtransaction) as total_transactions
+            $sql_cmd = "SELECT HOUR(transaction_time) as `hour` , COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE DATE(transaction_time) = CURDATE()
-                        GROUP BY HOUR(transaction_time)";
+                        GROUP BY hour
+                        -- ORDER BY `hour` ASC; -- On working
+                        ";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2391,9 +2393,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Get the current week and group by day
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
-                        WHERE WEEK(transaction_time) = WEEK(CURDATE())
+                        WHERE (WEEK(transaction_time) = WEEK(CURDATE())) 
+                        AND DATE(transaction_time) <= CURDATE() AND YEAR(transaction_time) = YEAR(CURDATE())
                         GROUP BY DATE(transaction_time)
-                        ORDER BY date ASC";
+                        ORDER BY date ASC;";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2408,7 +2411,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else if ($data_range === "last-week") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
-                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND
+                        DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE(transaction_time)
                         ORDER BY date ASC
                         ";
@@ -2428,7 +2432,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Get the current month and group by day
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
-                        WHERE MONTH(transaction_time) = MONTH(CURDATE())
+                        WHERE MONTH(transaction_time) = MONTH(CURDATE()) AND
+                            DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE(transaction_time)
                         ORDER BY date ASC";
             $stmt = $conn->prepare($sql_cmd);
@@ -2446,7 +2451,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else if ($data_range === "last-30-days") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
                         FROM transactions
-                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND
+                        DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE(transaction_time)
                         ORDER BY date ASC";
             $stmt = $conn->prepare($sql_cmd);
@@ -2464,7 +2470,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else if ($data_range === "last-3-months") {
             $sql_cmd = "SELECT DATE_FORMAT(transaction_time, '%Y-%m') as month, COUNT(idtransaction) as total_transactions
                         FROM transactions
-                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH) AND
+                            DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
                         ORDER BY month ASC";
             $stmt = $conn->prepare($sql_cmd);
@@ -2482,7 +2489,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else if ($data_range === "last-12-months") {
             $sql_cmd = "SELECT DATE_FORMAT(transaction_time, '%Y-%m') as month, COUNT(idtransaction) as total_transactions
                         FROM transactions
-                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                        WHERE transaction_time >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) AND
+                            DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
                         ORDER BY month ASC";
             $stmt = $conn->prepare($sql_cmd);
