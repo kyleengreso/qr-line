@@ -1,4 +1,4 @@
-<div class="my-5">
+<div>
 <footer class="text-center text-lg-start text-black footer">
     <div class="container p-4 pb-0">
     <section class="">
