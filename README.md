@@ -58,9 +58,19 @@ git clone https://github.com/kyleengreso/qr-line.git
 
 ## Usage
 
+**Users:**
 1. Users scan a QR code to join the queue.
-2. Real-time updates ensure smooth queue management.
+2. Users have the option to cancel their queue request.
+
+**Employees:**
+1. Employees can manage the queue (e.g., call next, skip, recall).
+2. Employees can cut-off the queue when needed.
+
+**Admin:**
+1. Admin can manage employees and counters.
+2. Admin can check transaction history.
+3. Admin can generate reports.
 
 ## License
 
-This project is licensed under the [MIT License](https://github.com/kyleengreso/qr-line?tab=MIT-1-ov-file).
+This project is licensed under the [MIT License](https://github.com/kyleengreso/qr-line/blob/main/LICENSE).
