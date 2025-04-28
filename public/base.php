@@ -22,9 +22,9 @@ $serverName = getHostByName(getHostName()) . ":80"; // IP Address version
 // $serverName = "qrline.psu.edu.ph"; // Domain name version
 
 // Project Support
-$project_address = "Tiniguiban Heights, Puerto Princesa City, Palawan, Philippines";
-$project_email = "marcsysman@gmail.com";
-$project_phone = "+63909-123-4567";
+$project_address = " Tiniguiban Heights, Puerto Princesa City, Palawan, Philippines";
+$project_email = " marcsysman@gmail.com";
+$project_phone = " (+63)909-123-4567";
 
 // Website Security Feature
 $enable_http = true;
