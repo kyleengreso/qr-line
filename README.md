@@ -55,14 +55,12 @@ git clone https://github.com/kyleengreso/qr-line.git
 - MySQL
 - JavaScript (for front-end interactions)
 - Bootstrap (for responsive UI design)
-- 
 
 ## Usage
 
 1. Users scan a QR code to join the queue.
-2. Admins monitor and manage queue positions.
-3. Real-time updates ensure smooth queue management.
+2. Real-time updates ensure smooth queue management.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](https://github.com/kyleengreso/qr-line?tab=MIT-1-ov-file).
