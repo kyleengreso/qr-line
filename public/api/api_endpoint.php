@@ -266,7 +266,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($result->num_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Username not found"
+                "message" => "Can't find username " . $username . "."
             ));
             exit;
         }

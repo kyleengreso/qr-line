@@ -1,7 +1,8 @@
 <?php
 include_once __DIR__ . '/../base.php';
+restrictCheckLoggedIn();
 
-// Make a random int 1 to 50
+// Random for captcha until 50, you can tell
 $int_first = rand(1, 50);
 $int_second = rand(1, 50);
 
@@ -34,6 +35,10 @@ $int_second = rand(1, 50);
                     <span class="input-group-text"><i class="fas fa-user"></i></span>
                     <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
                 </div>
+                <div class="input-group mb-4">
+                    <span class="input-group-text"><i class="bi bi-puzzle-fill"></i></span>
+                    <input type="text" class="form-control" name="sum_captcha" id="sum_captcha" placeholder="<?php echo $int_first . "+" . $int_second?>" required>
+                </div>
                 <button type="submit" class="btn btn-primary w-100">Send Password</button>
                 <p class="text-center mt-3"><a class="text-decoration-none" href="login.php">Back to Login?</a></p>
             </form>
@@ -44,6 +49,8 @@ $int_second = rand(1, 50);
     <script src="./../asset/js/message.js"></script>
     <!-- <script src="./../asset/js/authenticate.js"></script> -->
     <script>
+        let captcha_correct = <?php echo ($int_first + $int_second)?>;
+        console.log(captcha_correct);
         // Exclusively for forgot password
         function forgot_password(username) {
             let data = {
@@ -69,6 +76,13 @@ $int_second = rand(1, 50);
             });
         }
 
+        let frmForgotPassword = document.getElementById('frmForgotPassword');
+        frmForgotPassword.addEventListener('submit', function(e) {
+            let formData = new FormData(this);
+            let username = formData.get('username');
+
+
+        });
         $('#frmForgotPassword').on('submit', function(event) {
             event.preventDefault();
             username = $('#username').val();
