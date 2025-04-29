@@ -53,7 +53,7 @@ restrictAdminMode();
                             <div class="col-12 mb-4">
                                 <div class="row">
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
                                         <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
                                     </div>
                                 </div>
@@ -116,7 +116,7 @@ restrictAdminMode();
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
                                 <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
                             </div>
                         </div>
@@ -191,7 +191,7 @@ restrictAdminMode();
                         </div>
                         <div class="mb-3">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
                                 <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
                             </div>
                         </div>

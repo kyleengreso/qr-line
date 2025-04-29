@@ -32,7 +32,7 @@ $int_second = rand(1, 50);
             </div>
             <form method="POST" id="frmForgotPassword">
                 <div class="input-group mb-4">
-                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                     <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
                 </div>
                 <div class="input-group mb-4">

@@ -29,13 +29,13 @@ restrictCheckLoggedIn();
             <form method="POST" id="frmLogIn">
                 <div class="">
                     <div class="input-group mb-4">
-                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                         <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
                     </div>
                 </div>
                 <div class="mb-2">
                     <div class="input-group mb-4">
-                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                         <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
                     </div>
                 </div>

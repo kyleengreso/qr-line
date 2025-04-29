@@ -38,21 +38,21 @@ include_once __DIR__ . "/../base.php";
                     <form method="POST" id="frmAddEmployee">
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                                 <input type="text" name="username" id="username" class="form-control" placeholder="Username" required>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirm password" required>
                             </div>
                         </div>

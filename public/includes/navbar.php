@@ -21,7 +21,7 @@ if (isset($_COOKIE['token'])) {
     </a>
     <a class="btn btn-primary text-decoration-none" style="border-radius: 5px; text-black; border: 1px solid #fff; background-color: transparent; margin-left: 10px; margin-right: 20px;"
         id="btn-logout">
-        <i class="fa-solid fa-right-from-bracket"></i>
+        <i class="bi bi-box-arrow-right"></i>
     </a>
     <script src="./../asset/js/navbar.js"></script>
     <?php endif; ?>

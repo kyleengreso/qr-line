@@ -37,7 +37,7 @@ login_as_employee();
                         <div class="col mb-3">
                             <label for="username" class="form-label col-3">Username</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                                 <input type="text" id="username" class="form-control" placeholder="Enter username" disabled>
                             </div>
                             
@@ -47,7 +47,7 @@ login_as_employee();
                         <div class="mb-3">
                             <label class="form-label">Password</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="password" id="password" class="form-control" placeholder="Enter password">
                             </div>
                         </div>
@@ -55,7 +55,7 @@ login_as_employee();
                         <div class="mb-3">
                             <label class="form-label">Confirm Password</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirm password">
                             </div>
                         </div>

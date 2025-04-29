@@ -34,18 +34,18 @@
 
         <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
             <h6 class="text-uppercase mb-4 font-weight-bold">Contact</h6>
-            <p><i class="fa-solid fa-location-dot"></i><?php echo $project_address?></p>
-            <p><i class="fas fa-envelope mr-3"></i><?php echo $project_email?></p>
-            <p><i class="fas fa-phone mr-3"></i><?php echo $project_phone?></p>
+            <p><i class="bi bi-geo-alt-fill"></i><?php echo $project_address?></p>
+            <p><i class="bi bi-envelope-at-fill"></i><?php echo $project_email?></p>
+            <p><i class="bi bi-telephone-fill"></i><?php echo $project_phone?></p>
         </div>
 
         <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mt-3">
             <h6 class="text-uppercase mb-4 font-weight-bold">Follow us</h6>
-            <a class="btn btn-primary btn-floating m-1" style="background-color: #3b5998" href="#!" role="button">
-            <i class="fab fa-facebook-f"></i>
+            <a class="rounded-circle btn btn-floating m-1" href="#!" role="button">
+            <i class="fs-1 bi bi-facebook" style="color:#3b5998"></i>
             </a>
-            <a class="btn btn-primary btn-floating m-1" style="background-color: #55acee" href="#!" role="button">
-            <i class="fab fa-twitter"></i>
+            <a class="rounded-circle btn btn-floating m-1" href="#!" role="button">
+            <i class="fs-1 bi bi-twitter-x"></i>
             </a>
         </div>
         </div>

@@ -23,7 +23,7 @@ include "./../base.php"
                 <div class="mb-3">
                     <label for="name" class="form-label fw-bold">Name</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                         <input type="text" class="form-control" id="name" name="name" placeholder="Enter Your Name" required>
                     </div>
                 </div>

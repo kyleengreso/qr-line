@@ -35,7 +35,7 @@ include_once __DIR__ . "/../base.php";
                         <div class="mb-3">
                             <label class="form-label">Search</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
                                 <input type="text" name="search" id="search" class="form-control" placeholder="Enter username">
                             </div>
                         </div>

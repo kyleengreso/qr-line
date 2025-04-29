@@ -37,7 +37,7 @@ include_once __DIR__ . "/../base.php";
                     <form method="POST" id="frmAddCounter">
                         <div class="mb-3">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
                                 <input type="text" name="search" id="search" class="form-control" placeholder="Search Username">
                             </div>
                         </div>

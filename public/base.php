@@ -174,19 +174,21 @@ function head_css() {
     ';
 }
 function before_js() {
-    echo '<script src="./../asset/js/0aa2c3c0f4.js"></script>';
+    // <script src="/node_modules/@fortawesome/fontawesome-free/js/fontawesome.js"></script>
+    echo '
+    ';
 }
 
 function after_js() {
     echo '
     <script src="./../asset/js/base.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
-    <script src="./../asset/js/popper.min.js" ></script>
-    <script src="./../asset/js/bootstrap.bundle.js"></script>
+        <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/message.js"></script>';
-
+    
     return;
 }
+// <script src="./../asset/js/popper.min.js" ></script>
 
 function project_year() {
     // Get year for today

@@ -48,7 +48,7 @@ restrictAdminMode();
                             <div class="row">
                                 <div class="col-9">
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
                                         <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
                                     </div>
                                 </div>
@@ -176,19 +176,19 @@ restrictAdminMode();
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                                 <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
                             </div>
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
                             </div>
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
                             </div>
                         </div>
@@ -237,7 +237,7 @@ restrictAdminMode();
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                                 <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
                             </div>
                         </div>
@@ -246,13 +246,13 @@ restrictAdminMode();
                         <!-- </div> -->
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
                             </div>
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
                             </div>
                         </div>

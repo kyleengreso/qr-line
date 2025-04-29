@@ -61,8 +61,8 @@ $counterNumber = $token->counterNumber;
                                             TRANSACTIONS TODAY</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-total"></span></div>
                                     </div>
-                                    <div class="col-auto">
-                                        <i class="fa-solid fa-users-line fs-1"></i>                                
+                                    <div class="col-auto fs-1">
+                                        <i class="bi bi-people-fill"></i>                              
                                     </div>
                                 </div>
                             </div>
@@ -77,8 +77,8 @@ $counterNumber = $token->counterNumber;
                                             PENDING</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-pending"></span></div>
                                     </div>
-                                    <div class="col-auto">
-                                        <i class="fa-regular fa-hourglass-half fs-1"></i>
+                                    <div class="col-auto fs-1">
+                                        <i class="bi bi-hourglass-split"></i>
                                     </div>
                                 </div>
                             </div>
@@ -93,8 +93,8 @@ $counterNumber = $token->counterNumber;
                                             COMPLETED</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-completed"></span></div>
                                     </div>
-                                    <div class="col-auto">
-                                        <i class="fa-solid fa-check fs-1"></i>
+                                    <div class="col-auto fs-1">
+                                        <i class="bi bi-check-lg"></i>
                                     </div>
                                 </div>
                             </div>
@@ -109,8 +109,8 @@ $counterNumber = $token->counterNumber;
                                             CANCELLED</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-cancelled"></span></div>
                                     </div>
-                                    <div class="col-auto">
-                                        <i class="fa-solid fa-xmark fs-1"></i>  
+                                    <div class="col-auto fs-1">
+                                        <i class="bi bi-x-lg"></i>
                                     </div>
                                 </div>
                             </div>
