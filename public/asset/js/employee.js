@@ -50,9 +50,11 @@ function loadEmployees() {
                                     </strong>
                                 </td>
                                 <td>
-                                    <a class="btn btn-outline-info text-info" id="view-employee-${employee.id}" data-toggle="modal" data-target="#viewEmployeeModal">View</a>
-                                    <a class="btn btn-outline-primary text-primary" id="update-employee-${employee.id}" data-toggle="modal" data-target="#updateEmployeeModal">Update</a>
-                                    <a class="btn btn-outline-danger text-danger" id="delete-employee-${employee.id}" data-toggle="modal" data-target="#deleteEmployeeModal">Delete</a>
+                                    <div class="btn-group">
+                                        <a class="btn btn-outline-info text-info" id="view-employee-${employee.id}" data-toggle="modal" data-target="#viewEmployeeModal">View</a>
+                                        <a class="btn btn-outline-primary text-primary" id="update-employee-${employee.id}" data-toggle="modal" data-target="#updateEmployeeModal">Update</a>
+                                        <a class="btn btn-outline-danger text-danger" id="delete-employee-${employee.id}" data-toggle="modal" data-target="#deleteEmployeeModal">Delete</a>
+                                    </div>
                             </tr>              
                         `;
                     });

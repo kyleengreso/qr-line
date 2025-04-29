@@ -32,8 +32,10 @@ function loadCounters() {
                                     <span>${userStatusIcon(counter.username, counter.role_type, counter.active)}</span>
                                 </td>
                                 <td>
-                                    <a class="btn btn-outline-primary text-primary" id="update-counter-${counter.idcounter}" data-toggle="modal" data-target="#updateCounterModal">Update</a>
-                                    <a id="delete-counter-${counter.idcounter}" class="btn btn-outline-danger" id="delete-counter" data-toggle="modal" data-target="#deleteCounterModal">Delete</a>
+                                    <div class="btn-group">
+                                        <a class="btn btn-outline-primary text-primary" id="update-counter-${counter.idcounter}" data-toggle="modal" data-target="#updateCounterModal">Update</a>
+                                        <a id="delete-counter-${counter.idcounter}" class="btn btn-outline-danger" id="delete-counter" data-toggle="modal" data-target="#deleteCounterModal">Delete</a>
+                                    </div>
                                 </td>
                             </tr>    
                         `;
