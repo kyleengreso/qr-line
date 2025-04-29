@@ -19,11 +19,13 @@
             <h6 class="text-uppercase mb-4">LINKS</h6>
             <?php if (!isset($_COOKIE['token'])): ?>
             <p>
-            <a class="text-black text-decoration-none">Login</a>
+            <a class="text-black text-decoration-none" href="/public/auth/login.php">Login</a>
             </p>
-            <p>
-            <a class="text-black text-decoration-none">Register</a>
-            </p>
+                <?php if ($enable_register_employee) : ?>
+                <p>
+                <a class="text-black text-decoration-none" href="/public/auth/register.php">Register</a>
+                </p>
+                <?php endif; ?>
             <?php endif; ?>
             <p>
             <a class="text-black text-decoration-none">FAQ</a>

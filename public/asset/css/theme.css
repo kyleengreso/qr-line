@@ -12,6 +12,9 @@
     position: relative;
 }
 
+.bg-primary {
+    background-color: rgb(255, 110, 55) !important;
+}
 .bg-non {
     position: relative;
 }
