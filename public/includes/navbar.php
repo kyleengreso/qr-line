@@ -45,7 +45,7 @@ if (isset($_COOKIE['token'])) {
             <?php if ($token->role_type == 'admin') : ?>
             <li>
                 <div class="py-4 px-2">
-                    <a href="/public/admin/dashboard.php" class="w-100 fs-4 text-white text-decoration-none">
+                    <a href="/public/admin" class="w-100 fs-4 text-white text-decoration-none">
                         <div class="row">
                             <div class="col-2">
                                 <i class="bi bi-house-fill"></i>
@@ -59,7 +59,7 @@ if (isset($_COOKIE['token'])) {
             </li>
             <li>
                 <div class="py-4 px-2">
-                    <a href="/public/admin/employees.php" class="w-100 fs-4 text-white text-decoration-none">
+                    <a href="/public/employees" class="w-100 fs-4 text-white text-decoration-none">
                         <div class="row">
                             <div class="col-2">
                                 <i class="bi bi-people-fill"></i>
@@ -73,7 +73,7 @@ if (isset($_COOKIE['token'])) {
             </li>
             <li>
                 <div class="py-4 px-2">
-                        <a href="/public/admin/counters.php" class="w-100 fs-4 text-white text-decoration-none"> 
+                        <a href="/public/counters" class="w-100 fs-4 text-white text-decoration-none"> 
                             <div class="row">
                                 <div class="col-2">
                                     <i class="bi bi-arrow-down-up"></i>

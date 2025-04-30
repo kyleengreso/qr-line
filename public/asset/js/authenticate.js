@@ -42,9 +42,9 @@ $(document).ready(function() {
                     auth_success(response.message);
                     setTimeout(function() {
                         if (response.data.role_type === 'admin') {
-                            window.location.href = "./../admin/dashboard.php";
+                            window.location.href = "/public/admin";
                         } else if (response.data.role_type === 'employee') {
-                            window.location.href = "./../employee/counter.php";
+                            window.location.href = "/public/employee";
                         }
                     }, 1000);
                 } else {

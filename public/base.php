@@ -96,11 +96,11 @@ function restrictAdminMode() {
 
         $token = json_decode($decryptToken);
         if ($token->role_type != "admin") {
-            header("Location: ./../employee/counter.php");
+            header("Location: /public/employee");
             exit();
         }
     } else {
-        header("Location: ./../auth/login.php");
+        header("Location: /public/auth/login.php");
         exit();
     }
 }
@@ -118,11 +118,11 @@ function restrictEmployeeMode() {
 
         $token = json_decode($decryptToken);
         if ($token->role_type != "employee") {
-            header("Location: ./../admin/dashboard.php");
+            header("Location: /public/admin");
             exit();
         }
     } else {
-        header("Location: ./../auth/login.php");
+        header("Location: /public/auth/login.php");
         exit();
     }
 }
@@ -140,10 +140,10 @@ function restrictCheckLoggedIn() {
 
         $token = json_decode($decryptToken);
         if ($token->role_type == "admin") {
-            header("Location: ./../admin/dashboard.php");
+            header("Location: /public/admin");
             exit();
         } elseif ($token->role_type == "employee") {
-            header("Location: ./../employee/counter.php");
+            header("Location: /public/employee");
             exit();
         }
     }
@@ -184,7 +184,6 @@ function after_js() {
     echo '
     <script src="./../asset/js/base.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
-    <script src="./../asset/js/bootstrap.bundle.js"></script>
     <script src="./../asset/js/message.js"></script>';
     
     return;

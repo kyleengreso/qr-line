@@ -21,19 +21,33 @@ function logOut() {
     });
 }
 
-let btnLogout1 = document.getElementById("btn-logout-1");
-if (btnLogout1) {
-    btnLogout1.addEventListener("click", function () {
-        logOut();
-    });
-};
+// Employee Logout Notify
 
-let btnLogout2 = document.getElementById("btn-logout-2");
-if (btnLogout2) {
-    btnLogout2.addEventListener("click", function () {
-        logOut();
-    });
-}
+// DOM document ready no jquery
+document.addEventListener("DOMContentLoaded", function () {
+    let logOutNotify = document.getElementById('logOutNotify');
+    
+    let btnLogout1 = document.getElementById("btn-logout-1");
+    if (btnLogout1) {
+        btnLogout1.addEventListener("click", function () {
+            logOutNotify.classList.remove('d-none');
+            setTimeout(() => {
+                logOut();
+            }, 2000);
+        });
+    };
+    
+    let btnLogout2 = document.getElementById("btn-logout-2");
+    if (btnLogout2) {
+        btnLogout2.addEventListener("click", function () {
+            logOutNotify.classList.remove('d-none');
+            setTimeout(() => {
+                logOut();
+            }, 2000);
+        });
+    }
+
+});
 
 // RealTimeClock
 let rtClock = document.getElementById("rtClock");
