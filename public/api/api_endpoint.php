@@ -483,7 +483,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!in_array($role_type, $role_type_accept)) {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Invalid role type"
+                "message" => "Please select the role type"
             ));
             exit;
         }

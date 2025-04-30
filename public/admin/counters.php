@@ -16,75 +16,70 @@ restrictAdminMode();
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container before-footer" style="margin-top:100px">
-        <div class="container d-flex justify-content-center align-items-center" style="margin-top: 15vh;">
-            <div class="col-md-6">
-                <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
-                    <nav aria-label="breadcrumb mx-4">
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item"><a href="./dashboard.php" style="text-decoration:none;color:black">Dashboard</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Counters</li>
-                        </ol>
-                    </nav>
+    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px">
+        <div class="col-md-6" style="min-width:400px;max-width:900px;transform:scale(0.9)">
+            <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
+                <nav aria-label="breadcrumb mx-4">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="./dashboard.php" style="text-decoration:none;color:black">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Counters</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="card shadow">
+                <div class="card-header">
+                    <span>Counters</span>
                 </div>
-                <div class="card shadow">
-                    <div class="card-header">
-                        <div class="row-12">
-                            <div class="col-9">
-                                Counters
+                <div class="card-body">
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col">
+                                <h3 class="text-start my-1 mx-2 fw-bold">Counters</h3>
+                            </div>
+                            <div class="col d-flex justify-content-end">
+                                <a class="btn btn-success text-white px-4" id="btn-add-counter" data-toggle="modal" data-target="#addCounterModal" ><span class="fw-bold">+</span> Add New</a>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="row align-center d-flex justify-content-between">
-                            <!-- <div class="col d-flex">
-                                <button class="btn btn-primary" onclick="window.location.href='./dashboard.php'">Back Dashboard</button>
-                            </div> -->
-                            <div class="col-12 mb-4">
-                                <div class="row">
-                                    <div class="col">
-                                        <h3 class="text-start my-1 mx-2 fw-bold">Counters</h3>
-                                    </div>
-                                    <div class="col d-flex justify-content-end">
-                                        <a class="btn btn-success text-white px-4" id="btn-add-counter" data-toggle="modal" data-target="#addCounterModal" ><span class="fw-bold">+</span> Add New</a>
-                                    </div>
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
                                 </div>
                             </div>
-                            <div class="col-12 mb-4">
-                                <div class="row">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
-                                    </div>
-                                </div>
-                            </div>
-                            <table class="table table-striped table-members" id="table-counters-registered">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Employee</th>
-                                    <!-- <th>Queue Count</th> -->
-                                    <th>Action</th>
-                                </tr>
-                            </table>
-                            <nav aria-label="Page navigation example">
-                                <ul class="pagination justify-content-center">
-                                    <li class="page-item">
-                                    <a class="page-link disabled" id="pagePrevCounterRegistered">Previous</a>
-                                    </li>
-                                    <li class="page-item">
-                                    <a class="page-link" id="pageNextCounterRegistered">Next</a>
-                                    </li>
-                                </ul>
-                            </nav>
                         </div>
                     </div>
+                    <table class="table table-striped table-members" id="table-counters-registered">
+                        <thead>
+                            <th>#</th>
+                            <!-- <th>Queue Count</th> -->
+                            <th>Employee</th>
+                            <th>Action</th>
+                        </thead>
+                        <tbody>
+                            <!-- Load -->
+                        </tbody>
+                    </table>
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item">
+                                <a class="page-link disabled" id="pagePrevCounterRegistered">Previous</a>
+                            </li>
+                            <!-- Page number reserved -->
+                            <li class="page-item">
+                                <a class="page-link" id="pageNextCounterRegistered">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- VIEW COUNTER -->
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -101,7 +96,7 @@ restrictAdminMode();
     </div>
 
     <!-- ADD COUNTER -->
-    <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -157,13 +152,13 @@ restrictAdminMode();
                             </div>
                         </div>
                     </form>
-                </div> <!-- Closing modal-body -->
+                </div>
             </div>
         </div>
     </div>
 
     <!-- UPDATE COUNTER -->
-    <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -239,7 +234,7 @@ restrictAdminMode();
     </div>
 
     <!-- DELETE COUNTER -->
-    <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">

@@ -116,5 +116,8 @@ if (isset($_COOKIE['token'])) {
             </li>
         </ul>
     </div>
+    <div class="offcanvas-footer text-center py-3" style="background-color: rgb(255, 110, 55);">
+        <span>&copy <?php echo project_year()?> <?php echo $project_name?>, All Rights Reserved.</span>
+    </div>
 </div>
 <script src="./../asset/js/navbar.js"></script>

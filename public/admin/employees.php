@@ -16,83 +16,78 @@ restrictAdminMode();
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container before-footer" style="margin-top:100px">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6">
-                <div class="col-12" style="min-width:450px;max-width: 900px;">
-                    <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
-                        <nav aria-label="breadcrumb mx-4">
-                            <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a href="./dashboard.php" style="text-decoration:none;color:black">Dashboard</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">Employees</li>
-                            </ol>
-                        </nav>
-                    </div>
-                    <div class="card shadow">
-                        <div class="card-header">
-                            Employees
-                        </div>
-                        <div class="card-body">
-                        <div class="col-12 mb-4">
-                            <div class="row">
-                                <div class="col">
-                                    <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
-                                </div>
-                                <div class="col d-flex justify-content-end">
-                                    <a class="btn btn-success text-white" id="btn-add-employee" data-toggle="modal" data-target="#addEmployeeModal" ><span class="fw-bold">+</span> Add New</a>
-                                    <!-- <a class="btn btn-success text-white px-4" id="btn-add-counter" data-toggle="modal" data-target="#addCounterModal" ><span class="fw-bold">+</span> Add New</a> -->
-                                </div>
+    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px">
+        <div class="col-md-6" style="min-width:400px;max-width:900px;transform:scale(0.9)">
+            <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
+                <nav aria-label="breadcrumb mx-4">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="./dashboard.php" style="text-decoration:none;color:black">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Employees</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="card shadow">
+                <div class="card-header">
+                    <span>Employees</span>
+                </div>
+                <div class="card-body">
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col">
+                                <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
+                            </div>
+                            <div class="col d-flex justify-content-end">
+                                <a class="btn btn-success text-white px-4" id="btn-add-employee" data-toggle="modal" data-target="#addEmployeeModal"><span class="fw-bold">+</span> Add New</a>
                             </div>
                         </div>
-                        <div class="col-12 mb-4">
-                            <div class="row">
-                                <div class="col-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <select class="form-select" name="getRoleType" id="getRoleType">
-                                        <option value="none">All</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="employee">Cashier</option>
-                                    </select>
+                    </div>
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-9">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
                                 </div>
                             </div>
-                        </div>
-                            <table class="table table-striped table-members" id="table-employees">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Username</th>
-                                    <th>Action</th>
-                                </tr>
-                            </table>
-                            <nav aria-label="Page navigation example">
-                                <ul class="pagination justify-content-center">
-                                    <li class="page-item">
-                                    <a class="page-link" id="pagePrevEmployees">Previous</a>
-                                    </li>
-                                    <!-- page number -->
-        
-                                    <li class="page-item">
-                                    <a class="page-link" id="pageNextEmployees">Next</a>
-                                    </li>
-                                </ul>
-                            </nav>
-    
+                            <div class="col-3">
+                                <select class="form-select" name="getRoleType" id="getRoleType">
+                                    <option value="none">All</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="employee">Cashier</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
+                    <table class="table table-striped table-members" id="table-employees">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Username</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Load -->
+                        </tbody>
+                    </table>
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item">
+                                <a class="page-link" id="pagePrevEmployees">Previous</a>
+                            </li>
+                            <!-- Page number reserved -->
+                            <li class="page-item">
+                                <a class="page-link" id="pageNextEmployees">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
-        <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateEmployeeModal">
-            Edit
-        </button> -->
     </div>
 
-    
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 100px">
+    <!-- View Employee -->
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -159,7 +154,8 @@ restrictAdminMode();
         </div>
     </div>
 
-    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
+    <!-- Add Employee -->
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form method="POST" id="frmAddEmployee">
@@ -194,7 +190,7 @@ restrictAdminMode();
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
                                 <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
                             </div>
                         </div>
@@ -220,7 +216,8 @@ restrictAdminMode();
         </div>
     </div>
 
-    <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
+    <!-- Update Employee -->
+    <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form id="frmUpdateEmployee" method="POST">
@@ -258,7 +255,7 @@ restrictAdminMode();
                         </div>
                         <div class="mb-4">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
                                 <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
                             </div>
                         </div>
@@ -283,7 +280,8 @@ restrictAdminMode();
         </div>
     </div>
 
-    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
+    <!-- Delete Employee -->
+    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form method="POST" id="frmDeleteEmployee">
@@ -322,9 +320,8 @@ restrictAdminMode();
         </div>
     </div>
 
-    <?php include_once "./../includes/footer.php";?>
     <?php after_js()?>
-    <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <?php include_once "./../includes/footer.php";?>
     <script src="./../asset/js/message.js"></script>
     <script src="./../asset/js/employee.js"></script>
 </body>

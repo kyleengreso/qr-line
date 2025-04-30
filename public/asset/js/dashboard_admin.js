@@ -463,6 +463,8 @@ initTransactionChart(getTransactionChart());
 
 function updateTransactionChart(data) {
     console.log(data);
+    var chart_labels = [];
+    var chart_transaction_total = [];
     if (data && data.stats && data.stats.length > 0) {
         if (data.stats[0].hour) {
             chart_labels = data.stats.map(stats => fmtHr(stats.hour));
