@@ -53,18 +53,21 @@ $email = $token->email;
                     </div>
                     <div class="col-12 mb-4">
                         <div class="row">
-                            <div class="col-9">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <div class="col-8">
+                                <div class="form-floating mb-2">
                                     <input type="text" name="searchEmail" id="searchEmail" class="form-control" placeholder="Search email">
+                                    <label for="searchEmail">Search email</label>
                                 </div>
                             </div>
-                            <div class="col-3">
-                                <select class="form-select" name="getPaymentType" id="getPaymentType">
-                                    <option value="none">All</option>
-                                    <option value="assessment">Assessment</option>
-                                    <option value="employee">Registrar</option>
-                                </select>
+                            <div class="col-4">
+                                <div class="form-floating">
+                                    <select class="form-select" name="getPaymentType" id="getPaymentType">
+                                        <option value="none">All</option>
+                                        <option value="assessment">Assessment</option>
+                                        <option value="employee">Registrar</option>
+                                    </select>
+                                    <label for="getPaymentType">Payment</label>
+                                </div>
                             </div>
                         </div>
                     </div>

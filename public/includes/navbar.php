@@ -10,23 +10,47 @@ if (isset($_COOKIE['token'])) {
 <nav class="navbar fixed-top" style="background-color: rgb(255, 110, 55);">
     <div class="container d-flex justify-content-between align-items-center" style="width: 100%;">
 
+        <!-- Sidebar Toggle Button -->
         <button class="btn btn-primary text-decoration-none me-3" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle Sidebar">
             <i class="bi bi-list"></i>
         </button>
 
+        <!-- Project Name -->
         <span class="navbar-brand mb-0 text-white d-flex align-items-start align-md-items-center mx-auto">
             <img src="./../asset/images/logo.png" alt="PSU logo" width="40" height="40" class="me-2">
             <span class="d-none d-md-block fs-5 fw-normal fs-4"><?php echo $project_name_full; ?></span>
         </span>
 
-        <!-- Logout Button (Right) -->
-        <?php if (isset($token) && $token) : ?>
-        <a class="d-none d-md-block btn btn-primary text-decoration-none" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" id="btn-logout-1" aria-label="Logout">
-            <i class="bi bi-box-arrow-right"></i>
-        </a>
-        <?php endif; ?>
+        <!-- Username and Clock -->
+        <div class="d-flex align-items-center">
+            <?php if (isset($token) && $token) : ?>
+                <span class="text-white me-3 d-none d-md-block">
+                    <!-- <i class="bi bi-person-circle"></i> -->
+                    <span class="fs-5"><?php echo $token->username; ?></span>
+                </span>
+            <?php endif; ?>
+            <span class="text-white me-3 d-none d-md-block" id="navbar-clock">
+                <!-- <i class="bi bi-clock"></i> -->
+                <span id="current-time"></span>
+            </span>
+            <!-- Logout Button 1 -->
+            <a class="d-none d-md-block btn btn-primary text-decoration-none" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" id="btn-logout-1" aria-label="Logout">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
     </div>
 </nav>
+
+<script>
+    // Update the clock every second
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('current-time').textContent = timeString;
+    }
+    setInterval(updateClock, 1000);
+    updateClock(); // Initialize the clock immediately
+</script>
 
 <!-- Sidebar -->
 <div class="offcanvas offcanvas-start bg-primary text-white" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" style="width: 350px;">

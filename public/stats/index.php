@@ -14,7 +14,7 @@ include "./../base.php"
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-        <div class="container d-flex justify-content-center before-footer" style="margin-top: 25px;transform:scale(0.8)">
+        <div class="container d-flex justify-content-center before-footer" style="margin-top: 100px;transform:scale(0.9)">
         <div class="card shadow-sm p-4" style="max-width: 1000px; width: 100%;">
             <div class="w-100">
                 <h4 class="text-center fw-bold fs-1"><?php echo $project_name ?> Stats</h4>

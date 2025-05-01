@@ -31,13 +31,13 @@ $int_second = rand(1, 50);
                 <p>Forgot Password</p>
             </div>
             <form method="POST" id="frmForgotPassword">
-                <div class="input-group mb-4">
-                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                <div class="form-floating mb-2">
                     <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
+                    <label for="username">Username</label>
                 </div>
-                <div class="input-group mb-4">
-                    <span class="input-group-text"><i class="bi bi-puzzle-fill"></i></span>
+                <div class="form-floating mb-4">
                     <input type="text" class="form-control" name="sum_captcha" id="sum_captcha" placeholder="<?php echo $int_first . "+" . $int_second?>" required>
+                    <label for="sum_captcha"><?php echo $int_first . "+" . $int_second?></label>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Send Password</button>
                 <p class="text-center mt-3"><a class="text-decoration-none" href="login.php">Back to Login?</a></p>

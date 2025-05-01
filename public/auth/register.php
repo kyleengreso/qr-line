@@ -26,29 +26,21 @@ restrictCheckLoggedIn();
                 <p>Request Account</p>
             </div>
             <form method="POST" id="frmRegister">
-                <div class="mb-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                        <input type="text" class="form-control" name="username" id="username" placeholder="Username">
-                    </div>
+                <div class="form-floating mb-2">
+                    <input type="text" class="form-control" name="username" id="username" placeholder="Username">
+                    <label for="username">Username</label>
                 </div>
-                <div class="mb-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        <input type="text" class="form-control" name="email" id="email" placeholder="Email">
-                    </div>
+                <div class="form-floating mb-2">
+                    <input type="text" class="form-control" name="email" id="email" placeholder="Email">
+                    <label for="email">Email</label>
                 </div>
-                <div class="mb-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
-                        <input type="password" class="form-control" name="password" id="password" placeholder="Password">
-                    </div>
+                <div class="form-floating mb-2">
+                    <input type="password" class="form-control" name="password" id="password" placeholder="Password">
+                    <label for="password">Password</label>
                 </div>
-                <div class="mb-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
-                        <input type="password" class="form-control" name="confirm_password" id="confirm_password" placeholder="Confirm Password">
-                    </div>
+                <div class="form-floating">
+                    <input type="password" class="form-control" name="confirm_password" id="confirm_password" placeholder="Confirm Password">
+                    <label for="confirm_password">Confirm Password</label>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Request Account</button>
                 <p class="text-center mt-3"><a class="register text-decoration-none" href="login.php">Login</a></p>

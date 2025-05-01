@@ -58,9 +58,9 @@ $counterNumber = $token->counterNumber;
                     <div class="col-12 mb-4">
                         <div class="row">
                             <div class="col-12">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <div class="form-floating mb-2">
                                     <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
+                                    <label for="searchAdd">Search Username</label>
                                 </div>
                             </div>
                         </div>
@@ -116,18 +116,16 @@ $counterNumber = $token->counterNumber;
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                     <h5 class="modal-title fw-bold" id="addCounterTitle">Add Counter</h5>
                 </div>
-                <div class="modal-body py-4 px-6" id="addCounterBody">
-                    <form method="POST" id="frmAddCounter">
-                        <div class="input-group">
+                <form method="POST" id="frmAddCounter">
+                    <div class="modal-body py-4 px-6" id="addCounterBody">
+                        <div class="mb-2">
                             <div class="alert alert-danger w-100 d-none" id="addCounterAlert">
                                 <span id="addCounterAlertMsg"></span>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
+                            <label for="addSearchUsername">Search Username</label>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Employees Available</label>
@@ -153,11 +151,9 @@ $counterNumber = $token->counterNumber;
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-sort-numeric-up"></i></span>
-                                <input type="number" name="counter_no_add" id="counter_no_add" class="form-control" placeholder="Counter Number" required>
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="number" name="counter_no_add" id="counter_no_add" class="form-control" placeholder="Counter Number" required>
+                            <label for="counter_no_add">Counter Number</label>
                         </div>
                         <div class="modal-footer">
                             <div class="d-flex justify-content-end">
@@ -165,8 +161,8 @@ $counterNumber = $token->counterNumber;
                                 <button type="submit" class="btn btn-primary" style="width:max-content;margin-right:10px">Add Counter</button>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -180,7 +176,7 @@ $counterNumber = $token->counterNumber;
                 </div>
                 <div class="modal-body py-4 px-6" id="updateCounterBody">
                     <form method="POST" id="frmUpdateCounter">
-                        <div class="input-group">
+                        <div class="mb-2">
                             <div class="alert alert-danger w-100 d-none" id="updateCounterAlert">
                                 <span id="updateCounterAlertMsg"></span>
                             </div>
@@ -198,11 +194,9 @@ $counterNumber = $token->counterNumber;
                                 <span id="update-idcounter"></span>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
+                            <label for="updateSearchUsername">Search Username</label>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Employees Available</label>
@@ -230,8 +224,8 @@ $counterNumber = $token->counterNumber;
                         </div>
                         <div class="mb-3 d-none">
                             <label class="form-label">Counter No.</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-sort-numeric-up"></i></span>
+                            <div class="form-floating mb-2">
+                                <span class="form-floating mb-2-text"><i class="fas fa-sort-numeric-up"></i></span>
                                 <input type="hidden" name="counter_no_update" id="counter_no_update" class="form-control" placeholder="Enter counter number" required>
                             </div>
                         </div>
@@ -254,9 +248,9 @@ $counterNumber = $token->counterNumber;
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                 <h5 class="modal-title fw-bold" id="deleteCounterTitle">Delete Counter: <span id="deleteCounterDisplay"></span></h5>
                 </div>
-                <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
-                    <form method="POST" id="frmDeleteCounter">
-                        <div class="input-group">
+                <form method="POST" id="frmDeleteCounter">
+                    <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
+                        <div class="mb-2">
                             <div class="alert alert-danger w-100 d-none" id="deleteCounterAlert">
                                 <span id="deleteCounterAlertMsg"></span>
                             </div>
@@ -282,8 +276,8 @@ $counterNumber = $token->counterNumber;
                                 <button type="submit" class="btn btn-danger" style="width:max-content">Delete Counter</button>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

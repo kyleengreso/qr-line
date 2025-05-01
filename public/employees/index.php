@@ -56,18 +56,21 @@ $counterNumber = $token->counterNumber;
                     </div>
                     <div class="col-12 mb-4">
                         <div class="row">
-                            <div class="col-9">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <div class="col-8">
+                                <div class="form-floating mb-2">
                                     <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
+                                    <label for="search">Search</label>
                                 </div>
                             </div>
-                            <div class="col-3">
-                                <select class="form-select" name="getRoleType" id="getRoleType">
-                                    <option value="none">All</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="employee">Cashier</option>
-                                </select>
+                            <div class="col-4">
+                                <div class="form-floating mb-2">
+                                    <select class="form-control" name="getRoleType" id="getRoleType">
+                                        <option value="none">All</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="employee">Cashier</option>
+                                    </select>
+                                    <label for="getRoleType">Role</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -170,114 +173,95 @@ $counterNumber = $token->counterNumber;
     <!-- Add Employee -->
     <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form method="POST" id="frmAddEmployee">
+            <form method="POST" id="frmAddEmployee">
+                <div class="modal-content">
                     <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                         <h5 class="modal-title fw-bold" id="addEmployeeTitle">Add Employee</h5>
                     </div>
                     <div class="modal-body py-4 px-6" id="addEmployeeBody">
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <div class="alert alert-danger w-100 d-none" id="addEmployeeAlert">
-                                    <span id="addEmployeeAlertMsg"></span>
-                                </div>
+                        <div class="mb-2">
+                            <div class="alert alert-danger w-100 d-none" id="addEmployeeAlert">
+                                <span id="addEmployeeAlertMsg"></span>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
+                            <label for="add_username">Username</label>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
-                                <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
+                            <label for="add_password">Password</label>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
-                                <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
+                            <label for="add_confirm_password">Confirm password</label>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
-                                <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
+                            <label for="add_email">Email</label>
                         </div>
-                        <div class="mb-4">
-                            <label for="role_type" class="form-label">Role</label>
+                        <div class="form-floating mb-4">
                             <select class="form-select" name="add_role_type" id="add_role_type" required>
                                 <option value="">Select Role</option>
                                 <option value="admin">Admin</option>
                                 <option value="employee">Employee</option>
                             </select>
+                            <label for="add_role_type">Role</label>
                         </div>
                         <div class="mb-4 form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="add_status" id="add_status" value="1">
                             <label class="form-check-label">Activate Employee</label>
                         </div>
+                        <div class="modal-footer" id="addEmployeeFooter">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success" id="btnAddEmployee">Add</button>
+                        </div>
                     </div>
-                    <div class="modal-footer" id="addEmployeeFooter">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success" id="btnAddEmployee">Add</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Update Employee -->
     <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form id="frmUpdateEmployee" method="POST">
+            <form id="frmUpdateEmployee" method="POST">
+                <div class="modal-content">
                     <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                         <h5 class="modal-title fw-bold" id="updateEmployeeTitle">Update Employee: <span id="updateUsernameDisplay"></span></h5>
                     </div>
                     <div class="modal-body py-4 px-6" id="updateEmployeeBody">
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <div class="alert alert-danger w-100 d-none" id="updateEmployeeAlert">
-                                    <span id="updateEmployeeAlertMsg"></span>
-                                </div>
+                        <div class="mb-2">
+                            <div class="alert alert-danger w-100 d-none" id="updateEmployeeAlert">
+                                <span id="updateEmployeeAlertMsg"></span>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
+                            <label for="update_username">Username</label>
                         </div>
                         <!-- <div class="mb-4"> -->
                             <input type="hidden" name="update_id" id="update_id">
                         <!-- </div> -->
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
-                                <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
+                            <label for="update_password">Password</label>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
-                                <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
+                            <label for="update_confirm_password">Confirm Password</label>
                         </div>
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
-                                <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
-                            </div>
+                        <div class="form-floating mb-2">
+                            <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
+                            <label for="update_email">Email</label>
                         </div>
-                        <div class="mb-4">
+                        <div class="form-floating mb-4">
                             <select class="form-select" name="update_role_type" id="update_role_type">
                                 <option value="">Role</option>
                                 <option value="admin">Admin</option>
                                 <option value="employee">Employee</option>
                             </select>
+                            <label for="update_role_type">Role</label>
                         </div>
                         <div class="mb-4 form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="update_active" id="update_active" value="1">
@@ -288,16 +272,16 @@ $counterNumber = $token->counterNumber;
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary" id="btnUpdateEmployee">Update</button>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Delete Employee -->
     <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form method="POST" id="frmDeleteEmployee">
+            <form method="POST" id="frmDeleteEmployee">
+                <div class="modal-content">
                     <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                         <h5 class="modal-title fw-bold" id="deleteEmployeeTitle">
                             Delete Employee: <span id="deleteUsernameDisplay"></span>
@@ -305,7 +289,7 @@ $counterNumber = $token->counterNumber;
                     </div>
                     <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
                         <div class="mb-4">
-                            <div class="input-group">
+                            <div class="mb-2">
                                 <div class="alert alert-danger w-100 d-none" id="deleteEmployeeAlert">
                                     <span id="deleteEmployeeAlertMsg"></span>
                                 </div>
@@ -328,8 +312,8 @@ $counterNumber = $token->counterNumber;
                             <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Delete</button>
                         </div>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 

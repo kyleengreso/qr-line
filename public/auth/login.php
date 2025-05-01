@@ -26,18 +26,14 @@ restrictCheckLoggedIn();
                 <h5 class="text-center fw-bold">Welcome to <?php echo $project_name?></h5>
                 <p>Login to continue</p>
             </div>
-            <form method="POST" id="frmLogIn">
-                <div class="">
-                    <div class="input-group mb-4">
-                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                        <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
-                    </div>
+            <form class="needs-validation" method="POST" id="frmLogIn" novalidate>
+                <div class="form-floating mb-2">
+                    <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
+                    <label for="username">Username</label>
                 </div>
-                <div class="mb-2">
-                    <div class="input-group mb-4">
-                        <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
-                        <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
-                    </div>
+                <div class="form-floating mb-4">
+                    <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+                    <label for="password">Password</label>
                 </div>
                 <div class="mb-2">
                     <button type="submit" class="btn btn-primary w-100">Login</button>
