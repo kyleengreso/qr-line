@@ -1805,8 +1805,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if (isset($_GET['email'])) {
             if ($_GET['email'] != 'none') {
-                $sql_cmd .= "AND r.email = ? ";
-                $params[] = $_GET['email'];
+                $sql_cmd .= "AND r.email LIKE ? ";
+                $params[] = "%" . $_GET['email'] . "%";
                 $types .= "s";
             }
         }
@@ -1829,6 +1829,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $types .= "ss";
         }
 
+        // echo json_encode(array(
+        //     "sql_cmd" => $sql_cmd
+        // ));
+        // exit;
+        
         $stmt = $conn->prepare($sql_cmd);
 
         if ($types) {

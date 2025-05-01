@@ -26,7 +26,7 @@ $counterNumber = $token->counterNumber;
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px">
+    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;margin-top:100px;min-height:500px">
         <div class="col-md-6" style="min-width:400px;max-width:900px;transform:scale(0.9)">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username?> has logged out successfully</span>

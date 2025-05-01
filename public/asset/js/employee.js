@@ -1,7 +1,7 @@
 
 var employee_search = '';
 var page_employees = 1;
-var paginate = 5;
+var paginate = 10;
 var role_type_employee = 'none';
 
 // Search
@@ -34,10 +34,15 @@ function loadEmployees() {
             url: realHost + '/public/api/api_endpoint.php?' + params,
             type: 'GET',
             success: function (response) {
+                while (table_employees.rows.length > 1) {
+                    table_employees.deleteRow(-1);
+                }
                 if (response.status === 'success') {
                     const employees = response.employees;
-                    while (table_employees.rows.length > 1) {
-                        table_employees.deleteRow(-1);
+                    if (employees.length < paginate) {
+                        pageNextEmployees.classList.add('disabled');
+                    } else {
+                        pageNextEmployees.classList.remove('disabled');
                     }
                     employees.forEach((employee) => {
                         let row = table_employees.insertRow(-1);
@@ -394,7 +399,9 @@ pagePrevEmployees.addEventListener('click', (e) => {
 
 pageNextEmployees.addEventListener('click', (e) => {
     page_employees++;
-    pagePrevEmployees.classList.remove('disabled');
+    if (page_employees > 1) {
+        pagePrevEmployees.classList.remove('disabled');
+    }
     loadEmployees();
 });
 

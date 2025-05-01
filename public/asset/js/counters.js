@@ -1,7 +1,7 @@
 
 var counter_search = '';
 var counter_page = 1;
-var paginate = 5;
+var paginate = 10;
 
 var counter_page_modal = 1;
 
@@ -23,6 +23,11 @@ function loadCounters() {
                 }
                 if (response.status === 'success') {
                     const counters = response.counters;
+                    if (counters.length < paginate) {
+                        pageNextCounterRegistered.classList.add('disabled');
+                    } else {
+                        pageNextCounterRegistered.classList.remove('disabled');
+                    }
                     counters.forEach(counter => {
                         let row = table_counters_registered.insertRow(-1);
                         row.innerHTML = `

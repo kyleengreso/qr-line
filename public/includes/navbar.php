@@ -87,7 +87,7 @@ if (isset($_COOKIE['token'])) {
             </li>
             <li>
                 <div class="py-4 px-2">
-                    <a href="#" class="fs-4 text-white text-decoration-none">
+                    <a href="/public/transaction_history" class="fs-4 text-white text-decoration-none">
                         <div class="row">
                             <div class="col-2">
                                 <i class="bi bi-person-lines-fill"></i>

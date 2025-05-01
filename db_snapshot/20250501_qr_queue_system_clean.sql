@@ -15,11 +15,11 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- Dumping database structure for qr_queue_system_2
-CREATE DATABASE IF NOT EXISTS `qr_queue_system_2` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `qr_queue_system_2`;
+-- Dumping database structure for qr_queue_system
+CREATE DATABASE IF NOT EXISTS `qr_queue_system` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `qr_queue_system`;
 
--- Dumping structure for table qr_queue_system_2.counters
+-- Dumping structure for table qr_queue_system.counters
 CREATE TABLE IF NOT EXISTS `counters` (
   `idcounter` int NOT NULL AUTO_INCREMENT,
   `counterNumber` int NOT NULL DEFAULT (0),
@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS `counters` (
   CONSTRAINT `counters_ibfk_1` FOREIGN KEY (`idemployee`) REFERENCES `employees` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table qr_queue_system_2.counters: ~0 rows (approximately)
+-- Dumping data for table qr_queue_system.counters: ~0 rows (approximately)
 DELETE FROM `counters`;
 
--- Dumping structure for procedure qr_queue_system_2.employeeMonitor
+-- Dumping structure for procedure qr_queue_system.employeeMonitor
 DELIMITER //
 CREATE PROCEDURE `employeeMonitor`()
     COMMENT 'Monitor the employee''s activity even login and logout'
@@ -142,7 +142,7 @@ BEGIN
 END//
 DELIMITER ;
 
--- Dumping structure for event qr_queue_system_2.employeeMonitorEvent
+-- Dumping structure for event qr_queue_system.employeeMonitorEvent
 DELIMITER //
 CREATE EVENT `employeeMonitorEvent` ON SCHEDULE EVERY 5 SECOND STARTS '2025-01-01 12:18:17' ON COMPLETION PRESERVE ENABLE DO BEGIN
 	CALL `employeeMonitor`();
@@ -151,7 +151,7 @@ CREATE EVENT `employeeMonitorEvent` ON SCHEDULE EVERY 5 SECOND STARTS '2025-01-0
 END//
 DELIMITER ;
 
--- Dumping structure for table qr_queue_system_2.employees
+-- Dumping structure for table qr_queue_system.employees
 CREATE TABLE IF NOT EXISTS `employees` (
   `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
@@ -169,7 +169,7 @@ CREATE TABLE IF NOT EXISTS `employees` (
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table qr_queue_system_2.employees: ~10 rows (approximately)
+-- Dumping data for table qr_queue_system.employees: ~10 rows (approximately)
 DELETE FROM `employees`;
 INSERT INTO `employees` (`id`, `username`, `password`, `created_at`, `role_type`, `email`, `active`, `employee_last_login`, `attempt_login`, `user_image`, `user_id_extended`, `cut_off_state`) VALUES
 	(1, 'marc', '$2y$10$npINOHJFBrzmyYBkm31jH.s0wOpNGeDIMlis7.yRiv9uby7GzOdhC', '2025-03-13 15:47:13', 'admin', 'markcediebuday@gmail.com2', 1, '2025-03-23 19:20:00', -96, NULL, NULL, 0),
@@ -183,7 +183,7 @@ INSERT INTO `employees` (`id`, `username`, `password`, `created_at`, `role_type`
 	(9, 'ai', '$2y$10$qwqxPZlsu7jzjsAEmiZTNu2fVkadpdogE5QBP7eW2c/3MmP.GhhoS', '2025-03-18 12:44:55', 'admin', NULL, 1, NULL, 0, NULL, NULL, 0),
 	(18, 'engine6', '$2y$10$R6rChq5xdK7KgGE9nflxxe7owfTJ0W/OqZkZhZOc1nw.RIQ3nD83C', '2025-03-22 17:15:28', 'employee', 'm1@g.com', 1, NULL, 0, NULL, NULL, 0);
 
--- Dumping structure for procedure qr_queue_system_2.requesterCount
+-- Dumping structure for procedure qr_queue_system.requesterCount
 DELIMITER //
 CREATE PROCEDURE `requesterCount`()
 BEGIN
@@ -201,7 +201,7 @@ BEGIN
 END//
 DELIMITER ;
 
--- Dumping structure for table qr_queue_system_2.requesters
+-- Dumping structure for table qr_queue_system.requesters
 CREATE TABLE IF NOT EXISTS `requesters` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -211,10 +211,10 @@ CREATE TABLE IF NOT EXISTS `requesters` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci CHECKSUM=1;
 
--- Dumping data for table qr_queue_system_2.requesters: ~0 rows (approximately)
+-- Dumping data for table qr_queue_system.requesters: ~0 rows (approximately)
 DELETE FROM `requesters`;
 
--- Dumping structure for table qr_queue_system_2.setup_system
+-- Dumping structure for table qr_queue_system.setup_system
 CREATE TABLE IF NOT EXISTS `setup_system` (
   `setup_id` int NOT NULL AUTO_INCREMENT,
   `setup_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -226,7 +226,7 @@ CREATE TABLE IF NOT EXISTS `setup_system` (
   UNIQUE KEY `unique_setup_key` (`setup_key`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=156 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table qr_queue_system_2.setup_system: ~28 rows (approximately)
+-- Dumping data for table qr_queue_system.setup_system: ~28 rows (approximately)
 DELETE FROM `setup_system`;
 INSERT INTO `setup_system` (`setup_id`, `setup_key`, `setup_value`, `setup_value_int`, `setup_description`, `updated_at`) VALUES
 	(1, 'queue_count', NULL, 267, 'Queue Count for requester form', '2025-05-01 15:48:11'),
@@ -258,14 +258,14 @@ INSERT INTO `setup_system` (`setup_id`, `setup_key`, `setup_value`, `setup_value
 	(154, 'requester_ordinary_assessment', NULL, NULL, 'Generated Itself', NULL),
 	(155, 'requester_ordinary_registrar', NULL, NULL, 'Generated Itself', NULL);
 
--- Dumping structure for event qr_queue_system_2.TransactionHistoryStatsEvent
+-- Dumping structure for event qr_queue_system.TransactionHistoryStatsEvent
 DELIMITER //
 CREATE EVENT `TransactionHistoryStatsEvent` ON SCHEDULE EVERY 1 MINUTE STARTS '2025-01-01 00:00:00' ON COMPLETION PRESERVE ENABLE COMMENT 'Get all transaction' DO BEGIN
 	CALL `TransactionsHistoryStats`();
 END//
 DELIMITER ;
 
--- Dumping structure for table qr_queue_system_2.transactions
+-- Dumping structure for table qr_queue_system.transactions
 CREATE TABLE IF NOT EXISTS `transactions` (
   `idtransaction` int NOT NULL AUTO_INCREMENT,
   `idrequester` int DEFAULT NULL,
@@ -286,10 +286,10 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   CONSTRAINT `transactions_ibfk_3` FOREIGN KEY (`idcounter`) REFERENCES `counters` (`idcounter`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table qr_queue_system_2.transactions: ~1 rows (approximately)
+-- Dumping data for table qr_queue_system.transactions: ~1 rows (approximately)
 DELETE FROM `transactions`;
 
--- Dumping structure for procedure qr_queue_system_2.TransactionsHistoryStats
+-- Dumping structure for procedure qr_queue_system.TransactionsHistoryStats
 DELIMITER //
 CREATE PROCEDURE `TransactionsHistoryStats`()
 BEGIN
@@ -353,7 +353,7 @@ BEGIN
 END//
 DELIMITER ;
 
--- Dumping structure for procedure qr_queue_system_2.TransactionsToday
+-- Dumping structure for procedure qr_queue_system.TransactionsToday
 DELIMITER //
 CREATE PROCEDURE `TransactionsToday`()
     COMMENT 'Count all transactions in current day'
@@ -418,14 +418,14 @@ BEGIN
 END//
 DELIMITER ;
 
--- Dumping structure for event qr_queue_system_2.TransactionsTodayEvent
+-- Dumping structure for event qr_queue_system.TransactionsTodayEvent
 DELIMITER //
 CREATE EVENT `TransactionsTodayEvent` ON SCHEDULE EVERY 5 SECOND STARTS '2025-05-01 11:58:29' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
 	CALL `TransactionsToday`();
 END//
 DELIMITER ;
 
--- Dumping structure for table qr_queue_system_2.user_logs
+-- Dumping structure for table qr_queue_system.user_logs
 CREATE TABLE IF NOT EXISTS `user_logs` (
   `log_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int DEFAULT NULL,
@@ -434,7 +434,7 @@ CREATE TABLE IF NOT EXISTS `user_logs` (
   PRIMARY KEY (`log_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table qr_queue_system_2.user_logs: ~0 rows (approximately)
+-- Dumping data for table qr_queue_system.user_logs: ~0 rows (approximately)
 DELETE FROM `user_logs`;
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
