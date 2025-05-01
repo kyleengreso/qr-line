@@ -145,7 +145,7 @@ $email = $token->email;
                 }
                 if (response.status === 'success') {
                     const transactions = response.transactions;
-                    console.log(transactions);
+                    // console.log(transactions);
                     if (transactions.length < paginate) {
                         pageNextTransactions.classList.add('disabled');
                     } else {
@@ -185,7 +185,7 @@ $email = $token->email;
     pagePrevTransactions.addEventListener('click', function (e) {
         if (page > 1) {
             page--;
-            if (page == 1) {
+            if (page === 1) {
                 pagePrevTransactions.classList.add('disabled');
             }
             getTransactionHistory();
