@@ -230,19 +230,19 @@ $counterNumber = $token->counterNumber;
                                     <div class="row">
                                         <div class="col-12 col-md-6">
                                             <div class="row">
-                                                <div class="col-6">
-                                                    <span>Data Range: </span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <select class="form-select" name="dateRange" id="dateRange-select">
-                                                        <option value="day">Today</option>
-                                                        <option value="week">This Week</option>
-                                                        <option value="last-week">Last Week</option>
-                                                        <option value="month">This Month</option>
-                                                        <option value="last-30-days">Last 30 Days</option>
-                                                        <option value="last-3-months">Last 3 months</option>
-                                                        <option value="last-12-months">Last 12 months</option>
-                                                    </select>
+                                                <div class="col-12">
+                                                    <div class="form-floating">
+                                                        <select class="form-select" name="dateRange" id="dateRange-select">
+                                                            <option value="day">Today</option>
+                                                            <option value="week">This Week</option>
+                                                            <option value="last-week">Last Week</option>
+                                                            <option value="month">This Month</option>
+                                                            <option value="last-30-days">Last 30 Days</option>
+                                                            <option value="last-3-months">Last 3 months</option>
+                                                            <option value="last-12-months">Last 12 months</option>
+                                                        </select>
+                                                        <label for="dateRange-select" class="form-label">Date Range</label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
