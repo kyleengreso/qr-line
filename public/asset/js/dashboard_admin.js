@@ -234,8 +234,19 @@ dd_month.change(function() {
 });
 
 $('#btnGenerateReport').click(function() {
-    var url = './../api/api_endpoint.php?generate-report&year=' + year + '&month=' + month;
-    window.open(url, '_blank');
+    let generateReportNotify = document.getElementById('generateReportNotify');
+    let month = $('#month').val();
+    let year = $('#year').val();
+    console.log(month, year);
+    if (!month || !year) {
+        generateReportNotify.classList.remove('d-none');
+        setTimeout(() => {
+            generateReportNotify.classList.add('d-none');
+        }, 5000);
+    } else {
+        var url = './../api/api_endpoint.php?generate-report&year=' + year + '&month=' + month;
+        window.open(url, '_blank');
+    }
 
 });
 

@@ -267,15 +267,17 @@ $counterNumber = $token->counterNumber;
                                         </div>
                                         <div class="card-body">
                                             <div class="row mb-3">
-                                                <span class="fs-6 col-3">Filter</span>
-                                                <div class="col-9">
-                                                    <select class="form-select" name="transactionselect" id="transaction-select">
-                                                        <option value="none" id="transaction-history-filter-corporate-none">All</option>
-                                                        <option value="psu.palawan.edu.ph" id="transaction-history-filter-corporate">Corporate</option>
-                                                        <option value="none" id="transaction-history-filter-non-corporate">Non-Corporate</option>
-                                                        <option value="registrar" id="transaction-history-filter-registrar">Registrar</option>
-                                                        <option value="assessment" id="transaction-history-filter-assessment">Assessment</option>
-                                                    </select>
+                                                <div class="col-12 col-sm-12 col-lg-9">
+                                                    <div class="form-floating">
+                                                        <select class="form-select" name="transactionselect" id="transaction-select">
+                                                                <option value="none" id="transaction-history-filter-corporate-none">All</option>
+                                                                <option value="psu.palawan.edu.ph" id="transaction-history-filter-corporate">Corporate</option>
+                                                                <option value="none" id="transaction-history-filter-non-corporate">Non-Corporate</option>
+                                                                <option value="registrar" id="transaction-history-filter-registrar">Registrar</option>
+                                                            <option value="assessment" id="transaction-history-filter-assessment">Assessment</option>
+                                                        </select>
+                                                        <label for="transaction-select" class="form-label">Filter</label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="table-responsive">
@@ -310,19 +312,30 @@ $counterNumber = $token->counterNumber;
                                             Generate Report
                                         </div>
                                         <div class="card-body">
+                                            <div class="alert alert-danger d-none" id="generateReportNotify">
+                                                <span>Specify the month and year to generate</span>
+                                            </div>
                                             <div class="row">
                                                 <div class="col-6 col-md-4 mb-2">
-                                                    <select class="form-select" name="month" id="month">
-                                                        <option value="01">Month</option>
-                                                    </select>
+                                                    <div class="form-floating">
+                                                        <select class="form-select" name="month" id="month">
+                                                            <option value="">Month</option>
+                                                        </select>
+                                                        <label for="month" class="form-label">Month</label>
+                                                    </div>
                                                 </div>
                                                 <div class="col-6 col-md-4 mb-2">
-                                                    <select class="form-select" name="year" id="year">
-                                                        <option value="2023">Year</option>
-                                                    </select>
+                                                    <div class="form-floating">
+                                                        <select class="form-select" name="year" id="year">
+                                                            <option value="">Year</option>
+                                                        </select>
+                                                        <label for="year" class="form-label">Year</label>
+                                                    </div>
                                                 </div>
                                                 <div class="col-12 col-md-4 mb-2">
-                                                    <button class="btn btn-primary w-100" type="button" id="btnGenerateReport">Generate</button>
+                                                    <div class="form-floating align-stretch">
+                                                        <button class="btn btn-primary btn-lg btn-lg w-100" type="button" id="btnGenerateReport">Generate</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
