@@ -18,17 +18,20 @@
         <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mt-3">
             <h6 class="text-uppercase mb-4">LINKS</h6>
             <?php if (!isset($_COOKIE['token'])): ?>
-            <p>
-            <a class="text-black text-decoration-none" href="/public/auth/login.php">Login</a>
-            </p>
-                <?php if ($enable_register_employee) : ?>
                 <p>
-                <a class="text-black text-decoration-none" href="/public/auth/register.php">Register</a>
+                    <a class="text-black text-decoration-none" href="/public/auth/login.php">Login</a>
                 </p>
-                <?php endif; ?>
+                <?php if ($enable_register_employee) : ?>
+                    <p>
+                        <a class="text-black text-decoration-none" href="/public/auth/register.php">Register</a>
+                    </p>
+                    <?php endif; ?>
+                <p>
+                    <a class="text-black text-decoration-none" href="/public/stats">Stats</a>
+                </p>
             <?php endif; ?>
             <p>
-            <a class="text-black text-decoration-none">FAQ</a>
+                <a class="text-black text-decoration-none">FAQ</a>
             </p>
         </div>
 
