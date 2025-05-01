@@ -245,15 +245,37 @@ function rtTransaction() {
         url: './../api/api_endpoint.php?dashboard_stats',
         type: 'GET',
         success: function(response) {
-            let stat = response.data[0]
+            let stat = response.data;
             console.log(stat);
             if (response.status === 'success') {
-                $('#transactions-total').text(stat.transaction_total_today);
-                $('#transactions-pending').text(stat.transaction_total_pending);
-                $('#transactions-completed').text(stat.transaction_total_completed);
-                $('#transactions-cancelled').text(stat.transaction_total_cancelled);
+
+                // For transaction for today
+                let transactionsToday = stat.find(item => item.setup_key === 'transactions_today');
+                let transactionsPending = stat.find(item => item.setup_key === 'transactions_today_pending');
+                let transactionsCompleted = stat.find(item => item.setup_key === 'transactions_today_completed');
+                let transactionsCancelled = stat.find(item => item.setup_key === 'transactions_today_cancelled');
+
+                $('#transactions-today').text(transactionsToday ? transactionsToday.setup_value_int : 'N/A');
+                $('#transactions-pending').text(transactionsPending ? transactionsPending.setup_value_int : 'N/A');
+                $('#transactions-completed').text(transactionsCompleted ? transactionsCompleted.setup_value_int : 'N/A');
+                $('#transactions-cancelled').text(transactionsCancelled ? transactionsCancelled.setup_value_int : 'N/A');
+
+                // Transaction Total
+                let transactionsTotal = stat.find(item => item.setup_key === 'transactions_total');
+                $('#transactions-total').text(transactionsTotal ? transactionsTotal.setup_value_int : 'N/A');
+
+                // Transaction History for pasts
+                let transactionsYesterday = stat.find(item => item.setup_key === 'transactions_yesterday');
+                let transactionsThisWeek = stat.find(item => item.setup_key === 'transactions_this_week');
+                let transactionsThisMonth = stat.find(item => item.setup_key === 'transactions_this_month');
+                let transactionsThisYear = stat.find(item => item.setup_key === 'transactions_this_year');
+
+                $('#transactions-yesterday').text(transactionsYesterday ? transactionsYesterday.setup_value_int : 'N/A');
+                $('#transactions-week').text(transactionsThisWeek ? transactionsThisWeek.setup_value_int : 'N/A');
+                $('#transactions-month').text(transactionsThisMonth ? transactionsThisMonth.setup_value_int : 'N/A');
+                $('#transactions-year').text(transactionsThisYear ? transactionsThisYear.setup_value_int : 'N/A');
             } else {
-                $('#transaction-today').text('N/A');
+                // Reserved
             }
         },
         error: function(response) {

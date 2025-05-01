@@ -1209,7 +1209,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         // Cancel it 
         $sql_cmd = "UPDATE transactions
-                    SET status = 'missed'
+                    SET status = 'cancelled'
                     WHERE token_number = ?";
         $stmt = $conn->prepare($sql_cmd);
         $stmt->bind_param("s", $token_number);
@@ -1331,11 +1331,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 } else if ($_SERVER["REQUEST_METHOD"] === "GET") {
     if (isset($_GET['dashboard_stats'])) {
 
-        $sql_cmd = "SELECT 
-                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE()) as transaction_total_today,
-                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'pending')  as transaction_total_pending,
-                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'completed') as transaction_total_completed,
-                    (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'cancelled')  as transaction_total_cancelled"; // Temporary fix
+        // Version 1
+        // $sql_cmd = "SELECT
+
+        //                 -- TRANSACTIONS FOR TODAY
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE()) as transaction_total_today,
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'pending')  as transaction_total_pending,
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'completed') as transaction_total_completed,
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'cancelled')  as transaction_total_cancelled,
+
+        //                 -- TRANSACTION HISTORY STATS
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() - INTERVAL 1 DAY)  as transaction_yesterday,
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE WEEK(transaction_time) = WEEK(CURDATE()) AND YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_week,
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE MONTH(transaction_time) = MONTH(CURDATE()) AND YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_month,   
+        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_year,
+        //                 (SELECT COUNT(*) FROM transactions) as transaction_total_all  
+        //             ";
+
+        // Version 2
+        $sql_cmd = "SELECT setup_key, setup_value_int
+                    FROM setup_system
+                    WHERE setup_key LIKE 'transactions%';
+        ";
         $stmt = $conn->prepare($sql_cmd);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -1347,54 +1364,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "data" => $stats
         ));
         exit;
-        // $sql_cmd = "";
-        // $stmt = null;
-        
-        // if (isset($_GET['day'])) {
-        //     // Query for today's transactions (12AM to 11:59PM)
-        //     $sql_cmd = "SELECT *
-        //                 FROM transactions t
-        //                 WHERE DATE(t.transaction_time) = CURDATE()";
-        // } else if (isset($_GET['week'])) {
-        //     // Query for the last 7 days' transactions
-        //     $sql_cmd = "SELECT *
-        //                 FROM transactions t
-        //                 WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
-        // } else if (isset($_GET['month'])) {
-        //     // Query for the last 30 days' transactions
-        //     $sql_cmd = "SELECT *
-        //                 FROM transactions t
-        //                 WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
-        // } else if (isset($_GET['year'])) {
-        //     // Query for the last 12 months' transactions
-        //     $sql_cmd = "SELECT *
-        //                 FROM transactions t
-        //                 WHERE t.transaction_time >= DATE_SUB(NOW(), INTERVAL 12 MONTH)";
-        // } else {
-        //     // Invalid request handling
-        //     echo json_encode(array(
-        //         "status" => "error",
-        //         "message" => "Invalid request"
-        //     ));
-        //     exit;
-        // }
-        
-        // Execute the query and return results
-        if (!empty($sql_cmd)) {
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $stats = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-    
-            echo json_encode(array(
-                "status" => "success",
-                "message" => "Dashboard stats successfully retrieved",
-                "data" => $stats
-            ));
-        }
-        exit;
-
 
     // GENERATE REPORT
     } else if (isset($_GET['generate-report'])) {
@@ -1941,7 +1910,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 exit;
             }
 
-            // Counting if theres transaction today was recorded
+            // Counting if theres transaction today was recorded in current day
             $queue_count = 0;
             $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
                         FROM transactions t
