@@ -1,6 +1,17 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
+
+$token = $_COOKIE['token'];
+$token = decryptToken($token, $master_key);
+$token = json_encode($token);
+$token = json_decode($token);
+
+$id = $token->id;
+$username = $token->username;
+$role_type = $token->role_type;
+$email = $token->email;
+$counterNumber = $token->counterNumber;
 ?>
 
 <!DOCTYPE html>
@@ -18,6 +29,9 @@ restrictAdminMode();
 
     <div class="container before-footer d-flex justify-content-center" style="margin-top:100px">
         <div class="col-md-6" style="min-width:400px;max-width:900px;transform:scale(0.9)">
+            <div class="alert text-start alert-success d-none" id="logOutNotify">
+                <span><?php echo $username?> has logged out successfully</span>
+            </div>
             <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
                 <nav aria-label="breadcrumb mx-4">
                     <ol class="breadcrumb mb-0">

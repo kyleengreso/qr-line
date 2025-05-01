@@ -184,8 +184,12 @@ function after_js() {
     echo '
     <script src="./../asset/js/base.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
-    <script src="./../asset/js/message.js"></script>';
+    <script src="./../asset/js/message.js"></script>
+    <script src="/public/asset/js/bootstrap.bundle.js"></script>
+
+    ';
     
+    // <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
     return;
 }
 // <script src="./../asset/js/popper.min.js" ></script>
