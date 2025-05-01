@@ -37,6 +37,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $decToken = decryptToken($token, $master_key);
             $web = false;
             if ($decToken) {
+                // Log the login
+                $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
+                $stmt = $conn->prepare($sql_cmd);
+
+                $user_id = $decToken['id'];
+                $username = $decToken['username'];
+                $comment = "LOG_OUT: " . $username . " is logged out";
+                $curdate = date("Y-m-d H:i:s");
+
+                $stmt->bind_param("sss", $user_id, $comment, $curdate);
+                $stmt->execute();
+                $stmt->close();
                 // Delete the cookie
                 setcookie("token", "", time() - 3600, "/");
                 echo json_encode(array(
@@ -128,6 +140,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $encToken = encryptToken($token, $master_key);
             setcookie("token", $encToken, time() + (86400 * 30), "/");
 
+            // Log the login
+            $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
+            $stmt = $conn->prepare($sql_cmd);
+            
+            $user_id = $employee[0]['id'];
+            $comment = "LOG_IN: " . $employee[0]['username'] . " is logged in";
+            $curdate = date("Y-m-d H:i:s");
+
+            $stmt->bind_param("sss", $user_id, $comment, $curdate);
+            $stmt->execute();
+            $stmt->close();
+
+
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Login successful",
@@ -179,6 +204,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $stmt->bind_param("ss", $username, $username);
                 $stmt->execute();
                 $stmt->close();
+
+                // Log the deactivated account 
+                $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
+                $stmt = $conn->prepare($sql_cmd);
+                $user_id = $employee[0]['id'];
+                $comment = "LOG_IN: " . $employee[0]['username'] . " has been deactivated after attempting many times";
                 echo json_encode(array(
                     "status" => "error",
                     "message" => "Account is deactivated"

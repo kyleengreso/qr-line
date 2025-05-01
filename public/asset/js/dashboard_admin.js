@@ -221,7 +221,7 @@ for (var y = 2020; y <= (new Date().getFullYear()) + 5; y++) {
 
 dd_year.change(function() {
     year = $(this).val();
-    console.log("Selected value: " + year);
+    // console.log("Selected value: " + year);
 });
 
 var dd_month = $('#month');
@@ -230,14 +230,14 @@ for (var m = 1; m <= 12; m++) {
 }
 dd_month.change(function() {
     month = $(this).val();
-    console.log("Selected value: " + month);
+    // console.log("Selected value: " + month);
 });
 
 $('#btnGenerateReport').click(function() {
     let generateReportNotify = document.getElementById('generateReportNotify');
     let month = $('#month').val();
     let year = $('#year').val();
-    console.log(month, year);
+    // console.log(month, year);
     if (!month || !year) {
         generateReportNotify.classList.remove('d-none');
         setTimeout(() => {
