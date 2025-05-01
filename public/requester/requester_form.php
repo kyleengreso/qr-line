@@ -31,7 +31,7 @@ include "./../base.php"
                 <div class="mb-3">
                     <label for="email" class="form-label fw-bold">Email</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
                         <input type="email" class="form-control" id="email" name="email" placeholder="Enter Your Email Address" required>
                     </div>
                 </div>
