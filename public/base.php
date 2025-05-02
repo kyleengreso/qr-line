@@ -27,8 +27,10 @@ $project_version = "1.0.0";
 
         [!] If your host is other than port 80, please change the port number at :80
 */
-$serverName = getHostByName(getHostName()) . ":80"; // IP Address version
+// $serverName = getHostByName(getHostName()) . ":80"; // IP Address version
 // $serverName = "qrline.psu.edu.ph:80"; // Domain name version
+$serverName = "192.168.1.137:80"; // IP Address version
+
 
 // Project Support
 $project_address = " Tiniguiban Heights, Puerto Princesa City, Palawan, Philippines";
