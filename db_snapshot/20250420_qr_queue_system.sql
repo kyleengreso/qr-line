@@ -76,7 +76,7 @@ CREATE TABLE `employees` (
 
 LOCK TABLES `employees` WRITE;
 /*!40000 ALTER TABLE `employees` DISABLE KEYS */;
-INSERT INTO `employees` VALUES (1,'marc','$2y$10$07sOgcaInDudhv9kdCZZL.qgj/1GPNstmeJyLUD4cnp/wruCfegBi','2025-03-13 15:47:13','admin','markcediebuday@gmail.com1',1,'2025-03-23 19:20:00',-96,NULL,NULL,1),(2,'kyle','$2y$10$4ucIeH0mZ4AByu4enxtpKeIx573T6qJxXHqlc1wac0GE9UcMNZ4Ji','2025-03-13 15:51:07','employee',NULL,1,NULL,0,NULL,NULL,0),(3,'ronald','$2y$10$NLxe1YdenLW7Qe6jNUonce77nCqWmjF7S6p/ws6MGlw52ELDR6aCC','2025-03-13 15:51:25','employee',NULL,1,NULL,0,NULL,NULL,0),(4,'root','$2y$10$paeqZzxCsEgITNLhuXjiXeDECbbf8L86MoUv9D52WSGbUJandhg1.','2025-03-13 17:07:05','employee','markcediebuday@gmail.com',1,NULL,0,NULL,NULL,0),(5,'pael','$2y$10$56lAk2ntCmcHGqikg1jAG.rNU8RXHxwi7IuYnNN0IkeqndObeBw2G','2025-03-13 17:08:17','employee','pael@gmail.com',1,NULL,0,NULL,NULL,0);
+INSERT INTO `employees` VALUES (1,'marc','$2y$10$07sOgcaInDudhv9kdCZZL.qgj/1GPNstmeJyLUD4cnp/wruCfegBi','2025-03-13 15:47:13','admin','dummy@gmail.com1',1,'2025-03-23 19:20:00',-96,NULL,NULL,1),(2,'kyle','$2y$10$4ucIeH0mZ4AByu4enxtpKeIx573T6qJxXHqlc1wac0GE9UcMNZ4Ji','2025-03-13 15:51:07','employee',NULL,1,NULL,0,NULL,NULL,0),(3,'ronald','$2y$10$NLxe1YdenLW7Qe6jNUonce77nCqWmjF7S6p/ws6MGlw52ELDR6aCC','2025-03-13 15:51:25','employee',NULL,1,NULL,0,NULL,NULL,0),(4,'root','$2y$10$paeqZzxCsEgITNLhuXjiXeDECbbf8L86MoUv9D52WSGbUJandhg1.','2025-03-13 17:07:05','employee','dummy@gmail.com',1,NULL,0,NULL,NULL,0),(5,'pael','$2y$10$56lAk2ntCmcHGqikg1jAG.rNU8RXHxwi7IuYnNN0IkeqndObeBw2G','2025-03-13 17:08:17','employee','pael@gmail.com',1,NULL,0,NULL,NULL,0);
 /*!40000 ALTER TABLE `employees` ENABLE KEYS */;
 UNLOCK TABLES;
 

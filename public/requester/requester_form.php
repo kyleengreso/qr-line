@@ -38,7 +38,7 @@ include "./../base.php"
                         <option value="registrar">Registrar</option>
                         <option value="assessment">Assessment</option>
                     </select>
-                    <label for="email" class="form-label fw-bold">Payment</label>
+                    <label for="email" class="form-label">Payment</label>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">Next</button>

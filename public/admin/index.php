@@ -41,15 +41,8 @@ $counterNumber = $token->counterNumber;
                         </div>
                     </div>
                     <div class="col-12 col-md-9 text-center text-md-start">
-                        <div class="px-4">
+                        <div class="pl-4">
                             <h1>DASHBOARD</h1>
-                        </div>
-                    </div>
-                    <div class="col-2 col-md-3 py-2 d-none d-md-block card shadow">
-                        <div class="row">
-                            <div class="w-100">
-                                <a class="btn btn-outline-primary w-100 h-100" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">CUT OFF</a>
-                            </div>
                         </div>
                     </div>
                 </div>

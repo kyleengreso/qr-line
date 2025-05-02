@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS `employees` (
 -- Dumping data for table qr_queue_system.employees: ~31 rows (approximately)
 DELETE FROM `employees`;
 INSERT INTO `employees` (`id`, `username`, `password`, `created_at`, `role_type`, `email`, `active`, `employee_last_login`, `attempt_login`, `user_image`, `user_id_extended`, `cut_off_state`) VALUES
-	(1, 'marc', '$2y$10$npINOHJFBrzmyYBkm31jH.s0wOpNGeDIMlis7.yRiv9uby7GzOdhC', '2025-03-13 15:47:13', 'admin', 'markcediebuday@gmail.com2', 1, '2025-03-23 19:20:00', -96, NULL, NULL, 1),
+	(1, 'marc', '$2y$10$npINOHJFBrzmyYBkm31jH.s0wOpNGeDIMlis7.yRiv9uby7GzOdhC', '2025-03-13 15:47:13', 'admin', 'dummy@gmail.com2', 1, '2025-03-23 19:20:00', -96, NULL, NULL, 1),
 	(2, 'root', '$2y$10$tStaPV991cvvl1lsq.r0xeHyN8/Eme.ZDQHBizxLp9X/Akx04zsk6', '2025-05-01 14:49:52', 'employee', NULL, 1, NULL, 0, NULL, NULL, 0);
 
 -- Dumping structure for procedure qr_queue_system.requesterCount
@@ -208,9 +208,9 @@ CREATE TABLE IF NOT EXISTS `requesters` (
 -- Dumping data for table qr_queue_system.requesters: ~17,405 rows (approximately)
 DELETE FROM `requesters`;
 INSERT INTO `requesters` (`id`, `name`, `email`, `payment`, `created_at`) VALUES
-	(1, 'Dawg', 'markcediebuday@gmail.com', 'assessment', '2025-05-01 14:54:46'),
-	(2, 'Gerald', 'markcediebuday@gmail.com', 'assessment', '2025-05-01 15:03:09'),
-	(3, 'Gerald1', 'markcediebuday@gmail.com', 'assessment', '2025-05-01 15:04:19');
+	(1, 'Dawg', 'dummy@gmail.com', 'assessment', '2025-05-01 14:54:46'),
+	(2, 'Gerald', 'dummy@gmail.com', 'assessment', '2025-05-01 15:03:09'),
+	(3, 'Gerald1', 'dummy@gmail.com', 'assessment', '2025-05-01 15:04:19');
 
 -- Dumping structure for table qr_queue_system.setup_system
 CREATE TABLE IF NOT EXISTS `setup_system` (

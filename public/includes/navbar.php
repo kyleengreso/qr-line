@@ -66,6 +66,16 @@ if (isset($_COOKIE['token'])) {
             </div>
         </div>
         <ul class="list-unstyled">
+            <li>
+                <div class="py-4 px-2">
+                    <div class="row">
+                        <a class="btn btn-danger ms-auto" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">
+                            <span><i class="bi bi-power shadow-sm"></i></span>
+                            CUT OFF
+                        </a>
+                    </div>
+                </div>
+            </li>
             <?php if ($token->role_type == 'admin') : ?>
             <li>
                 <div class="py-4 px-2">

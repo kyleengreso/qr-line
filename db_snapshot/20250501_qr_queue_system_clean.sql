@@ -172,10 +172,10 @@ CREATE TABLE IF NOT EXISTS `employees` (
 -- Dumping data for table qr_queue_system.employees: ~10 rows (approximately)
 DELETE FROM `employees`;
 INSERT INTO `employees` (`id`, `username`, `password`, `created_at`, `role_type`, `email`, `active`, `employee_last_login`, `attempt_login`, `user_image`, `user_id_extended`, `cut_off_state`) VALUES
-	(1, 'marc', '$2y$10$npINOHJFBrzmyYBkm31jH.s0wOpNGeDIMlis7.yRiv9uby7GzOdhC', '2025-03-13 15:47:13', 'admin', 'markcediebuday@gmail.com2', 1, '2025-03-23 19:20:00', -96, NULL, NULL, 0),
+	(1, 'marc', '$2y$10$npINOHJFBrzmyYBkm31jH.s0wOpNGeDIMlis7.yRiv9uby7GzOdhC', '2025-03-13 15:47:13', 'admin', 'dummy@gmail.com2', 1, '2025-03-23 19:20:00', -96, NULL, NULL, 0),
 	(2, 'kyle', '$2y$10$LOmN.0JisVKw7niiC.8h7uGjBi37ZM8oUEW2/rmCKv3aziqROId0S', '2025-03-13 15:51:07', 'employee', 'py@gmail.com', 1, NULL, 3, NULL, NULL, 0),
 	(3, 'ronald', '$2y$10$ebA29Vdog1//ZpZ4R7ZFt.JcQYaGUarDEya/z4HIvrIFBmp3jd.T6', '2025-03-13 15:51:25', 'employee', NULL, 1, NULL, 0, NULL, NULL, 0),
-	(4, 'root', '$2y$10$hiCjuciNXNnOe7ZWuEc9Oui5efXq1bmlgGmVtW54azXgHq2hW81Ny', '2025-03-13 17:07:05', 'employee', 'markcediebuday@gmail.com', 1, NULL, 0, NULL, NULL, 0),
+	(4, 'root', '$2y$10$hiCjuciNXNnOe7ZWuEc9Oui5efXq1bmlgGmVtW54azXgHq2hW81Ny', '2025-03-13 17:07:05', 'employee', 'dummy@gmail.com', 1, NULL, 0, NULL, NULL, 0),
 	(5, 'pael', '$2y$10$56lAk2ntCmcHGqikg1jAG.rNU8RXHxwi7IuYnNN0IkeqndObeBw2G', '2025-03-13 17:08:17', 'employee', 'pael@gmail.com', 1, NULL, 0, NULL, NULL, 0),
 	(6, 'marc2', '$2y$10$Nx852RMiw0S3rz7KEaLk3unbW.SDljHtkd8Vk/6G1r1OOQcZUCLfa', '2025-03-13 17:47:28', 'admin', NULL, 1, NULL, 0, NULL, NULL, 0),
 	(7, 'marc1', '$2y$10$IYEEhFJUPHiI2jD4r3HcKO51zwlHW.9C6djxoDPg/NzjCwliSzBhO', '2025-03-18 12:23:37', 'employee', NULL, 1, NULL, 0, NULL, NULL, 0),

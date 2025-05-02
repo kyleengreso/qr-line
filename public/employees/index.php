@@ -69,7 +69,7 @@ $counterNumber = $token->counterNumber;
                                         <option value="admin">Admin</option>
                                         <option value="employee">Cashier</option>
                                     </select>
-                                    <label for="getRoleType">Role</label>
+                                    <label for="getRoleType" class="form-label">Role</label>
                                 </div>
                             </div>
                         </div>
@@ -206,7 +206,7 @@ $counterNumber = $token->counterNumber;
                                 <option value="admin">Admin</option>
                                 <option value="employee">Employee</option>
                             </select>
-                            <label for="add_role_type">Role</label>
+                            <label for="add_role_type" class="form-label">Role</label>
                         </div>
                         <div class="mb-4 form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="add_status" id="add_status" value="1">
@@ -261,7 +261,7 @@ $counterNumber = $token->counterNumber;
                                 <option value="admin">Admin</option>
                                 <option value="employee">Employee</option>
                             </select>
-                            <label for="update_role_type">Role</label>
+                            <label for="update_role_type" class="form-label">Role</label>
                         </div>
                         <div class="mb-4 form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="update_active" id="update_active" value="1">
