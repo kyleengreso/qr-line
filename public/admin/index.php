@@ -53,7 +53,7 @@ $counterNumber = $token->counterNumber;
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #27548A">
-                                                TRANSACTIONS TODAY
+                                                Today
                                             </div>
                                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                                 <span class="fs-1 fw-bold" id="transactions-today"></span>
@@ -129,12 +129,12 @@ $counterNumber = $token->counterNumber;
                             <div class="d-flex justify-content-center align-items-center card border border-2 text-center bg-white p-4 shadow rounded">
                                 <table style="max-width: 250px">
                                     <tr>
-                                        <td class="pr-3 text-center text-muted">
+                                        <td class="d-none pr-4 text-center text-muted">
                                             <i class="fs-1 bi bi-graph-up"></i>                   
                                         </td>
                                         <td class="text-center">
-                                            <span class="text-muted mb-0">
-                                                TOTAL TRANSACTIONS
+                                            <span class="text-muted text-uppercase mb-0">
+                                                Total Transactions
                                                 <h3 class="fs-2 fw-bold"><span id="transactions-total"></span></h3>
                                             </span>               
                                         </td>
@@ -149,7 +149,7 @@ $counterNumber = $token->counterNumber;
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
                                                 <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #7C4585">
-                                                    TRANSACTION YESTERDAY</div>
+                                                    Yesterday</div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800">
                                                     <span class="fs-1 fw-bold" id="transactions-yesterday"></span>
                                                 </div>
@@ -167,7 +167,7 @@ $counterNumber = $token->counterNumber;
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
                                                 <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #F8B55F">
-                                                    THIS WEEK</div>
+                                                    This Week</div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-week"></span></div>
                                             </div>
                                             <div class="col-auto fs-1">
@@ -183,7 +183,7 @@ $counterNumber = $token->counterNumber;
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
                                                 <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #FFCBCB">
-                                                    THIS MONTH</div>
+                                                    This Month</div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-month"></span></div>
                                             </div>
                                             <div class="col-auto fs-1">
@@ -199,7 +199,7 @@ $counterNumber = $token->counterNumber;
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
                                                 <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#0A97B0">
-                                                    THIS YEAR</div>
+                                                    This Year</div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-year"></span></div>
                                             </div>
                                             <div class="col-auto fs-1">
@@ -234,7 +234,7 @@ $counterNumber = $token->counterNumber;
                                                             <option value="last-3-months">Last 3 months</option>
                                                             <option value="last-12-months">Last 12 months</option>
                                                         </select>
-                                                        <label for="dateRange-select" class="form-label">Date Range</label>
+                                                        <label for="dateRange-select" class="form-label`">Date Range</label>
                                                     </div>
                                                 </div>
                                             </div>

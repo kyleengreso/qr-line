@@ -26,24 +26,25 @@ function userStatusIcon(username, role_type, active) {
     if (role_type == 'admin') {
         if (active === 1) {
             return `
-                <i class="fas fa-user-shield role_type_admin_icon"></i>
+
+                <i class="bi bi-person-fill-gear role_type_admin_icon"></i>
                 <span class="role_type_admin_icon">${username}</span>
             `;
         } else {
             return `
-                <i class="fa-solid fa-user-slash employeeActive-no-icon"></i>
+                <i class="bi bi-person-fill-slash employeeActive-no-icon"></i>
                 <span class="employeeActive-no-icon">${username}</span>
             `;
         }
     } else if (role_type == 'employee') {
         if (active === 1) {
             return `
-                <i class="fas fa-user role_type_employee_icon"></i>
+                <i class="bi bi-person-plus-fill role_type_employee_icon"></i>
                 <span class="role_type_employee_icon">${username}</span>
             `;
         } else {
             return `
-                <i class="fa-solid fa-user-slash employeeActive-no-icon"></i>
+                <i class="bi bi-person-fill-slash employeeActive-no-icon"></i>
                 <span class="employeeActive-no-icon">${username}</span>
             `;
         }
