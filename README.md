@@ -44,9 +44,11 @@ git clone https://github.com/kyleengreso/qr-line.git
 
 9. Open **XAMPP Control Panel** and start<u>Apache</u> only 
 
-10. Open the browser and place **localhost** if youre onworking to your current machine. So you will directly to the **QR-Line's Requester Form** or if you want to login, you can go at **http://localhost/public/auth/** .
+10. Open the browser and place **localhost** if youre onworking to your current machine. So you will directly to the **QR-Line's Requester Invite** go to the below usage section or if you want to login, you can go at **http://{your_address}/public/auth/** .
 
-11. Discover the features, and enjoy.
+11. Locate at /public/base.php. Find the **$serverName** variable, replace it your current IP address or domain name from your machine.
+
+12. Ready to serve for your requesters.
 
 ## Dependencies
 
@@ -59,14 +61,17 @@ git clone https://github.com/kyleengreso/qr-line.git
 ## Usage
 
 **Users:**
-1. Users scan a QR code to join the queue.
+
+1. Users scan a QR code to join the queue. At the **{your_address}/public/requester/requester_invite.php**
 2. Users have the option to cancel their queue request.
 
 **Employees:**
+
 1. Employees can manage the queue (e.g., call next, skip, recall).
 2. Employees can cut-off the queue when needed.
 
 **Admin:**
+
 1. Admin can manage employees and counters.
 2. Admin can check transaction history.
 3. Admin can generate reports.
