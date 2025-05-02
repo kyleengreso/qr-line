@@ -67,14 +67,17 @@ if (isset($_COOKIE['token'])) {
         </div>
         <ul class="list-unstyled">
             <li>
+            <!-- Show the "CUT OFF" button only on specific pages -->
+            <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false || strpos($_SERVER['REQUEST_URI'], '/public/employee') !== false): ?>
                 <div class="py-4 px-2">
                     <div class="row">
-                        <a class="btn btn-danger ms-auto" id="employee-cut-off" data-toggle="modal" data-target="#cutOffModal">
+                        <a class="btn btn-danger ms-auto" id="employee-cut-off" data-bs-toggle="modal" data-bs-target="#cutOffModal">
                             <span><i class="bi bi-power shadow-sm"></i></span>
                             CUT OFF
                         </a>
                     </div>
                 </div>
+            <?php endif; ?>
             </li>
             <?php if ($token->role_type == 'admin') : ?>
             <li>

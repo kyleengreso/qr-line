@@ -1,15 +1,9 @@
 
-var protocol = window.location.protocol;
-var host = window.location.host;
-var realHost = protocol + '//' + host;
-
 function sumbitUserForm(user) {
-    // console.log(user);
-    // return;
     var form = $('#frmUserForm');
     message_info(form, 'Processing...');
     $.ajax({
-        url: `${realHost}/public/api/api_endpoint.php`,
+        url: '/public/api/api_endpoint.php',
         type: 'POST',
         data: JSON.stringify(user),
         success: function(response) {

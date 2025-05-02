@@ -29,10 +29,10 @@
                 <p>
                     <a class="text-black text-decoration-none" href="/public/stats">Stats</a>
                 </p>
-            <?php endif; ?>
-            <p>
-                <a class="text-black text-decoration-none">FAQ</a>
-            </p>
+                <!-- <p>
+                    <a class="text-black text-decoration-none">FAQ</a>
+                </p> -->
+                <?php endif; ?>
         </div>
 
         <hr class="w-100 clearfix d-md-none" />

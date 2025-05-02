@@ -1,8 +1,3 @@
-
-var protocol = window.location.protocol;
-var host = window.location.host;
-var realHost = protocol + '//' + host;
-
 function fetchYourQuery() {
     const token = new URLSearchParams(window.location.search).get('requester_token');
 
@@ -11,12 +6,12 @@ function fetchYourQuery() {
         window.location.href = `${realHost}/public/requester/requester_form.php`;
     }
 
-    var param = new URLSearchParams({
+    var params = new URLSearchParams({
         requester_number: true,
         requester_token : token
     })
     $.ajax({
-        url: `${realHost}/public/api/api_endpoint.php?${param}`,
+        url: '/public/api/api_endpoint.php?' + params,
         type: 'GET',
         success: function(response) {
             console.log(response);
@@ -46,14 +41,14 @@ if (btnCancelRequest) {
             token_number: token
         }
         $.ajax({
-            url: `${realHost}/public/api/api_endpoint.php`,
+            url: '/public/api/api_endpoint.php',
             type: "POST",
             data: JSON.stringify(data),
             success: function (response) {
                 console.log(response);
                 if (response.status) {
                     alert(response.message);
-                    window.location.href = `${realHost}/public/requester/requester_form.php`;
+                    window.location.href = '/public/requester/requester_form.php';
                 } else {
                     alert(response.message);
                 }

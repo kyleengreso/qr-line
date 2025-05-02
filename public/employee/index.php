@@ -27,30 +27,32 @@ $counterNumber = $token->counterNumber;
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
-    <div></div>
     <div class="container d-flex justify-content-center align-items-center before-footer container-set" style="margin-top: 50px">
         <div class="text-center w-100" style="max-width: 400px;" id="employeeDashboard">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
-                <span><?php echo $username?> has logged out successfully</span>
+                <span><?php echo $username ?> has logged out successfully</span>
             </div>
             <div class="alert text-start alert-success d-none" id="cutOffNotification">Operational</div>
-            <h3 class="fw-bold">COUNTER <span id="employee-counter-number"><?php echo $counterNumber?></span> <span class="text-danger d-none" id="cutOffState">(Cut-Off)</span></h3>
-
+            <h3 class="fw-bold">
+                COUNTER <span id="employee-counter-number"><?php echo $counterNumber ?></span>
+                <span class="text-danger d-none" id="cutOffState">(Cut-Off)</span>
+            </h3>
+        
             <p class="mb-3">Current Serving</p>
             <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
-                <span id="queue-number"></span>
+                <span id="queue-number">N/A</span>
             </div>
             <form method="POST" id="frmNextTransaction">
-                <button type="submit" name="next_queue" id="btn-counter-success"class="btn btn-warning text-white fw-bold px-4">NEXT</button>
-                <button type="submit" name="skip_queue" id="btn-counter-skip"class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+                <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
+                <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
             </form>
-            <div class="py-3">
+            <!-- <div class="py-3">
                 <a class="btn btn-danger fw-bold text-white" id="employee-cut-off">Cut Off</a>
-            </div>
+            </div> -->
         </div>
     </div>
 
-    <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
+    <!-- <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
@@ -64,7 +66,7 @@ $counterNumber = $token->counterNumber;
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
@@ -154,11 +156,11 @@ $counterNumber = $token->counterNumber;
 
         var operational = false;
         let btn_counter_resume = document.getElementById('employee-resume');
-        let cutOff = document.getElementById('employee-cut-off');
         let cutOffNotification = document.getElementById('cutOffNotification');
         
         let cutOffState = document.getElementById('cutOffState');
 
+        let cutOff = document.getElementById('employee-cut-off');
         const params = new URLSearchParams({
             employeeCutOff: true,
             id: <?php echo $id?>
@@ -195,21 +197,19 @@ $counterNumber = $token->counterNumber;
                         cutOffState.classList.add('d-none');
                         btn_counter_success.disabled = false;
                         btn_counter_skip.disabled = false;
-
                         // setTimeout(() => {
                         //     cutOffNotification.classList.add('d-none');
                         // }, 5000);
                     }
                 }
             }
-
-        })
+        });
 
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
             if (operational) {
                 $.ajax({
-                    url: `${realHost}/public/api/api_endpoint.php`,
+                    url: '/public/api/api_endpoint.php',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
@@ -274,7 +274,7 @@ $counterNumber = $token->counterNumber;
         //     e.preventDefault();
         // });
 
-        fetchTransaction();
+        // fetchTransaction();
 
         setInterval(() => {
             if (operational) {

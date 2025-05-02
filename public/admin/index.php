@@ -39,10 +39,17 @@ $counterNumber = $token->counterNumber;
                         <div class="alert alert-danger d-none" id="dashboardStatus">
                             <span class="" id="dashboardStatusMsg">You're has been cut off.</span>
                         </div>
+                        <div class="alert text-start alert-success d-none" id="cutOffNotification">
+                            Operational
+                        </div>
+
                     </div>
                     <div class="col-12 col-md-9 text-center text-md-start">
                         <div class="pl-4">
-                            <h1>DASHBOARD</h1>
+                            <h1>
+                                DASHBOARD 
+                                <span class="text-danger d-none"id="cutOffState">(Cut Off)</span>
+                            </h1>
                         </div>
                     </div>
                 </div>
@@ -427,23 +434,6 @@ $counterNumber = $token->counterNumber;
         </div>
     </div>
 
-    <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Employee: <?php echo $username?> is cut off</h5>
-                </div>
-                <div class="modal-body py-4 px-6" id="viewEmployeeBody">
-                    You are cut off for temporary.
-                    <input type="hidden" name="employee-id" id="employee-id" value="<?php echo $id?>">
-                </div>
-                <div class="modal-footer col" id="viewEmployeeFooter">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" data-dismiss="modal" id="employee-resume">Resume</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <?php after_js()?>
     <script src="./../asset/js/dashboard_admin.js"></script>
     <script>
@@ -461,6 +451,113 @@ $counterNumber = $token->counterNumber;
             let counter_listing = document.getElementById("counter-listing");
             counter_listing.classList.remove('d-none');
         });
+
+
+        // Cut Off
+        let cutOffNotification = document.getElementById('cutOffNotification');
+        let cutOffState = document.getElementById('cutOffState');
+        let cutOff = document.getElementById('employee-cut-off');
+        const params = new URLSearchParams({
+            employeeCutOff: true,
+            id: <?php echo $id?>
+        });
+
+        $.ajax({
+            url: `${realHost}/public/api/api_endpoint.php?${params}`,
+            type: 'GET',
+            success: function(response) {
+                console.log(response);
+                if (response.status == "success") {
+                    console.log(response.cut_off);
+                    if (response.cut_off_state == 1) {
+                        operational = false;
+                        cutOffNotification.classList.remove('alert-success');
+                        cutOffNotification.classList.add('alert-danger');
+                        cutOffNotification.innerHTML = 'You have been cut-off';
+                        cutOff.classList.remove('btn-danger');
+                        cutOff.innerText = "Resume";
+                        cutOff.classList.add('btn-success');
+                        cutOffState.classList.remove('d-none');
+                        // setTimeout(() => {
+                        //     cutOffNotification.classList.add('d-none');
+                        // }, 5000);  
+                    } else {
+                        operational = true;
+                        cutOffNotification.classList.remove('alert-danger');
+                        cutOffNotification.classList.add('alert-success');
+                        cutOffNotification.innerHTML = 'You are back to operational';
+                        cutOff.classList.remove('btn-success');
+                        cutOff.innerText = "Cut Off";
+                        cutOff.classList.add('btn-danger');
+                        cutOffState.classList.add('d-none');
+                        // setTimeout(() => {
+                        //     cutOffNotification.classList.add('d-none');
+                        // }, 5000);
+                    }
+                }
+            }
+        });
+
+        cutOff.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (operational) {
+                $.ajax({
+                    url: '/public/api/api_endpoint.php',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        method: 'employee-cut-off',
+                        id: <?php echo $id?>,
+                    }),
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            operational = false;
+                            cutOffNotification.classList.remove('alert-success', 'd-none');
+                            cutOffNotification.classList.add('alert-danger');
+                            cutOffNotification.innerHTML = 'You have been cut-off';
+                            cutOff.classList.remove('btn-danger');
+                            cutOff.innerText = "Resume";
+                            cutOff.classList.add('btn-success');
+                            cutOffState.classList.remove('d-none');
+                            setTimeout(() => {
+                                cutOffNotification.classList.add('d-none');
+                            }, 5000);      
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                    }
+                });
+            } else {
+                $.ajax({
+                    url: `${realHost}/public/api/api_endpoint.php`,
+                    type: 'POST',
+                    data: JSON.stringify({
+                        method: 'employee-cut-off',
+                        id: <?php echo $id?>,
+                    }),
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            operational = true;
+                            cutOffNotification.classList.remove('alert-danger', 'd-none');
+                            cutOffNotification.classList.add('alert-success');
+                            cutOffNotification.innerHTML = 'You are back to operational';
+                            cutOff.classList.remove('btn-success');
+                            cutOff.innerText = "Cut Off";
+                            cutOff.classList.add('btn-danger');
+                            cutOffState.classList.add('d-none');
+                            setTimeout(() => {
+                                cutOffNotification.classList.add('d-none');
+                            }, 5000);
+                        } else {
+                            console.log('Error:', response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                    }
+                })
+            }
+        }); 
     </script>
     <?php include_once "./../includes/footer.php"; ?>
 </body>
