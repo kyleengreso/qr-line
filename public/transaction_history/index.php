@@ -27,7 +27,7 @@ $email = $token->email;
     <?php include "./../includes/navbar.php"; ?>
 
     <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:500px">
-        <div class="col-md-6" style="min-width:400px;max-width:900px;">
+        <div class="col-md-6" style="min-width:400px;">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username?> has logged out successfully</span>
             </div>
@@ -75,7 +75,7 @@ $email = $token->email;
                         <thead>
                             <th>Transaction Time</th>
                             <th>#</th>
-                            <th>Email</th>
+                            <th class="d-none d-md-none d-lg-block">Email</th>
                             <th>Payment</th>
                         </thead>
                         <tbody>
@@ -159,7 +159,9 @@ $email = $token->email;
                         row.innerHTML += `
                             <td>${transaction.transaction_time}</td>
                             <td>${transaction.idtransaction}</td>
-                            <td>${transaction.email}</td>
+                            <td class="d-none d-md-none d-lg-block">
+                                <span class="d-none d-md-none d-lg-block">${transaction.email}</span>
+                            </td>
                             <td>${transaction.payment}</td>
                         `;
                     });

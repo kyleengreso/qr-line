@@ -47,8 +47,13 @@ function displayCounters(response) {
 }
 
 function getCounter() {
+    let params = new URLSearchParams({
+        counters: true,
+        page: page_counter,
+        paginate: paginate,
+    });
     $.ajax({
-        url: './../api/api_endpoint.php?counters&page=' + page_counter + '&paginate=' + paginate,
+        url: '/public/api/api_endpoint.php?' + params,
         type: 'GET',
         success: function(response) {
             displayCounters(response);
@@ -93,8 +98,18 @@ function displayTransactions(response) {
 
 }
 function getTransactions() {
+    let params = new URLSearchParams({
+        transactions: true,
+        today: true,
+        desc: true,
+        page: page_transaction,
+        paginate: paginate,
+        email: transaction_corporate,
+        payment: transaction_payment,
+    });
+    console.log(params.toString());
     $.ajax({
-        url: './../api/api_endpoint.php?transactions&today&desc&page=' + page_transaction + '&paginate=' + paginate + '&email=' + transaction_corporate + '&payment=' + transaction_payment,
+        url: '/public/api/api_endpoint.php?' + params,
         type: 'GET',
         success: function(response) {
             displayTransactions(response);
@@ -133,8 +148,13 @@ function displayEmployees(response) {
 }
 
 function getEmployees() {
+    let params = new URLSearchParams({
+        employees: true,
+        page: page_employee,
+        paginate: paginate,
+    });
     $.ajax({
-        url: './../api/api_endpoint.php?employees&page=' + page_employee + '&paginate=' + paginate,
+        url: '/public/api/api_endpoint.php?' + params,
         type: 'GET',
         success: function(response) {
             displayEmployees(response);

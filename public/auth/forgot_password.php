@@ -21,7 +21,7 @@ $int_second = rand(1, 50);
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
 
-    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top: 50px">
+    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top: 50px;min-height: 600px;">
         <div class="card shadow-sm p-4 w-100" style="max-width: 400px;border-radius:30px">
             <div class="w-100 py-3">
                 <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
@@ -80,13 +80,17 @@ $int_second = rand(1, 50);
         frmForgotPassword.addEventListener('submit', function(e) {
             let formData = new FormData(this);
             let username = formData.get('username');
-
-
-        });
-        $('#frmForgotPassword').on('submit', function(event) {
-            event.preventDefault();
-            username = $('#username').val();
-            forgot_password(username);
+            let sum_captcha = formData.get('sum_captcha');
+            if (sum_captcha != captcha_correct) {
+                e.preventDefault();
+                message_error(frmForgotPassword, 'Captcha is incorrect');
+                setTimeout(() => {
+                    // Reserved
+                }, timeout);
+            } else {
+                e.preventDefault();
+                forgot_password(username);
+            }
         });
     </script>
     <?php include_once "./../includes/footer.php"; ?>

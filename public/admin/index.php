@@ -297,6 +297,9 @@ $counterNumber = $token->counterNumber;
                                                     </li>
                                                 </ul>
                                             </nav>
+                                            <div class="w-100">
+                                                <a class="btn btn-primary w-100" href="/public/transaction_history">View all transactions</a>
+                                            </div>
                                         </div>
                                     </div>
                                     <!-- Generate Report -->
