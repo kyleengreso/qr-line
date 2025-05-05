@@ -410,6 +410,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $password = $data->password;
         $email = $data->email;
         $role_type = $data->role_type;
+        $active = $data->active;
 
         $sql_cmd = "SELECT e.id
                     FROM employees e
@@ -428,9 +429,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
         $hash_password = password_hash($password, PASSWORD_DEFAULT);
-        $sql_cmd = "INSERT INTO employees (username, password, email, role_type) VALUES (?, ?, ?, ?)";
+        $sql_cmd = "INSERT INTO employees (username, password, email, role_type, active) VALUES (?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ssss", $username, $hash_password, $email, $role_type);
+        $stmt->bind_param("sssss", $username, $hash_password, $email, $role_type, $active);
         $stmt->execute();
         if ($stmt->affected_rows > 0) {
             // Activate the employee

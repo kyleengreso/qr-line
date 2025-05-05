@@ -142,8 +142,7 @@ frmAddEmployee.addEventListener('submit', function (e) {
     const confirm_password = formData.get('add_confirm_password');
     const email = formData.get('add_email');
     const role_type = formData.get('add_role_type');
-    const status = formData.get('add_status');
-    
+    const active = formData.get('add_status');
     console.log(username, password, confirm_password, email, role_type, status);
 
     if (password !== confirm_password) {
@@ -155,7 +154,7 @@ frmAddEmployee.addEventListener('submit', function (e) {
     }
 
     $.ajax({
-        url: realHost + '/public/api/api_endpoint.php',
+        url: '/public/api/api_endpoint.php',
         type: 'POST',
         data: JSON.stringify({
             username : username,
@@ -163,7 +162,7 @@ frmAddEmployee.addEventListener('submit', function (e) {
             email : email,
             role_type : role_type,
             method : "employees-add",
-            status: status
+            active: active
         }),
         success: function (response) {
             console.log(response);
