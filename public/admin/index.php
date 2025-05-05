@@ -255,62 +255,8 @@ $counterNumber = $token->counterNumber;
                         </div>
                     </div>
 
-                    <!-- Rest -->
-                    <div class="row p-0 m-0">
-                        <div class="col-12 col-sm-12 row-md p-0 m-0">
-                            <div class="row p-0 m-0">
-                                <div class="col-12 col-sm-12 col-md-12 col-lg-6 p-0 m-0">
-                                    <!-- Transactions History -->
-                                    <div class="card shadow m-2 mb-4">
-                                        <div class="card-header">
-                                            Transaction History
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row mb-3">
-                                                <div class="col-12 col-sm-12 col-lg-9">
-                                                    <div class="form-floating">
-                                                        <select class="form-select" name="transactionselect" id="transaction-select">
-                                                                <option value="none" id="transaction-history-filter-corporate-none">All</option>
-                                                                <option value="psu.palawan.edu.ph" id="transaction-history-filter-corporate">Corporate</option>
-                                                                <option value="none" id="transaction-history-filter-non-corporate">Non-Corporate</option>
-                                                                <option value="registrar" id="transaction-history-filter-registrar">Registrar</option>
-                                                            <option value="assessment" id="transaction-history-filter-assessment">Assessment</option>
-                                                        </select>
-                                                        <label for="transaction-select" class="form-label">Filter</label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="table-responsive">
-                                                <table class="table table-striped table-members" id="table-transaction-history">
-                                                    <thead>
-                                                        <tr>
-                                                            <th class="col-3">#</th>
-                                                            <th>Email</th>
-                                                            <th>Payment</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <!-- Table rows go here -->
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <nav aria-label="Page navigation example">
-                                                <ul class="pagination justify-content-center">
-                                                    <li class="page-item">
-                                                        <a class="page-link" id="pagePrevTransactions">Previous</a>
-                                                    </li>
-                                                    <li class="page-item">
-                                                        <a class="page-link" id="pageNextTransactions">Next</a>
-                                                    </li>
-                                                </ul>
-                                            </nav>
-                                            <div class="w-100">
-                                                <a class="btn btn-primary w-100" href="/public/transaction_history">View all transactions</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Generate Report -->
-                                    <div class="card shadow m-2">
+                                                        <!-- Generate Report -->
+                                                        <div class="card shadow m-2">
                                         <div class="card-header">
                                             Generate Report
                                         </div>
@@ -322,7 +268,7 @@ $counterNumber = $token->counterNumber;
                                                 <div class="col-6 col-md-4 mb-2">
                                                     <div class="form-floating">
                                                         <select class="form-select" name="month" id="month">
-                                                            <option value="">Month</option>
+                                                            <option value="">--</option>
                                                         </select>
                                                         <label for="month" class="form-label">Month</label>
                                                     </div>
@@ -330,7 +276,7 @@ $counterNumber = $token->counterNumber;
                                                 <div class="col-6 col-md-4 mb-2">
                                                     <div class="form-floating">
                                                         <select class="form-select" name="year" id="year">
-                                                            <option value="">Year</option>
+                                                            <option value="">----</option>
                                                         </select>
                                                         <label for="year" class="form-label">Year</label>
                                                     </div>
@@ -343,92 +289,6 @@ $counterNumber = $token->counterNumber;
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-12 col-sm-12 col-md-12 col-lg-6 p-0 m-0">
-                                    <div class="row p-0 m-0">
-                                        <div class="col-md-6 col-lg-6 p-0 m-0">
-                                            <div class="card shadow m-2">
-                                                <div class="card-header">
-                                                    Employees
-                                                </div>
-                                                <div class="card-body">
-                                                    <div id="employee-nonlisting">
-                                                        Employee is hidden
-                                                        <div class="text-center p-4">
-                                                            <a class="fs-5 text-primary text-decoration-none" id="employee-show" style="cursor:pointer">Show List</a>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-none" id="employee-listing">
-                                                        <div id="table-employees"></div>
-                                                        <nav aria-label="Page navigation example">
-                                                            <ul class="pagination justify-content-center">
-                                                                <li class="page-item">
-                                                                    <a class="page-link" id="pagePrevEmployees">Previous</a>
-                                                                </li>
-                                                                <li class="page-item">
-                                                                    <a class="page-link" id="pageNextEmployees">Next</a>
-                                                                </li>
-                                                            </ul>
-                                                        </nav>
-                                                    </div>
-                                                    <div class="w-100">
-                                                        <a class="btn btn-primary w-100" href="/public/employees/">View all employees</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6 col-lg-6 p-0 m-0">
-                                            <div class="card shadow m-2">
-                                                <div class="card-header">
-                                                    Counters
-                                                </div>
-                                                <div class="card-body">
-                                                    <div id="counter-nonlisting">
-                                                        Counter is hidden
-                                                        <div class="text-center p-4">
-                                                            <a class="fs-5 text-primary text-decoration-none" id="counters-show" style="cursor:pointer">Show List</a>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-none" id="counter-listing">
-                                                        <div id="table-counters"></div>
-                                                        <nav aria-label="Page navigation example">
-                                                            <ul class="pagination justify-content-center">
-                                                                <li class="page-item">
-                                                                    <a class="page-link" id="pagePrevCounters">Previous</a>
-                                                                </li>
-                                                                <li class="page-item">
-                                                                    <a class="page-link" id="pageNextCounters">Next</a>
-                                                                </li>
-                                                            </ul>
-                                                        </nav>
-                                                    </div>
-                                                    <div class="w-100">
-                                                        <a class="btn btn-primary w-100" href="/public/counters">View all counters</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-6 p-0 m-0">
-                                <div class="col-12 col-lg-12 col-xl-6">
-                                </div>
-                                <div class="d-flex flex-row flex-col-lg-6 p-0 m-0 gap-3">
-                                    <div class="col-lg-12 col-xl-6">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Employee List -->
-                    <div class="row p-0 m-0">
-                    </div>
-
-                    <!-- Counter List -->
-                    <div class="row p-0 m-0">
-                    </div>
                 </div>
             </div>
         </div>
