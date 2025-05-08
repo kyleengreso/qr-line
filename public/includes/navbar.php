@@ -71,7 +71,7 @@ if (isset($_COOKIE['token'])) {
             <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false || strpos($_SERVER['REQUEST_URI'], '/public/employee') !== false): ?>
                 <div class="py-4 px-2">
                     <div class="row">
-                        <a class="btn btn-danger ms-auto" id="employee-cut-off" data-bs-toggle="modal" data-bs-target="#cutOffModal">
+                        <a class="btn btn-danger ms-auto" id="employee-cut-off">
                             <span><i class="bi bi-power shadow-sm"></i></span>
                             CUT OFF
                         </a>

@@ -349,6 +349,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
         
+        // Check if the employee exists
         $sql_cmd = "SELECT *
                     FROM employees
                     WHERE id = ?";
@@ -372,6 +373,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $cut_off = 1;
         } else {
             $cut_off = 0;
+
+            // Affects only for counter table
+            $sql_cmd = "UPDATE counters c
+                        SET c.queue_remain = NULL
+                        WHERE c.idemployee = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $data->id);
+            $stmt->execute();
+            $stmt->close();
         }
 
         // Toggle cut off
@@ -979,10 +989,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
 
+        $idemployee = $data->idemployee;
+
         // check if the employee is exist
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->idemployee);
+        $stmt->bind_param("s", $idemployee);
         $stmt->execute();
         $result = $stmt->get_result();
         $employee = $result->fetch_all(MYSQLI_ASSOC);
@@ -1003,7 +1015,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Check if the employee was assigned in counter
         $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->idemployee);
+        $stmt->bind_param("s", $idemployee);
         $stmt->execute();
         $result = $stmt->get_result();
         $counter = $result->fetch_all(MYSQLI_ASSOC);
@@ -1025,7 +1037,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Get the 'serve' by 'idcounter' and 'idemployee'
         $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
         $stmt = $conn->prepare($sql_cmd);   
-        $stmt->bind_param("ss", $counter[0]['idcounter'], $data->idemployee);
+        $stmt->bind_param("ss", $counter[0]['idcounter'], $idemployee);
         $stmt->execute();
         $result = $stmt->get_result();
         $transaction = $result->fetch_all(MYSQLI_ASSOC);
@@ -1052,6 +1064,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         
         if ($stmt->affected_rows > 0) {
+            // queue remain notify
+
+            // Fetch
+            $sql_cmd = "SELECT queue_remain
+                        FROM counters c
+                        WHERE c.idemployee = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $idemployee);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $counter = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            $queue_remain_get = $counter[0]['queue_remain'];
+
+            if ($queue_remain_get !== null) {
+                $queue_remain_set = $queue_remain_get - 1;
+                if ($queue_remain_set == 0) {
+                    // Trigger
+                    $sql_cmd = "UPDATE employees e
+                                SET cut_off_state = 1
+                                WHERE e.id = ?";
+                    $stmt = $conn->prepare($sql_cmd);
+                    $stmt->bind_param("s", $idemployee);
+                    $stmt->execute();
+                    $stmt->close();
+                } else {
+                    $sql_cmd = "UPDATE counters c
+                                SET c.queue_remain = ?
+                                WHERE c.idemployee = ?";
+                    $stmt = $conn->prepare($sql_cmd);
+                    $stmt->bind_param("ss", $queue_remain_set, $idemployee);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+            }
+
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Success Transaction updated successfully"
@@ -1083,10 +1131,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
 
+        $idemployee = $data->idemployee;
+
         // check if the employee is exist
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->idemployee);
+        $stmt->bind_param("s", $idemployee);
         $stmt->execute();
         $result = $stmt->get_result();
         $employee = $result->fetch_all(MYSQLI_ASSOC);
@@ -1107,7 +1157,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Check if the employee was assigned in counter
         $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->idemployee);
+        $stmt->bind_param("s", $idemployee);
         $stmt->execute();
         $result = $stmt->get_result();
         $counter = $result->fetch_all(MYSQLI_ASSOC);
@@ -1129,7 +1179,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Get the 'serve' by 'idcounter' and 'idemployee'
         $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
         $stmt = $conn->prepare($sql_cmd);   
-        $stmt->bind_param("ss", $counter[0]['idcounter'], $data->idemployee);
+        $stmt->bind_param("ss", $counter[0]['idcounter'], $idemployee);
         $stmt->execute();
         $result = $stmt->get_result();
         $transaction = $result->fetch_all(MYSQLI_ASSOC);
@@ -1154,6 +1204,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->bind_param("s", $transaction[0]['idtransaction']);
         $stmt->execute();
         if ($stmt->affected_rows > 0) {
+            // queue remain notify
+
+            // Fetch
+            $sql_cmd = "SELECT queue_remain
+                        FROM counters c
+                        WHERE c.idemployee = ?";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $idemployee);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $counter = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            $queue_remain_get = $counter[0]['queue_remain'];
+
+            if ($queue_remain_get !== null) {
+                $queue_remain_set = $queue_remain_get - 1;
+                if ($queue_remain_set == 0) {
+                    // Trigger
+                    $sql_cmd = "UPDATE employees e
+                                SET cut_off_state = 1
+                                WHERE e.id = ?";
+                    $stmt = $conn->prepare($sql_cmd);
+                    $stmt->bind_param("s", $idemployee);
+                    $stmt->execute();
+                    $stmt->close();
+                } else {
+                    $sql_cmd = "UPDATE counters c
+                                SET c.queue_remain = ?
+                                WHERE c.idemployee = ?";
+                    $stmt = $conn->prepare($sql_cmd);
+                    $stmt->bind_param("ss", $queue_remain_set, $idemployee);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+            }
+
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Missed Transaction updated successfully"
@@ -1358,6 +1444,63 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     } else if ($method == "requester_form_cancel") {
         // WAIT LANG
+    } else if ($method == "counter_queue_remain") {
+        if (!isset($data->counter_number)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Counter Number is required"
+            ));
+        }
+        // if (!isset($data->queue_remain)) {
+        //     echo json_encode(array(
+        //         "status" => "error",
+        //         "message" => "Queue Reamin is required"
+        //     ));
+        // }
+        $counter_number = $data->counter_number;
+        $queue_remain = $data->queue_remain;
+
+        // Check counter number is registered?
+        $sql_cmd = "SELECT *
+                    FROM counters c
+                    WHERE c.counterNumber = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $counter_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $counter = $result->fetch_all(MYSQLI_ASSOC);
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Counter number not found"
+            ));
+            exit;
+        }
+        $stmt->close();
+
+        $sql_cmd = "UPDATE counters
+                    SET queue_remain = ?
+                    WHERE counterNumber = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("ss", $queue_remain, $counter_number);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Queue remain updated successfully"
+            ));
+        } else if ($stmt->affected_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No changes made"
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . $conn->error
+            ));
+        }
+        exit;
     }
 
 } else if ($_SERVER["REQUEST_METHOD"] === "GET") {
@@ -2012,8 +2155,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $transactions = $result->fetch_all(MYSQLI_ASSOC);
             $stmt->close();
             if ($result->num_rows > 0) {
+
+                
+
+
                 $sql_cmd = "UPDATE transactions
-                            SET idcounter = ?, idemployee = ?, status = 'serve'
+                            SET idcounter = ?, idemployee = ?,  status = 'serve'
                             WHERE idtransaction = ?";
                 $stmt = $conn->prepare($sql_cmd);
                 $stmt->bind_param("sss", $counters[0]['idcounter'], $_GET['employee_id'], $transactions[0]['idtransaction']);
@@ -2534,6 +2681,49 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Invalid request"
             ));
         }
+    
+    } else if (isset($_GET['counter_queue_remain'])) {
+        if (!isset($_GET['counter_number'])) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please provide the counter number."
+            ));
+            exit;
+        }
+
+        $counter_number = $_GET['counter_number'];
+        $sql_cmd = "SELECT c.queue_remain
+                    FROM counters c
+                    WHERE c.counterNumber = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $counter_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $counters = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        if ($result->num_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Counter is not assigned"
+            ));
+            exit;
+        } else {
+            echo json_encode(array(
+                "status" => "success",
+                "queue_remain" => $counters[0]['queue_remain'],
+                "message" => "Counter found"
+            ));
+            exit;
+        }
+        exit;
+    // Reset the transaction for today
+    } else if (isset($_GET['transaction_today_reset'])) {
+        $sql_cmd = "UPDATE transactions t
+                    SET t.idemployee = NULL, t.idcounter = NULL, t.status = 'pending'
+                    WHERE DATE(t.;transaction_time) = DATE(CURDATE())";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $stmt->close();
 
     } else {
         echo json_encode(array(

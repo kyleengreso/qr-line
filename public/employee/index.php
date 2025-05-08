@@ -27,7 +27,7 @@ $counterNumber = $token->counterNumber;
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center before-footer container-set" style="margin-top: 50px">
+    <div class="container-lg d-flex justify-content-center align-items-center before-footer" style="margin-top: 100px">
         <div class="text-center w-100" style="max-width: 400px;" id="employeeDashboard">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username ?> has logged out successfully</span>
@@ -43,9 +43,36 @@ $counterNumber = $token->counterNumber;
                 <span id="queue-number">N/A</span>
             </div>
             <form method="POST" id="frmNextTransaction">
-                <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
-                <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+                <div class="w-100 mb-4">
+                    <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
+                    <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+                </div>
             </form>
+
+            <div class="w-100">
+                <div class="card border-1 p-4 text-center">
+                    <form action="" id="frmCutOff_trigger">
+                        <div class="alert alert-info text-start d-none" id="cutOff_trigger_notification">
+                            <span id="cutOff_trigger_message">
+                                Standby...
+                            </span>
+                        </div>
+                        <div class="form-floating mb-4">
+                            <select class="form-select" name="cut_off_select" id="cut_off_select">
+                                <option value="null">No action</option>
+                                <option value="1">After this queue</option>
+                                <option value="3">After 3 queries</option>
+                                <option value="5">After 5 queries</option>
+                                <option value="10">After 10 queries</option>
+
+                                <!-- On production -->
+                                <!-- <option value="last">Until no transaction</option> -->
+                            </select>
+                            <label for="cut_off_select">Auto-cut off action</label>
+                        </div>
+                    </form>
+                </div>
+            </div>
             <!-- <div class="py-3">
                 <a class="btn btn-danger fw-bold text-white" id="employee-cut-off">Cut Off</a>
             </div> -->
@@ -71,9 +98,79 @@ $counterNumber = $token->counterNumber;
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
-        var protocol = window.location.protocol;
-        var host = window.location.host;
-        var realHost = protocol + '//' + host;
+        var notify_priority = false;
+        var notify_priority_timer = 5;
+
+        let frmCutOff_trigger = document.getElementById('frmCutOff_trigger');
+        let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
+        let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
+    
+        function queue_remain_set(queue_remain) {
+            $.ajax({
+                url: "/public/api/api_endpoint.php",
+                method: "POST",
+                data: JSON.stringify({
+                    method : "counter_queue_remain",
+                    counter_number : <?php echo $counterNumber?>,
+                    queue_remain : queue_remain
+                }),
+                success: function (response) {
+                    cutOff_trigger_notification.classList.remove('d-none');
+                    notify_priority = true;
+                    if (notify_priority && queue_remain != null) {
+                        cutOff_trigger_message.innerText = "Queue remining set to " + queue_remain;
+                    } else if (notify_priority && queue_remain == null) {
+                        cutOff_trigger_message.innerText = "Auto-cut off is disabled";
+                    }
+                    setTimeout(() => {
+                        notify_priority = false;
+                        cutOff_trigger_notification.classList.add('d-none');
+                    },notify_priority_timer * 1000);
+                    console.log(response);
+                }
+            });
+        }
+
+        let cut_off_select = document.getElementById('cut_off_select');
+        cut_off_select.addEventListener('change', function (e) {
+            console.log(this.value);
+            if (this.value == "null") {
+            queue_remain_set(this.null);
+            } else {
+                queue_remain_set(this.value);
+            }
+        });
+
+        function queue_remain_get() {
+            let param = new URLSearchParams({
+                counter_queue_remain: true,
+                counter_number: <?php echo htmlspecialchars($counterNumber); ?>
+            });
+            $.ajax({
+                url: "/public/api/api_endpoint.php?" + param.toString(),
+                method: "GET",
+                success: function(response) {
+                    console.log("Response received:", response); // Log the response
+                    if (response.status === 'success') {
+                        if (response.queue_remain != null) {
+                            if (cutOff_trigger_notification.classList.contains('d-none')) {
+                                cutOff_trigger_notification.classList.remove('d-none');
+                                cutOff_trigger_notification.innerText = response.queue_remain + " queue remain.";
+                            }
+                        }
+                        console.log("Success:", response.message);
+                    } else {
+                        // cutOff_trigger_notification.innerText = 
+                        console.log("Error in response:", response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    console.error("Response Text:", xhr.responseText); // Log the raw response
+                }
+            });
+        }
+    
         let x = <?php echo $counterNumber . $id?>;
         function fetchTransaction() {
             let resp = null;
@@ -82,7 +179,7 @@ $counterNumber = $token->counterNumber;
                 employee_id: <?php echo $id?>
             });
             $.ajax({
-                url: `${realHost}/public/api/api_endpoint.php?${params}`,
+                url: '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
                 success: function(response) {
                     let queue_number = document.getElementById('queue-number');
@@ -92,11 +189,14 @@ $counterNumber = $token->counterNumber;
                         console.log(resp);
                     } else {
                         queue_number.innerHTML = "No queue";
-                        console.log('Error:', response.message);
+                        if (cutOff_auto && cutOff_trigger_queue == 0) {
+                            cutOff.click();
+                        }
+                        // console.log('Error:', response.message);     // Disable
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
+                    // console.error('AJAX Error:', status, error);
                 }
             });
         }
@@ -106,7 +206,7 @@ $counterNumber = $token->counterNumber;
         btn_counter_success.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
-                url: `${realHost}/public/api/api_endpoint.php`,
+                url: '/public/api/api_endpoint.php',
                 type: 'POST',
                 data: JSON.stringify({
                     method: 'cashier-success',
@@ -115,7 +215,6 @@ $counterNumber = $token->counterNumber;
                 success: function(response) {
                     if (response.status === 'success') {
                         fetchTransaction();
-                        // console.log('Transaction completed successfully');
                     } else {
                         console.log('Error:', response.message);
                     }
@@ -131,7 +230,7 @@ $counterNumber = $token->counterNumber;
         btn_counter_skip.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
-                url: `${realHost}/public/api/api_endpoint.php`,
+                url: '/public/api/api_endpoint.php',
                 type: 'POST',
                 data: JSON.stringify({
                     method: 'cashier-missed',
@@ -139,6 +238,7 @@ $counterNumber = $token->counterNumber;
                 }),
                 success: function(response) {
                     if (response.status === 'success') {
+                        update_cutOff_trigger();
                         fetchTransaction();
                         // console.log('Transaction skipped successfully');
                     } else {
@@ -165,13 +265,14 @@ $counterNumber = $token->counterNumber;
             employeeCutOff: true,
             id: <?php echo $id?>
         });
-        $.ajax({
-            url: `${realHost}/public/api/api_endpoint.php?${params}`,
-            type: 'GET',
-            success: function(response) {
-                console.log(response);
-                if (response.status == "success") {
-                    console.log(response.cut_off);
+        function fetchCutOff() {
+            $.ajax({
+                url: '/public/api/api_endpoint.php?' + params,
+                type: 'GET',
+                success: function(response) {
+                    console.log(response);
+                    if (response.status == "success") {
+                        console.log(response.cut_off);
                     if (response.cut_off_state == 1) {
                         operational = false;
                         cutOffNotification.classList.remove('alert-success');
@@ -186,7 +287,7 @@ $counterNumber = $token->counterNumber;
                         // setTimeout(() => {
                         //     cutOffNotification.classList.add('d-none');
                         // }, 5000);  
-                    } else {
+                    } else if (response.cut_off_state == 0){
                         operational = true;
                         cutOffNotification.classList.remove('alert-danger');
                         cutOffNotification.classList.add('alert-success');
@@ -198,12 +299,15 @@ $counterNumber = $token->counterNumber;
                         btn_counter_success.disabled = false;
                         btn_counter_skip.disabled = false;
                         // setTimeout(() => {
-                        //     cutOffNotification.classList.add('d-none');
-                        // }, 5000);
+                            //     cutOffNotification.classList.add('d-none');
+                            // }, 5000);
+                        }
                     }
                 }
-            }
-        });
+            });
+        };
+
+        fetchCutOff();
 
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
@@ -238,7 +342,7 @@ $counterNumber = $token->counterNumber;
                 });
             } else {
                 $.ajax({
-                    url: `${realHost}/public/api/api_endpoint.php`,
+                    url: '/public/api/api_endpoint.php',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
@@ -269,20 +373,15 @@ $counterNumber = $token->counterNumber;
                 })
             }
         });
-        
-        // btn_counter_resume.addEventListener('click', function(e) {
-        //     e.preventDefault();
-        // });
 
-        // fetchTransaction();
 
         setInterval(() => {
+            fetchCutOff();
             if (operational) {
+                queue_remain_get();
                 fetchTransaction();
             }
         }, 5000);
-
-
     </script>
     <!-- <script src="./../asset/js/dashboard_cashier.js"></script> -->
 </body>
