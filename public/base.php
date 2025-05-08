@@ -61,7 +61,7 @@ $api_path = $root_path . "/api/";
 
 // System Website Control
 $system_development_mode = true;
-$enable_register_employee = false;
+$enable_register_employee = true;
 
 
 // Website tweaks

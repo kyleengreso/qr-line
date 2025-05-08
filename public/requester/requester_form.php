@@ -23,22 +23,30 @@ include "./../base.php"
             <p class="text-center text-muted">PLEASE FILL UP</p>
 
             <form method="post" id="frmUserForm">
-                <div class="form-floating mb-2">
-                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter Your Name" required>
-                    <label for="name" class="form-label">Name</label>
+                <div class="input-group mb-2">
+                    <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="name" name="name" placeholder="Enter Your Name" required>
+                        <label for="name" class="form-label">Name</label>
+                    </div>
                 </div>
-                <div class="form-floating mb-2">
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter Your Email Address" required>
-                    <label for="email" class="form-label">Email</label>
+                <div class="input-group mb-2">
+                    <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
+                    <div class="form-floating">
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter Your Email Address" required>
+                        <label for="email" class="form-label">Email</label>
+                    </div>
                 </div>
-
-                <div class="form-floating mb-3">
-                    <select class="form-select"  name="transaction-history-payment" id="transaction-history-payment">
-                        <option value="null">Payment</option>
-                        <option value="registrar">Registrar</option>
-                        <option value="assessment">Assessment</option>
-                    </select>
-                    <label for="email" class="form-label">Payment</label>
+                <div class="input-group mb-3">
+                    <div class="input-group-text"><i class="bi bi-cash"></i></div>
+                    <div class="form-floating">
+                        <select class="form-select"  name="transaction-history-payment" id="transaction-history-payment">
+                            <option value="null">Payment</option>
+                            <option value="registrar">Registrar</option>
+                            <option value="assessment">Assessment</option>
+                        </select>
+                        <label for="email" class="form-label">Payment</label>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">Next</button>

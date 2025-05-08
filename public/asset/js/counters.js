@@ -38,8 +38,8 @@ function loadCounters() {
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a class="btn btn-outline-primary text-primary" id="update-counter-${counter.idcounter}" data-toggle="modal" data-target="#updateCounterModal">Update</a>
-                                        <a id="delete-counter-${counter.idcounter}" class="btn btn-outline-danger" id="delete-counter" data-toggle="modal" data-target="#deleteCounterModal">Delete</a>
+                                        <a class="btn btn-outline-primary text-primary" id="update-counter-${counter.idcounter}" data-toggle="modal" data-target="#updateCounterModal"><i class="bi bi-pencil-square"></i></a>
+                                        <a id="delete-counter-${counter.idcounter}" class="btn btn-outline-danger" id="delete-counter" data-toggle="modal" data-target="#deleteCounterModal"><i class="bi bi-trash-fill"></i></a>
                                     </div>
                                 </td>
                             </tr>    

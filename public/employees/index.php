@@ -57,9 +57,12 @@ $counterNumber = $token->counterNumber;
                     <div class="col-12 mb-4">
                         <div class="row">
                             <div class="col-8">
-                                <div class="form-floating mb-2">
-                                    <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
-                                    <label for="search">Search</label>
+                                <div class="input-group mb-2">
+                                    <div class="input-group-text"><i class="bi bi-search"></i></div>
+                                    <div class="form-floating">
+                                        <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
+                                        <label for="search">Search</label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-4">
@@ -184,29 +187,44 @@ $counterNumber = $token->counterNumber;
                                 <span id="addEmployeeAlertMsg"></span>
                             </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
-                            <label for="add_username">Username</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
+                                <label for="add_username">Username</label>
+                            </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
-                            <label for="add_password">Password</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
+                                <label for="add_password">Password</label>
+                            </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
-                            <label for="add_confirm_password">Confirm password</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
+                                <label for="add_confirm_password">Confirm password</label>
+                            </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
-                            <label for="add_email">Email</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
+                                <label for="add_email">Email</label>
+                            </div>
                         </div>
-                        <div class="form-floating mb-4">
-                            <select class="form-select" name="add_role_type" id="add_role_type" required>
-                                <option value="">Select Role</option>
-                                <option value="admin">Admin</option>
-                                <option value="employee">Employee</option>
-                            </select>
-                            <label for="add_role_type" class="form-label">Role</label>
+                        <div class="input-group mb-4">
+                            <div class="input-group-text"><i class="bi bi-person-up"></i></div>
+                            <div class="form-floating">
+                                <select class="form-select" name="add_role_type" id="add_role_type" required>
+                                    <option value="">Select Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="employee">Employee</option>
+                                </select>
+                                <label for="add_role_type" class="form-label">Role</label>
+                            </div>
                         </div>
                         <div class="mb-4 form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="add_status" id="add_status" value="1">
@@ -236,32 +254,47 @@ $counterNumber = $token->counterNumber;
                                 <span id="updateEmployeeAlertMsg"></span>
                             </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
-                            <label for="update_username">Username</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
+                                <label for="update_username">Username</label>
+                            </div>
                         </div>
                         <!-- <div class="mb-4"> -->
                             <input type="hidden" name="update_id" id="update_id">
                         <!-- </div> -->
-                        <div class="form-floating mb-2">
-                            <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
-                            <label for="update_password">Password</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
+                                <label for="update_password">Password</label>
+                            </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
-                            <label for="update_confirm_password">Confirm Password</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
+                                <label for="update_confirm_password">Confirm Password</label>
+                            </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
-                            <label for="update_email">Email</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
+                                <label for="update_email">Email</label>
+                            </div>
                         </div>
-                        <div class="form-floating mb-4">
-                            <select class="form-select" name="update_role_type" id="update_role_type">
-                                <option value="">Role</option>
-                                <option value="admin">Admin</option>
-                                <option value="employee">Employee</option>
-                            </select>
-                            <label for="update_role_type" class="form-label">Role</label>
+                        <div class="input-group mb-4">
+                            <div class="input-group-text"><i class="bi bi-person-up"></i></div>
+                            <div class="form-floating">
+                                <select class="form-select" name="update_role_type" id="update_role_type">
+                                    <option value="">Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="employee">Employee</option>
+                                </select>
+                                <label for="update_role_type" class="form-label">Role</label>
+                            </div>
                         </div>
                         <div class="mb-4 form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="update_active" id="update_active" value="1">

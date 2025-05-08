@@ -58,9 +58,12 @@ $counterNumber = $token->counterNumber;
                     <div class="col-12 mb-4">
                         <div class="row">
                             <div class="col-12">
-                                <div class="form-floating mb-2">
-                                    <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
-                                    <label for="searchAdd">Search Username</label>
+                                <div class="input-group mb-2">
+                                    <div class="input-group-text"><i class="bi bi-search"></i></div>
+                                    <div class="form-floating">
+                                        <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
+                                        <label for="searchAdd">Search Username</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -76,7 +79,7 @@ $counterNumber = $token->counterNumber;
                             <!-- Load -->
                         </tbody>
                     </table>
-                    <nav aria-label="Page navigation example">
+                    <nav aria-label="">
                         <ul class="pagination justify-content-center">
                             <li class="page-item">
                                 <a class="page-link disabled" id="pagePrevCounterRegistered">Previous</a>
@@ -123,9 +126,12 @@ $counterNumber = $token->counterNumber;
                                 <span id="addCounterAlertMsg"></span>
                             </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
-                            <label for="addSearchUsername">Search Username</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
+                            <div class="form-floating">
+                                <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
+                                <label for="addSearchUsername">Search Username</label>
+                            </div>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Employees Available</label>
@@ -151,9 +157,12 @@ $counterNumber = $token->counterNumber;
                                 </div>
                             </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="number" name="counter_no_add" id="counter_no_add" class="form-control" placeholder="Counter Number" required>
-                            <label for="counter_no_add">Counter Number</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text" ><i class="bi bi-arrow-down-up"></i></div>
+                            <div class="form-floating">
+                                <input type="number" name="counter_no_add" id="counter_no_add" class="form-control" placeholder="Counter Number" required>
+                                <label for="counter_no_add">Counter Number</label>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <div class="d-flex justify-content-end">
@@ -194,9 +203,12 @@ $counterNumber = $token->counterNumber;
                                 <span id="update-idcounter"></span>
                             </div>
                         </div>
-                        <div class="form-floating mb-2">
-                            <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
-                            <label for="updateSearchUsername">Search Username</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text"><i class="bi bi-search"></i></div>
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
+                                <label for="updateSearchUsername">Search Username</label>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Employees Available</label>

@@ -27,13 +27,19 @@ restrictCheckLoggedIn();
                 <p>Login to continue</p>
             </div>
             <form class="needs-validation" method="POST" id="frmLogIn" novalidate>
-                <div class="form-floating mb-2">
-                    <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
-                    <label for="username">Username</label>
+                <div class="input-group mb-2">
+                    <div class="input-group-text" id="basic-addon1"><i class="bi bi-person-fill"></i></div>
+                    <div class="form-floating">
+                        <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
+                        <label for="username">Username</label>
+                    </div>
                 </div>
-                <div class="form-floating mb-4">
-                    <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
-                    <label for="password">Password</label>
+                <div class="input-group mb-4">
+                    <div class="input-group-text" id="basic-addon1"><i class="bi bi-lock-fill"></i></div>
+                    <div class="form-floating">
+                        <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+                        <label for="password">Password</label>
+                    </div>
                 </div>
                 <div class="mb-2">
                     <button type="submit" class="btn btn-primary w-100">Login</button>
