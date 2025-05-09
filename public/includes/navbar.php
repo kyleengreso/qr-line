@@ -136,6 +136,20 @@ if (isset($_COOKIE['token'])) {
                     </a>
                 </div>
             </li>
+            <li>
+                <div class="py-4 px-2">
+                    <a href="/public/schedule" class="w-100 fs-4 text-white text-decoration-none">
+                        <div class="row">
+                            <div class="col-2">
+                                <i class="bi bi-gear-fill"></i>
+                            </div>
+                            <div class="col-10">
+                                <span>Schedules</span>    
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </li>
             <?php endif; ?>
             <li>
                 <div class="py-4 px-2">

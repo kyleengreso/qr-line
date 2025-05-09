@@ -66,6 +66,7 @@ $enable_register_employee = true;
 
 // Website tweaks
 $form_label_state = "hidden";
+date_default_timezone_set("Asia/Manila");
 
 // Social Media Links
 /*

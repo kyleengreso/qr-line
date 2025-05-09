@@ -1501,6 +1501,143 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
         }
         exit;
+    
+    // Schedule
+    } else if ($method == "schedule-create") {
+        if (!isset($data->enable) || !isset($data->schedule_type) || !isset($data->schedule_key)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please fill up the information for schedule."
+            ));
+            exit;
+        }
+
+        $date_start = $data->date_start ?? null;
+        $date_end = $data->date_end ?? null;
+        $time_start = $data->time_start ?? null;
+        $time_end = $data->time_end ?? null;
+        $enable = $data->enable;
+        $schedule_type = $data->schedule_type;
+        $schedule_key = $data->schedule_key;
+        $repeat = $data->repeat ?? null;
+        $everyday = $data->everyday ?? null;
+
+        $sql_cmd = "INSERT INTO scheduler (date_start, date_end, enable, schedule_type, schedule_key, `repeat`, time_start,  time_end, everyday) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("sssssssss", $date_start, $date_end, $enable, $schedule_type, $schedule_key, $repeat, $time_start, $time_end, $everyday);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Schedule created successfully"
+            ));
+        } else if ($stmt->affected_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No changes made"
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . $conn->error
+            ));
+        }
+    } else if ($method == "schedule-update-requester_form") {
+        if (!isset($data->time_start) || !isset($data->time_end) || !isset($data->enable)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please fill up the information for schedule."
+            ));
+            exit;
+        }
+
+        $time_start = $data->time_start ?? null;
+        $time_end = $data->time_end ?? null;
+        $enable = $data->enable;
+        $repeat = $data->repeat ?? null;
+        $everyday = $data->everyday ?? null;
+
+        // Checking schedule_key was exist
+        $sql_cmd = "SELECT *
+                    FROM scheduler
+                    WHERE schedule_key = 'requester_form'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $schedule = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        if ($result->num_rows == 0) {
+
+            $sql_cmd = "INSERT INTO scheduler (time_start, time_end, enable, schedule_type, schedule_key, `repeat`, everyday) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql_cmd);
+
+            // You can update this part to set the default value
+            $time_start = "8:00:00";
+            $time_end = "17:00:00";
+            $enable = 1;
+            $schedule_type = "requester";
+            $schedule_key = "requester_form";
+            $repeat = "daily";
+            $everyday = "mon;true;wed;thu;fri";
+            $stmt->bind_param("sssssss", $time_start, $time_end, $enable, $schedule_type, $schedule_key, $repeat, $everyday);
+            $stmt->execute();
+
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Schedule not found, however the schedule will reset to default."
+            ));
+            exit;
+        } else if ($result->num_rows > 1) {
+            // Delete all requester_form schedule_key related
+            $sql_cmd = "DELETE FROM scheduler
+                        WHERE schedule_key = 'requester_form'";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            if ($stmt->affected_rows > 0) {
+                $sql_cmd = "INSERT INTO scheduler (time_start, time_end, enable, schedule_type, schedule_key, `repeat`, everyday) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql_cmd);
+
+                // You can update this part to set the default value
+                $time_start = "8:00:00";
+                $time_end = "17:00:00";
+                $enable = 1;
+                $schedule_type = "requester";
+                $schedule_key = "requester_form";
+                $repeat = "daily";
+                $everyday = "mon;true;wed;thu;fri";
+                $stmt->bind_param("sssssss", $time_start, $time_end, $enable, $schedule_type, $schedule_key, $repeat, $everyday);
+                $stmt->execute();
+            }
+        }
+
+        // Only take 1 :>
+        $sql_cmd = "UPDATE scheduler
+                    SET time_start = ?, time_end = ?, enable = ?, `repeat` = ?, everyday = ?
+                    WHERE schedule_key = 'requester_form'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("sssss", $time_start, $time_end, $enable, $repeat, $everyday);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Schedule updated successfully"
+            ));
+        } else if ($stmt->affected_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No changes made"
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . $conn->error
+            ));
+        }
+        exit;
     }
 
 } else if ($_SERVER["REQUEST_METHOD"] === "GET") {
@@ -2725,6 +2862,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->execute();
         $stmt->close();
 
+    } else if (isset($_GET['schedule-requester_form'])) {
+        $sql_cmd = "SELECT s.enable, s.time_start, s.time_end, s.everyday
+                    FROM scheduler s
+                    WHERE s.schedule_key = 'requester_form'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $schedule = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        if ($result->num_rows > 0) {
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Schedule found",
+                "data" => $schedule[0]
+            ));
+            exit;
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Schedule not found"
+            ));
+            exit;
+        }
     } else {
         echo json_encode(array(
             "status" => "error",

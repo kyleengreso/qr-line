@@ -28,14 +28,14 @@ restrictCheckLoggedIn();
             </div>
             <form class="needs-validation" method="POST" id="frmLogIn" novalidate>
                 <div class="input-group mb-2">
-                    <div class="input-group-text" id="basic-addon1"><i class="bi bi-person-fill"></i></div>
+                    <div class="input-group-text" ><i class="bi bi-person-fill"></i></div>
                     <div class="form-floating">
                         <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
                         <label for="username">Username</label>
                     </div>
                 </div>
                 <div class="input-group mb-4">
-                    <div class="input-group-text" id="basic-addon1"><i class="bi bi-lock-fill"></i></div>
+                    <div class="input-group-text" ><i class="bi bi-lock-fill"></i></div>
                     <div class="form-floating">
                         <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
                         <label for="password">Password</label>

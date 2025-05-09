@@ -287,3 +287,34 @@
     font-weight: bold;
     /* text-align: center; */
 }
+
+/* Borders */
+.border-primary {
+    border-color: rgb(255, 110, 55) !important;
+}
+
+/* Checkbox */
+.form-check-input {
+    /* background-color: rgb(255, 110, 55) !important; */
+    border-color: rgb(255, 110, 55) !important;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 0.25rem; /* Adds slight rounding for a modern look */
+    /* transition: all 0.2s ease-in-out; Smooth transition for hover/focus effects */
+}
+
+.form-check-input:checked {
+    background-color: rgb(230, 100, 50) !important; /* Darker shade for checked state */
+    border-color: rgb(230, 100, 50) !important;
+}
+
+.form-check-input:hover {
+    /* background-color: rgb(255, 120, 65) !important; Slightly lighter shade on hover */
+    border-color: rgb(255, 120, 65) !important;
+    box-shadow: 0 0 5px rgba(255, 110, 55, 0.5); /* Adds a subtle glow effect */
+}
+
+.form-check-input:focus {
+    outline: none;
+    box-shadow: 0 0 8px rgba(255, 110, 55, 0.75); /* Stronger glow effect on focus */
+}
