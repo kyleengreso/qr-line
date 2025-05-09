@@ -1,13 +1,13 @@
 <?php
 include_once './../public/base.php';
-$patch_version = "0.199.1";
+$patch_version = "0.199.2";
 $patch_version_current = null;
 
 if (isset($_GET['install'])) {
     echo "nyaa!<br>";
 
     /*
-        Patch Version: 0.199.1
+        Patch Version: 0.199.2
     */
 
     // Install new table
@@ -76,7 +76,7 @@ if ($setup_patch) {
     $patch_version_current = $setup_patch['setup_value'];
 } else {
     $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value) 
-                VALUES ('patch_version', '$patch_version')";
+                VALUES ('patch_version', '0.199.1')";
     $stmt = $conn->prepare($sql_cmd);
     $stmt->execute();
     if ($stmt->affected_rows > 0) {
