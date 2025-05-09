@@ -9,19 +9,25 @@ $result = $stmt->get_result();
 $schedule = $result->fetch_assoc();
 if (!$schedule) {
 
-    // $sql_cmd = "INSERT INTO scheduler (schedule_key, time_start, time_end) 
-    //             VALUES ('requester_form', '08:00:00', '17:00:00')";
-    // $stmt = $conn->prepare($sql_cmd);
-    // $stmt->execute();
-    // $stmt->close();
-
-    // header("Location: " . $_SERVER['PHP_SELF']);
 }
 
 $schedule_present = $schedule['enable'];
 $time_start = date("H:i:s", strtotime($schedule['time_start']));
 $time_end = date("H:i:s", strtotime($schedule['time_end']));
 $time_now = date("H:i:s");
+$everyday = explode(";", $schedule['everyday']);
+$day_of_week = strtolower(date("D"));
+$schedule_present = false;
+foreach ($everyday as $day) {
+    if ($day == $day_of_week) {
+        $schedule_present = true;
+        $schedule_day_announcment = "Come back later at";
+        break;
+    } else {
+        $schedule_day_announcment = "Schedule is closed for today";
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -41,7 +47,7 @@ $time_now = date("H:i:s");
             <div class="w-100 py-3">
                 <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
             </div>
-            <?php if ($time_now > $time_start && $time_now < $time_end && $schedule_present = 1) :?>
+            <?php if ($time_now > $time_start && $time_now < $time_end && $schedule_present) :?>
             <h4 class="text-center fw-bold">QR FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
             <form method="post" id="frmUserForm">
@@ -76,7 +82,7 @@ $time_now = date("H:i:s");
             <?php else :?>
                 <div class="text-center fw-bold">
                     <h5 class="text-danger">SCHEDULE CLOSED</h5>
-                    <p class="text-muted">Please come back later</p>
+                    <p class="text-muted"><?php echo $schedule_day_announcment?></p>
                 </div>
 
                 <div class="w-100">

@@ -1,17 +1,22 @@
 <?php
 include_once './../public/base.php';
-$patch_version = "0.199.2";
+
+$patch_version = "0.199.4";
+$patch_version_initial = "0.199.1";
 $patch_version_current = null;
 
 if (isset($_GET['install'])) {
-    echo "nyaa!<br>";
+    echo "Installing patch...<br>";
 
     /*
-        Patch Version: 0.199.2
+        Patch Version: 0.199.3
     */
 
     // Install new table
     try {
+        $conn->begin_transaction();
+
+        // Create the `scheduler` table if it doesn't exist
         $sql_cmd = "CREATE TABLE IF NOT EXISTS `scheduler` (
                     `schedule_id` int NOT NULL AUTO_INCREMENT,
                     `enable` tinyint NOT NULL DEFAULT (0),
@@ -26,15 +31,10 @@ if (isset($_GET['install'])) {
                     `schedule_type` enum('requester','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
                     `managed_by` int DEFAULT NULL,
                     PRIMARY KEY (`schedule_id`)
-                ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Schedule for whole operation';
-        ";
+                ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Schedule for whole operation';";
         $stmt = $conn->prepare($sql_cmd);
         $stmt->execute();
-        if ($stmt->affected_rows > 0) {
-            echo "Scheduler table is created.<br>";
-        } else if ($stmt->affected_rows == 0) {
-            echo "Scheduler table is already created. Skipping...<br>";
-        }
+        echo "Scheduler table is created or already exists.<br>";
 
         // Check if the default schedule exists
         $sql_cmd = "SELECT * FROM scheduler WHERE schedule_key = 'requester_form'";
@@ -42,20 +42,46 @@ if (isset($_GET['install'])) {
         $stmt->execute();
         $result = $stmt->get_result();
         $schedule = $result->fetch_assoc();
+
         if (!$schedule) {
-            // Insert default schedule for requester_form
+            // Insert default schedule for `requester_form`
             $sql_cmd = "INSERT INTO scheduler (schedule_key, time_start, time_end, schedule_type, `repeat`, `everyday`, `enable`) 
                         VALUES ('requester_form', '08:00:00', '17:00:00', 'requester', 'daily', 'mon;tue;wed;thu;fri', 1)";
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
-            if ($stmt->affected_rows > 0) {
-                echo "Default schedule for requester_form is created.<br>";
-            } else if ($stmt->affected_rows == 0) {
-                echo "Default schedule for requester_form is already created. Skipping...<br>";
+            echo "Default schedule for requester_form is created.<br>";
+        } else {
+            echo "Default schedule for requester_form already exists. Skipping...<br>";
+        }
+
+        // Update patch version
+        $sql_cmd = "SELECT setup_value FROM setup_system WHERE setup_key = 'patch_version'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $setup_patch = $result->fetch_assoc();
+
+        if ($setup_patch) {
+            $patch_version_current = $setup_patch['setup_value'];
+            if (version_compare($patch_version_current, $patch_version, '<')) {
+                // Update to the new patch version
+                $sql_cmd = "UPDATE setup_system SET setup_value = ? WHERE setup_key = 'patch_version'";
+                $stmt = $conn->prepare($sql_cmd);
+                $stmt->bind_param("s", $patch_version);
+                $stmt->execute();
+                echo "Patch version updated to $patch_version.<br>";
+            } else {
+                echo "Patch version is already up to date. Skipping...<br>";
             }
         } else {
-            echo "Default schedule for requester_form is already created. Skipping...<br>";
+            // Insert the initial patch version
+            $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value) VALUES ('patch_version', ?)";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $patch_version_initial);
+            $stmt->execute();
+            echo "Initial patch version ($patch_version_initial) is installed.<br>";
         }
+
         $conn->commit();
         $stmt->close();
     } catch (Exception $e) {
@@ -63,31 +89,25 @@ if (isset($_GET['install'])) {
         echo "Error: " . $e->getMessage() . "<br>";
     }
 }
+
 // Patch Versioning
-$sql_cmd = "SELECT *
-            FROM setup_system
-            WHERE setup_key = 'patch_version'";
+$sql_cmd = "SELECT setup_value FROM setup_system WHERE setup_key = 'patch_version'";
 $stmt = $conn->prepare($sql_cmd);
 $stmt->execute();
 $result_patch = $stmt->get_result();
 $setup_patch = $result_patch->fetch_assoc();
+
 if ($setup_patch) {
-    // Reserved
     $patch_version_current = $setup_patch['setup_value'];
 } else {
-    $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value) 
-                VALUES ('patch_version', '0.199.1')";
+    // Insert the initial patch version if it doesn't exist
+    $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value) VALUES ('patch_version', ?)";
     $stmt = $conn->prepare($sql_cmd);
+    $stmt->bind_param("s", $patch_version_initial);
     $stmt->execute();
-    if ($stmt->affected_rows > 0) {
-        echo "Patch system is installed. You can reload the page.";
-    } else {
-        echo "Failed to install the patch system. Please contact the developer.";
-    }
+    echo "Initial patch version ($patch_version_initial) is installed.<br>";
     exit;
 }
-
-
 ?>
 
 <!DOCTYPE html>
@@ -130,6 +150,7 @@ if ($setup_patch) {
                             <a class="btn btn-success" href="/update/?install">Install Update</a>
                             <?php elseif ($patch_version_current == $patch_version) : ?>
                             <p class="text-success">Your patch version is up to date.</p>
+                            <a class="btn btn-warning" href="/update/?install">Reinstall Update</a>
                             <?php else : ?>
                             <p class="text-success">Your patch version is not compatible.</p>
                             <?php endif; ?>
