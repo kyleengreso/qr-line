@@ -26,7 +26,7 @@ $email = $token->email;
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:500px">
+    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:900px">
         <div class="col-md-6" style="min-width:400px;">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username?> has logged out successfully</span>
@@ -53,23 +53,66 @@ $email = $token->email;
                     </div>
                     <div class="col-12 mb-4">
                         <div class="row">
-                            <div class="col-8">
-                                <div class="form-floating mb-2">
+                            <div class="input-group">
+                                <div class="form-floating">
                                     <input type="text" name="searchEmail" id="searchEmail" class="form-control" placeholder="Search email">
                                     <label for="searchEmail">Search email</label>
                                 </div>
+                                <a class="input-group-text px-4 fw-bold fs-3" id="btn-transaction-show-filters" data-bs-toggle="collapse" href="#transaction-show-filters" role="button" aria-expanded="false" aria-controls="transaction-show-filters">
+                                    <i class="bi bi-filter-left"></i>
+                                </a>
                             </div>
-                            <div class="col-4">
+                        </div>
+                    </div>
+                    <div class="col-12 mb-4">
+                        <div class="" id="transaction-show-filters">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="form-floating">
+                                        <select class="form-select" name="transaction-filter-status" id="transaction-filter-status">
+                                            <option value="none">All</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="serve">Failed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                        <label for="transaction-filter-status">Status</label>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-floating">
+                                        <select class="form-select" name="transaction-filter-daterange" id="transaction-filter-daterange">
+                                            <option value="none">--</option>
+                                            <option value="today">Today</option>
+                                            <option value="yesterday">Yesterday</option>
+                                            <option value="this_week">This Week</option>
+                                            <option value="last_week">Last Week</option>
+                                            <option value="this_month">This Month</option>
+                                            <option value="last_month">Last Month</option>
+                                            <option value="this_year">This Year</option>
+                                            <option value="last_year">Last Year</option>
+                                        </select>
+                                        <label for="getTransactionDesc">Date Range</label>
+                                    </div>
+                                </div>
+                                <div class="col-4">
                                 <div class="form-floating">
                                     <select class="form-select" name="getPaymentType" id="getPaymentType">
                                         <option value="none">All</option>
                                         <option value="assessment">Assessment</option>
-                                        <option value="employee">Registrar</option>
+                                        <option value="registrar">Registrar</option>
                                     </select>
                                     <label for="getPaymentType">Payment</label>
                                 </div>
                             </div>
+                            </div>
                         </div>
+                        <div class="d-none" id="transaction-show-filters">
+                        
+                        </div>
+                    </div>
+                    <div class="w-100">
+                        <span>Show 1-100</span>
                     </div>
                     <table class="table table-striped table-members" id="table-transactions-history">
                         <thead>
@@ -124,12 +167,25 @@ $email = $token->email;
     let getPaymentType = document.getElementById("getPaymentType");
 
     var page = 1;
-    var paginate = 5;
+    var paginate = 100;
     var search_transaction = '';
     var payment = 'none';
     var status_transactions = 'none';
     var transaction_desc = true;
+    var tranasction_date_range = 'none';
 
+    let transaction_filter_daterange = document.getElementById("transaction-filter-daterange");
+    transaction_filter_daterange.addEventListener('change', function (e) {
+        tranasction_date_range = e.target.value;
+        console.log(tranasction_date_range);
+        getTransactionHistory();
+    });
+    let transaction_filter_status = document.getElementById("transaction-filter-status");
+    transaction_filter_status.addEventListener('change', function (e) {
+        status_transactions = e.target.value;
+        console.log(status_transactions);
+        getTransactionHistory();
+    });
     function getTransactionHistory() {
         var params = new URLSearchParams({
             transactions: true,
@@ -138,7 +194,10 @@ $email = $token->email;
             email: search_transaction,
             payment: payment,
             desc: transaction_desc,
+            status: status_transactions,
+            date_range: tranasction_date_range,
         });
+        console.log(params.toString());
         $.ajax({
             url: "/public/api/api_endpoint.php?" + params,
             type: "GET",

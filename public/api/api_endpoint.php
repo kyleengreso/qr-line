@@ -2085,26 +2085,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         FROM transactions t";
         }
 
-        if(isset($_GET['completed'])) {
-            $sql_cmd .= "AND t.status = 'completed' ";
-            $params[] = $_GET['completed'];
+        if(isset($_GET['status'])) {
+            if ($_GET['status'] != 'none') {
+                $sql_cmd .= "AND t.status = ? ";
+                $params[] = $_GET['status'];
+                $types .= "s";
+            }
         }
-
-        if(isset($_GET['pending'])) {
-            $sql_cmd .= "AND t.status = 'pending' ";
-            $params[] = $_GET['pending'];
-        }
-
-        if(isset($_GET['cancelled'])) {
-            $sql_cmd .= "AND t.status = 'cancelled' ";
-            $params[] = $_GET['cancelled'];
-        }
-
-        if (isset($_GET['serve'])) {
-            $sql_cmd .= "AND t.serve = 'serve' ";
-            $params[] = $_GET['serve'];
-        }
-
 
         if (isset($_GET['payment'])) {
             if ($_GET['payment'] != 'none') {
@@ -2112,7 +2099,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $params[] = $_GET['payment'];
                 $types .= "s";
             }
-
         }
 
         if (isset($_GET['email'])) {
@@ -2125,6 +2111,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if (isset($_GET['today'])) {
             $sql_cmd .= "AND DATE(t.transaction_time) = CURDATE() ";
+        }
+
+        if (isset($_GET['date_range'])) {
+            if ($_GET['date_range'] != 'none') {
+                if ($_GET['date_range'] == 'today') {
+                    $sql_cmd .= "AND DATE(t.transaction_time) = DATE(CURDATE()) ";
+                } else if ($_GET['date_range'] == 'yesterday') {
+                    $sql_cmd .= "AND DATE(t.transaction_time) = DATE(CURDATE() - INTERVAL 1 DAY) ";
+                } else if ($_GET['date_range'] == 'this_week') {
+                    $sql_cmd .= "AND WEEK(t.transaction_time) = WEEK(CURDATE()) AND YEAR(t.transaction_time) = YEAR(CURDATE()) ";
+                } else if ($_GET['date_range'] == 'last_week') {
+                    $sql_cmd = "AND WEEK(t.transaction_time) = WEEK(CURDATE() - INTERVAL 1 WEEK) AND YEAR(t.transaction_time) = YEAR(CURDATE()) ";
+                } else if ($_GET['date_range'] == 'this_month') {
+                    $sql_cmd .= "AND MONTH(t.transaction_time) = MONTH(CURDATE()) AND YEAR(t.transaction_time) = YEAR(CURDATE()) ";
+                } else if ($_GET['date_range'] == 'last_month') {
+                    $sql_cmd .= "AND MONTH(t.transaction_time) = MONTH(CURDATE() - INTERVAL 1 MONTH) AND YEAR(t.transaction_time) = YEAR(CURDATE()) ";
+                } else if ($_GET['date_range'] == 'this_year') {
+                    $sql_cmd .= "AND YEAR(t.transaction_time) = YEAR(CURDATE()) ";
+                } else if ($_GET['date_range'] == 'last_year') {
+                    $sql_cmd .= "AND YEAR(t.transaction_time) = YEAR(CURDATE() - INTERVAL 1 YEAR) ";
+                }
+            }
         }
 
         // Descending order
