@@ -56,7 +56,7 @@ $counterNumber = $token->counterNumber;
 
             <div class="w-100">
                 <div class="card border-1 p-4 text-center">
-                    <form action="" id="frmCutOff_trigger">
+                    <form class="d-none" action="" id="frmCutOff_trigger">
                         <div class="alert alert-info text-start d-none" id="cutOff_trigger_notification">
                             <span id="cutOff_trigger_message">
                                 Standby...
@@ -76,6 +76,9 @@ $counterNumber = $token->counterNumber;
                             <label for="cut_off_select">Auto-cut off action</label>
                         </div>
                     </form>
+                    <div class="alert alert-info d-none" id="frmCutOff_trigger_message">
+                        <span>You need to resume to show Auto-cut off feature</span>
+                    </div>
                 </div>
             </div>
             <!-- <div class="py-3">
@@ -105,8 +108,11 @@ $counterNumber = $token->counterNumber;
     <script>
         var notify_priority = false;
         var notify_priority_timer = 5;
+        var cutOff_auto = false;
+        var queue_remain = null;
 
         let frmCutOff_trigger = document.getElementById('frmCutOff_trigger');
+        let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
     
@@ -140,8 +146,10 @@ $counterNumber = $token->counterNumber;
         cut_off_select.addEventListener('change', function (e) {
             console.log(this.value);
             if (this.value == "null") {
-            queue_remain_set(this.null);
+                fetchCutOff();
+                queue_remain_set(this.null);
             } else {
+                fetchCutOff();
                 queue_remain_set(this.value);
             }
         });
@@ -156,12 +164,15 @@ $counterNumber = $token->counterNumber;
                 method: "GET",
                 success: function(response) {
                     console.log("Response received:", response); // Log the response
+                    queue_remain = response.queue_remain;
                     if (response.status === 'success') {
                         if (response.queue_remain != null) {
                             if (cutOff_trigger_notification.classList.contains('d-none')) {
                                 cutOff_trigger_notification.classList.remove('d-none');
                                 cutOff_trigger_notification.innerText = response.queue_remain + " queue remain.";
                             }
+                        } else {
+                            cutOff_trigger_notification.classList.add('d-none');
                         }
                         console.log("Success:", response.message);
                     } else {
@@ -219,7 +230,7 @@ $counterNumber = $token->counterNumber;
                 }),
                 success: function(response) {
                     if (response.status === 'success') {
-                        fetchTransaction();
+                        return;
                     } else {
                         console.log('Error:', response.message);
                     }
@@ -243,9 +254,7 @@ $counterNumber = $token->counterNumber;
                 }),
                 success: function(response) {
                     if (response.status === 'success') {
-                        update_cutOff_trigger();
-                        fetchTransaction();
-                        // console.log('Transaction skipped successfully');
+                        return;
                     } else {
                         console.log('Error:', response.message);
                     }
@@ -270,7 +279,8 @@ $counterNumber = $token->counterNumber;
             employeeCutOff: true,
             id: <?php echo $id?>
         });
-        function fetchCutOff() {
+
+        async function fetchCutOff() {
             $.ajax({
                 url: '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
@@ -278,41 +288,40 @@ $counterNumber = $token->counterNumber;
                     console.log(response);
                     if (response.status == "success") {
                         console.log(response.cut_off);
-                    if (response.cut_off_state == 1) {
-                        operational = false;
-                        cutOffNotification.classList.remove('alert-success');
-                        cutOffNotification.classList.add('alert-danger');
-                        cutOffNotification.innerHTML = 'You have been cut-off';
-                        cutOff.classList.remove('btn-danger');
-                        cutOff.innerText = "Resume";
-                        cutOff.classList.add('btn-success');
-                        cutOffState.classList.remove('d-none');
-                        btn_counter_success.disabled = true;
-                        btn_counter_skip.disabled = true;
-                        // setTimeout(() => {
-                        //     cutOffNotification.classList.add('d-none');
-                        // }, 5000);  
-                    } else if (response.cut_off_state == 0){
-                        operational = true;
-                        cutOffNotification.classList.remove('alert-danger');
-                        cutOffNotification.classList.add('alert-success');
-                        cutOffNotification.innerHTML = 'You are back to operational';
-                        cutOff.classList.remove('btn-success');
-                        cutOff.innerText = "Cut Off";
-                        cutOff.classList.add('btn-danger');
-                        cutOffState.classList.add('d-none');
-                        btn_counter_success.disabled = false;
-                        btn_counter_skip.disabled = false;
-                        // setTimeout(() => {
-                            //     cutOffNotification.classList.add('d-none');
-                            // }, 5000);
+                        if (response.cut_off_state == 1) {
+                            operational = false;
+                            frmCutOff_trigger.classList.add('d-none');
+                            // frmCutOff_trigger.querySelectorAll('input, select, button, textarea').forEach(e => {
+                            //     e.disabled = true;
+                            // });
+                            frmCutOff_trigger_message.classList.remove('d-none');
+                            cutOffNotification.classList.remove('alert-success');
+                            cutOffNotification.classList.add('alert-danger');
+                            cutOffNotification.innerHTML = 'You have been cut-off';
+                            cutOff.classList.remove('btn-danger');
+                            cutOff.innerText = "Resume";
+                            cutOff.classList.add('btn-success');
+                            cutOffState.classList.remove('d-none');
+                            btn_counter_success.disabled = true;
+                            btn_counter_skip.disabled = true;
+                        } else if (response.cut_off_state == 0){
+                            operational = true;
+                            frmCutOff_trigger.classList.remove('d-none');
+                            frmCutOff_trigger_message.classList.add('d-none');
+                            cutOffNotification.classList.remove('alert-danger');
+                            cutOffNotification.classList.add('alert-success');
+                            cutOffNotification.innerHTML = 'You are back to operational';
+                            cutOff.classList.remove('btn-success');
+                            cutOff.innerText = "Cut Off";
+                            cutOff.classList.add('btn-danger');
+                            cutOffState.classList.add('d-none');
+                            btn_counter_success.disabled = false;
+                            btn_counter_skip.disabled = false;
                         }
                     }
                 }
             });
         };
-
-        fetchCutOff();
 
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
@@ -325,6 +334,7 @@ $counterNumber = $token->counterNumber;
                         id: <?php echo $id?>,
                     }),
                     success: function(response) {
+                        fetchCutOff();
                         if (response.status === 'success') {
                             operational = false;
                             cutOffNotification.classList.remove('alert-success', 'd-none');
@@ -380,13 +390,18 @@ $counterNumber = $token->counterNumber;
         });
 
 
-        setInterval(() => {
-            fetchCutOff();
+        async function daemon() {
+            await fetchCutOff();
+            queue_remain_get();
             if (operational) {
-                queue_remain_get();
                 fetchTransaction();
             }
-        }, 5000);
+            // Schedule the next execution
+            setTimeout(daemon, 5000);
+        }
+        
+        // Start the daemon loop
+        daemon();
     </script>
     <!-- <script src="./../asset/js/dashboard_cashier.js"></script> -->
 </body>
