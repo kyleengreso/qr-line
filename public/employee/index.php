@@ -44,8 +44,13 @@ $counterNumber = $token->counterNumber;
             </div>
             <form method="POST" id="frmNextTransaction">
                 <div class="w-100 mb-4">
-                    <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
-                    <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+                    <div class="mb-4">
+                        <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
+                        <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+                    </div>
+                    <div>
+                    <a class="btn btn-danger ms-auto" id="employee-cut-off">Cut-Off</a>
+                    </div>
                 </div>
             </form>
 

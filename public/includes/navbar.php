@@ -11,9 +11,13 @@ if (isset($_COOKIE['token'])) {
     <div class="container d-flex justify-content-between align-items-center" style="width: 100%;">
 
         <!-- Sidebar Toggle Button -->
+        <?php if ($token->role_type === 'admin') : ?>
         <button class="btn btn-primary text-decoration-none me-3" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle Sidebar">
             <i class="bi bi-list"></i>
         </button>
+        <?php else : ?>
+        <button class="invisible">wews</button>
+        <?php endif; ?>
 
         <!-- Project Name -->
         <a class="text-decoration-none" href="/public">
@@ -43,18 +47,8 @@ if (isset($_COOKIE['token'])) {
     </div>
 </nav>
 
-<script>
-    // Update the clock every second
-    function updateClock() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        document.getElementById('current-time').textContent = timeString;
-    }
-    setInterval(updateClock, 1000);
-    updateClock(); // Initialize the clock immediately
-</script>
-
 <!-- Sidebar -->
+<?php if ($token->role_type === 'admin') : ?>
 <div class="offcanvas offcanvas-start bg-primary text-white" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" style="width: 350px;">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title fs-3" id="sidebarLabel"><?php echo $project_name?></h5>
@@ -70,7 +64,9 @@ if (isset($_COOKIE['token'])) {
         <ul class="list-unstyled">
             <li>
             <!-- Show the "CUT OFF" button only on specific pages -->
-            <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false || strpos($_SERVER['REQUEST_URI'], '/public/employee') !== false): ?>
+            <!-- <?php // if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false || strpos($_SERVER['REQUEST_URI'], '/public/employee') !== false): ?> -->
+            <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false): ?>
+
                 <div class="py-4 px-2">
                     <div class="row">
                         <a class="btn btn-danger ms-auto" id="employee-cut-off">
@@ -173,4 +169,6 @@ if (isset($_COOKIE['token'])) {
         <span>&copy <?php echo project_year()?> <?php echo $project_name?>, All Rights Reserved.</span>
     </div>
 </div>
+<?php endif; ?>
+
 <script src="./../asset/js/navbar.js"></script>
