@@ -5,6 +5,12 @@ $username = "root";
 $password = "root";
 $dbname = "qr_queue_system";
 
+// PROD DB
+// $servername = "77.37.35.51";
+// $username = "u273960544_qrliners";
+// $password = "QRlin3rs*";
+// $dbname = "u273960544_qrline";
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
