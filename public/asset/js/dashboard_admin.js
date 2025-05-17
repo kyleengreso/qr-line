@@ -64,39 +64,6 @@ function getCounter() {
     });
 }
 
-function displayTransactions(response) {
-    let data = response;
-    console.log(data);
-    let table_transactions = document.getElementById('table-transaction-history');
-    while (table_transactions.rows.length > 1) {
-        table_transactions.deleteRow(-1);
-    }
-    let pagePrevEmployees = document.getElementById('pagePrevEmployees');
-    let pageNextEmployees = document.getElementById('pageNextEmployees');
-    if (data.status === 'success' && data.transactions) {
-        pagePrevEmployees.style.display = 'block';
-        pageNextEmployees.style.display = 'block';
-        data.transactions.forEach(transaction => {
-            let row = table_transactions.insertRow(-1);
-            // console.log(transaction);
-            row.innerHTML = `
-                <tr>
-                    <td>${transaction.queue_number}</td>
-                    <td>${transaction.email}</td>
-                    <td>${transaction.payment}</td>
-                </tr>
-            `;
-        });
-    } else {
-        pagePrevEmployees.style.display = 'none';
-        pageNextEmployees.style.display = 'none';
-        let row = table_transactions.insertRow(-1);
-        row.innerHTML = `
-            <td colspan="3" class="text-center fw-bold">No transaction for today</td>
-        `;
-    }
-
-}
 function getTransactions() {
     let params = new URLSearchParams({
         transactions: true,
@@ -117,93 +84,6 @@ function getTransactions() {
 
     });
 }
-
-function displayEmployees(response) {
-    let data = response;
-    console.log(data);
-    let table_employees = $('#table-employees');
-    table_employees.empty();
-    if (data.status === 'success' && data.employees) {
-        data.employees.forEach(employee => {
-            table_employees.append(`
-                <div class="card shadow-sm w-100 p-2 mb-2 d-flex flex-row">
-                    <div class="col-1" style="min-width:50px;min-height:50px;max-width:50px;max-height:50px">
-                        <img class="w-100 h-100 border rounded-circle" src="/public/asset/images/user_icon.png" alt="${employee.username}"">
-                    </div>
-                    <div class="px-2">
-                    <span class="d-none">${employee.id}</span>
-                    <strong class="p-0">
-                        ${userStatusIcon(employee.username, employee.role_type, employee.active)}
-                    </strong>
-                    </div>
-                </div>
-            `);
-        });
-    } else {
-        let row = table_employees.insertRow(-1);
-        row.innerHTML = `
-            No data available
-        `;
-    }
-}
-
-function getEmployees() {
-    let params = new URLSearchParams({
-        employees: true,
-        page: page_employee,
-        paginate: paginate,
-    });
-    $.ajax({
-        url: '/public/api/api_endpoint.php?' + params,
-        type: 'GET',
-        success: function(response) {
-            displayEmployees(response);
-        },
-        error: function(response) {
-            console.log(response);
-        }
-    });
-}
-
-getEmployees();
-getTransactions();
-getCounter();
-
-$('#pagePrevTransactions').click(function() {
-    if (page_transaction > 1) {
-        page_transaction--;
-        getTransactions();
-    }
-});
-
-$('#pageNextTransactions').click(function() {
-    page_transaction++;
-    getTransactions();
-});
-
-$('#pagePrevCounters').click(function() {
-    if (page_counter > 1) {
-        page_counter--;
-        getCounter();
-    }
-});
-
-$('#pageNextCounters').click(function() {
-    page_counter++;
-    getCounter();
-});
-
-$('#pagePrevEmployees').click(function() {
-    if (page_employee > 1) {
-        page_employee--;
-        getEmployees();
-    }
-});
-
-$('#pageNextEmployees').click(function() {
-    page_employee++;
-    getEmployees();
-});
 
 // Transaction History if corporate or not
 
@@ -235,7 +115,6 @@ var months = ['January', 'February', 'March',
                 'October', 'November', 'December'];
 var dd_year = $('#year');
 for (var y = 2020; y <= (new Date().getFullYear()) + 5; y++) {
-    // This why i added automated year
     dd_year.append('<option value="' + y + '">' + y + '</option>');
 }
 
@@ -504,6 +383,5 @@ setInterval(function() {
     if (operational) {
         updateTransactionChart(getTransactionChart());
         rtTransaction();
-        getTransactions();
     }
 }, 5000);

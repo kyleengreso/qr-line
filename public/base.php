@@ -41,7 +41,6 @@ $project_phone = " (+63)909-123-4567";
 $enable_http = true;                // Enable HTTP connection. Default: true
 $enable_secure = true;              // Enable HTTPS connection. Default: true
 $master_key = "master";             // Master key for encryption and decryption. Default: "master"
-$disable_registration = true;       // Disable registration. Default: false
 
 // Email Feature setup
 $email_feature = TRUE;
@@ -61,7 +60,7 @@ $api_path = $root_path . "/api/";
 
 // System Website Control
 $system_development_mode = true;
-$enable_register_employee = true;
+$enable_register_employee = false;
 
 
 // Website tweaks

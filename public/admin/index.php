@@ -297,22 +297,6 @@ $counterNumber = $token->counterNumber;
     <?php after_js()?>
     <script src="./../asset/js/dashboard_admin.js"></script>
     <script>
-        let btn_employee_show = document.getElementById("employee-show");
-        btn_employee_show.addEventListener("click", function() {
-            let employee_nonlisting = document.getElementById("employee-nonlisting");
-            employee_nonlisting.classList.add('d-none');
-            let employee_listing = document.getElementById("employee-listing");
-            employee_listing.classList.remove('d-none');
-        });
-        let counters_show = document.getElementById("counters-show");
-        counters_show.addEventListener("click", function() {
-            let counter_nonlisting = document.getElementById("counter-nonlisting");
-            counter_nonlisting.classList.add('d-none');
-            let counter_listing = document.getElementById("counter-listing");
-            counter_listing.classList.remove('d-none');
-        });
-
-
         // Cut Off
         let cutOffNotification = document.getElementById('cutOffNotification');
         let cutOffState = document.getElementById('cutOffState');
