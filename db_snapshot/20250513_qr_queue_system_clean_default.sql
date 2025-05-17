@@ -1,0 +1,9 @@
+DELETE FROM transactions;
+ALTER TABLE transactions AUTO_INCREMENT = 1;
+DELETE FROM requesters;
+ALTER TABLE requesters AUTO_INCREMENT = 1;
+DELETE FROM counters;
+ALTER TABLE counters AUTO_INCREMENT = 1;
+DELETE FROM employees;
+ALTER TABLE employees AUTO_INCREMENT = 1;
+SET FOREIGN_CHECKS = 0;

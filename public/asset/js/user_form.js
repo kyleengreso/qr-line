@@ -47,7 +47,7 @@ $('#frmUserForm').submit(function(e) {
         name: $('#name').val(),
         email: $('#email').val(),
         payment: payment,
-        website: `${realHost}/public/user/requester_number.php`
+        website: `${realHost}/public/requester/requester_number.php`
     };
     console.log(user);
     sumbitUserForm(user);

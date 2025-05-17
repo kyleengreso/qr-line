@@ -41,7 +41,7 @@ $project_phone = " (+63)909-123-4567";
 $enable_http = true;                // Enable HTTP connection. Default: true
 $enable_secure = true;              // Enable HTTPS connection. Default: true
 $master_key = "master";             // Master key for encryption and decryption. Default: "master"
-$disable_registration = false;      // Disable registration. Default: false
+$disable_registration = true;       // Disable registration. Default: false
 
 // Email Feature setup
 $email_feature = TRUE;

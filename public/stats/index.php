@@ -22,7 +22,7 @@ include "./../base.php"
             <div class="row">
                 <div class="col-12">
                     <div class="text-center bg-white p-4 border border-2 shadow-sm rounded">
-                        <h3 class="fs-2 fw-bold" id="transactions-total">0</h3>
+                        <h3 class="fs-2 fw-bold" id="transactions-total"></h3>
                         <p class="text-muted mb-0">Total Transactions</p>
                     </div>
                 </div>
@@ -30,7 +30,7 @@ include "./../base.php"
                     <div class="p-3 w-100">
                         <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
                             <i class="bi bi-people fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-today">0</h3>
+                            <h3 class="fs-2 fw-bold" id="transactions-today"></h3>
                             <p class="text-muted mb-0">Transaction Today</p>
                         </div>
                     </div>
@@ -39,7 +39,7 @@ include "./../base.php"
                     <div class="p-3 w-100">
                         <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
                             <i class="bi bi-people-fill fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-yesterday">0</h3>
+                            <h3 class="fs-2 fw-bold" id="transactions-yesterday"></h3>
                             <p class="text-muted mb-0">Transaction Yesterday</p>
                         </div>
                     </div>
@@ -48,7 +48,7 @@ include "./../base.php"
                     <div class="p-3 w-100">
                         <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
                             <i class="bi bi-calendar-fill fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-week">0</h3>
+                            <h3 class="fs-2 fw-bold" id="transactions-week"></h3>
                             <p class="text-muted mb-0">This week</p>
                         </div>
                     </div>
@@ -57,7 +57,7 @@ include "./../base.php"
                     <div class="p-3 w-100">
                         <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
                             <i class="bi bi-calendar fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-month">6,902</h3>
+                            <h3 class="fs-2 fw-bold" id="transactions-month"></h3>
                             <p class="text-muted mb-0">This Month</p>
                         </div>
                     </div>
@@ -66,7 +66,7 @@ include "./../base.php"
                     <div class="p-3 w-100">
                         <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
                             <i class="bi bi-calendar-fill fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-yeaer">13,023</h3>
+                            <h3 class="fs-2 fw-bold" id="transactions-year"></h3>
                             <p class="text-muted mb-0">This Year</p>
                         </div>
                     </div>
