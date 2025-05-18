@@ -2517,7 +2517,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // exit;
     
         // Get your counter number based from token
-        $stmt = $conn->prepare("SELECT t.queue_number, c.counterNumber, t.idcounter, c.queue_count
+        $stmt = $conn->prepare("SELECT t.queue_number, c.counterNumber, t.idcounter, t.status, c.queue_count
                                 FROM transactions t
                                 LEFT JOIN counters c ON t.idcounter = c.idcounter
                                 WHERE t.token_number = ?
@@ -2551,7 +2551,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "status" => "success",
             "queueNumber" => $row['queue_number'] ?? "N/A",
             "counterNumber" => $row['counterNumber'] ?? "N/A",
-            "currentQueueNumber" => $queue_count_int ?? "N/A"
+            "currentQueueNumber" => $queue_count_int ?? "N/A",
+            "requester_status" => $row['status'] ?? "N/A"
         ));
         exit;
     } else if (isset($_GET['transaction_reminder'])) {

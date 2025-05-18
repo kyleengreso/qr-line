@@ -22,6 +22,11 @@ include './../base.php';
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
     <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:100px;flex-direction:column">
+        <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:100px;flex-direction:column">
+            <div class="alert alert-info" id="this_requester_status_alert">
+                Status: <span class="fw-bold" id="this_requester_status_info"></span>
+            </div>
+        </div>
         <div class="row circle text-center">
             <div>
                 <img src="./../asset/images/logo_blk.png" alt="logo" width="75px" style="margin-top: -15px;">
@@ -62,7 +67,103 @@ include './../base.php';
         </div>
     </div>
     <?php after_js()?>
-    <script src="./../asset/js/user_number.js"></script>
+    <script src="./../asset/js/requester_number.js"></script>
+    <script>
+        let this_requester_status_alert = document.getElementById("this_requester_status_alert");
+        let this_requester_status_info = document.getElementById("this_requester_status_info");
+
+        function fetchYourQuery() {
+            const token = new URLSearchParams(window.location.search).get('requester_token');
+
+            if (!token) {
+                alert("Token was not assigned");
+                window.location.href = `${realHost}/public/requester/requester_form.php`;
+            }
+
+            var params = new URLSearchParams({
+                requester_number: true,
+                requester_token : token
+            })
+            $.ajax({
+                url: '/public/api/api_endpoint.php?' + params,
+                type: 'GET',
+                success: function(response) {
+                    console.log(response);
+                    if (response.status === 'success') {
+                        if (response.requester_status == "pending" || response.requester_status == "serve") {
+                            this_requester_status_alert.classList.remove('alert-success', 'alert-danger', 'alert-warning');
+                            this_requester_status_alert.classList.add('alert-info');
+                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
+                        } else if (response.requester_status == "completed") {
+                            this_requester_status_alert.classList.remove('alert-info', 'alert-danger', 'alert-warning');
+                            this_requester_status_alert.classList.add('alert-success');
+                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
+                        } else if (response.requester_status == "missed") {
+                            this_requester_status_alert.classList.remove('alert-success', 'alert-danger', 'alert-info');
+                            this_requester_status_alert.classList.add('alert-warning');
+                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
+                        } else if (response.requester_status == "cancelled") {
+                            this_requester_status_alert.classList.remove('alert-success', 'alert-info', 'alert-warning');
+                            this_requester_status_alert.classList.add('alert-danger');
+                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
+                        }
+                        $('#queueNumber').text(response.queueNumber);
+                        $('#counterNumber').text(response.counterNumber);
+                        $('#currentQueueNumber').text(response.currentQueueNumber);
+
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    $('#user_number').text('0');
+                }
+            });
+        }
+
+        let btnCancelRequest = document.getElementById("btnCancelRequest");
+        if (btnCancelRequest) {
+            btnCancelRequest.addEventListener("click", function () {
+                // get token from url
+                const token = new URLSearchParams(window.location.search).get('requester_token');
+                console.log(token);
+                var data = {
+                    method: "requester-form-cancel",
+                    token_number: token
+                }
+                $.ajax({
+                    url: '/public/api/api_endpoint.php',
+                    type: "POST",
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        console.log(response);
+                        if (response.status) {
+                            alert(response.message);
+                            window.location.href = '/public/requester/requester_form.php';
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Logout request failed:", error);
+                        alert("An error occurred while logging out. Please try again.");
+                    }
+                });
+            });
+        }
+        fetchYourQuery();
+
+        setInterval(function() {
+            fetchYourQuery()
+        }, 5000);
+
+
+
+    </script>
+    <script>
+
+
+    </script>
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>
