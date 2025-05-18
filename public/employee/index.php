@@ -403,7 +403,6 @@ $counterNumber = $token->counterNumber;
         // Start the daemon loop
         daemon();
     </script>
-    <!-- <script src="./../asset/js/dashboard_cashier.js"></script> -->
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>
