@@ -2494,8 +2494,68 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     } else if (isset($_GET['dashboard_admin'])) {
         // Admin Dashboard
-        $sql_cmd = "SELECT COUNT(id) as today_transactions";
 
+        // Spacial reserved
+
+    // Cashier Current Number
+    } else if (isset($_GET['counter_current_number'])) {
+        /**
+         * This part will show only in the public...
+         */
+
+        $sql_cmd = "SELECT 
+                        c.counterNumber,
+                        t.queue_number,
+                        t.transaction_time
+                    FROM 
+                        counters c
+                    LEFT JOIN 
+                        transactions t
+                    ON 
+                        t.idtransaction = (
+                            SELECT t2.idtransaction
+                            FROM transactions t2
+                            WHERE t2.idcounter = c.idcounter AND
+                                DATE(t2.transaction_time) = DATE(CURDATE()) AND
+                                t2.status = 'serve'
+                            ORDER BY t2.transaction_time DESC
+                            LIMIT 1
+                        );
+            ";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $counters = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        if ($result->num_rows > 0) {
+            $sql_cmd = "SELECT t.queue_number
+                        FROM transactions t
+                        WHERE
+                            DATE(t.transaction_time) = DATE(CURDATE()) AND
+                            t.status = 'serve'
+                        ORDER BY
+                            t.transaction_time DESC
+                        LIMIT 1;
+                        ";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->execute();
+            $result_1 = $stmt->get_result();
+            $requester_latest = $result_1->fetch_all(MYSQLI_ASSOC);
+            echo json_encode(array(
+                "status" => "success",
+                "counters" => $counters,
+                "requester" => $requester_latest[0]['queue_number'] ?? "No queue",
+                "message" => "Counters found",
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No counters found",
+            ));
+        }
+        exit;
+
+    
     // Requester Number Monitor
     } else if (isset($_GET['requester_number'])) {
         // F

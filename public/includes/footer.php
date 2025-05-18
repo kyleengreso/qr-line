@@ -27,7 +27,10 @@
                     </p>
                     <?php endif; ?>
                 <p>
-                    <a class="text-black text-decoration-none" href="/public/stats">Stats</a>
+                    <a class="text-black text-decoration-none" href="/public/stats">Transaction Stats</a>
+                </p>
+                <p>
+                    <a class="text-black text-decoration-none" href="/public/cashier_stats">Counter Stats</a>
                 </p>
                 <p>
                     <a class="text-black text-decoration-none" href="/public/about">About</a>
