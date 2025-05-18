@@ -826,6 +826,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             exit;
         }
+
+        // Checking for transaction history if theres assigned will be nulll and panding
+        $sql_cmd = "UPDATE transactions t
+                    SET t.idcounter = NULL, t.idemployee = NULL, t.status = 'pending'
+                    WHERE t.idcounter = ?";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $data->id);
+        $stmt->execute();
+        $stmt->close();
+
         $id = $data->id;
         $sql_cmd = "DELETE FROM counters WHERE idcounter = ?";
         $stmt = $conn->prepare($sql_cmd);
