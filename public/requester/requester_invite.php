@@ -1,10 +1,5 @@
 <?php
 include './../base.php';
-include './../../vendor/autoload.php';
-
-use chillerlan\QRCode\QRCode;
-use chillerlan\QRCode\QROptions;
-$data = "sample";
 ?>
 
 <!DOCTYPE html>
@@ -17,7 +12,6 @@ $data = "sample";
     <?php head_css()?>
     <?php before_js()?>
     <?php
-    $web_domain = $_SERVER['HTTP_HOST'];
     ?>
 </head>
 <body class="bg">
@@ -29,11 +23,8 @@ $data = "sample";
                     Join the queue
                 </h3>
             </div>
-            <div class="w-100">
-            <?php
-            // echo $serverName; // Debug
-            echo '<img src="'.(new QRCode)->render($serverName).'" alt="QR Code" />';
-            ?>
+            <div class="w-100" id="qr_code_link">
+                <img class="p-2 w-100 h-100" id="qr_code_img" src="" alt="qr_code">
             </div>
             <div class="w-100 text-center">
                 <h3>Scan the QR Code</h3>
@@ -42,6 +33,11 @@ $data = "sample";
     </div>
 
     <?php after_js()?>
+    <script>
+        let qr_code_link = document.getElementById("qr_code_link");
+        let qr_code_img = document.getElementById("qr_code_img");
+        qr_code_img.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + realHost;
+    </script>
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>
