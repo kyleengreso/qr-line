@@ -36,6 +36,14 @@ include './../base.php';
                     <p class="value" id="counterNumber">N/A</p>
                 </div>
             </div>
+            <div class="alert alert-info d-none" id="nextNumberNotification" role="alert">
+                <i class="bi bi-bell-fill me-2"></i>
+                <span>Your number will be called next!</span>
+            </div>
+            <div class="alert alert-success d-none" id="completionNotification" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span>Your transaction has been completed! Thank you for your patience.</span>
+            </div>
             <p class="current-number">Current number: <strong><span id="currentQueueNumber">N/A</span></strong></p>
         </div>
         <div class="d-flex justify-content-center align-items-center">

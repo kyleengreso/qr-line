@@ -60,10 +60,50 @@ if (btnCancelRequest) {
         });
     });
 }
-fetchYourQuery();
 
-setInterval(function() {
-    fetchYourQuery()
-}, 5000);
+function updateQueueInfo() {
+    $.ajax({
+        url: '/public/api/api_endpoint.php',
+        method: 'GET',
+        data: {
+            requester_token: '<?php echo $requester_token ?>',
+            get_queue_info: true
+        },
+        success: function(response) {
+            $('#queueNumber').text(response.queueNumber);
+            $('#counterNumber').text(response.counterNumber);
+            $('#currentQueueNumber').text(response.currentQueueNumber);
+            
+            // Check if this number is next
+            const currentNumber = parseInt(response.currentQueueNumber);
+            const userNumber = parseInt(response.queueNumber);
+            
+            // Hide both notifications initially
+            $('#nextNumberNotification').addClass('d-none');
+            $('#completionNotification').addClass('d-none');
+            
+            if (!isNaN(currentNumber) && !isNaN(userNumber)) {
+                if (userNumber === currentNumber + 1) {
+                    // Show next number notification
+                    $('#nextNumberNotification').removeClass('d-none');
+                    // Play notification sound
+                    const audio = new Audio('/public/asset/sounds/notification.mp3');
+                    audio.play();
+                } else if (userNumber === currentNumber) {
+                    // Show completion notification
+                    $('#completionNotification').removeClass('d-none');
+                    // Play completion sound
+                    const audio = new Audio('/public/asset/sounds/completion.mp3');
+                    audio.play();
+                }
+            }
+        }
+    });
+}
+
+// Update queue info every 5 seconds
+setInterval(updateQueueInfo, 5000);
+// Initial update
+updateQueueInfo();
 
 
