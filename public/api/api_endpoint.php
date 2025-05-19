@@ -2116,7 +2116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $params[] = $_GET['employee_id'];
             $types .= "s";
         }
-        
+
         if (isset($_GET['students'])) {
             $sql_cmd .= "AND r.is_student = ? ";
             $params[] = 1;
@@ -2165,6 +2165,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
 
+        // Group by student
+        if (isset($_GET['students_group'])) {
+            if ($_GET['group_by'] == 'student') {
+                $sql_cmd .= "GROUP BY r.is_student";
+            }
+        }
+    
         // Descending order
         if (isset($_GET['desc'])) {
             $sql_cmd .= "ORDER BY t.transaction_time DESC ";

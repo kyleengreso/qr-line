@@ -54,7 +54,7 @@ $counterNumber = $token->counterNumber;
                     </div>
                 </div>
                 <div class="row p-0 m-0 text-center">
-                        <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #27548A;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
@@ -129,6 +129,24 @@ $counterNumber = $token->counterNumber;
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="row p-0 m-0">
+                    <div class="col-12 m-0 mb-4">
+                        <div class="d-flex justify-content-center align-items-center card border border-2 text-center bg-white p-4 shadow rounded">
+                            <table style="max-width: 250px">
+                                <tr>
+                                    <td class="d-none pr-4 text-center text-muted">
+                                        <i class="fs-1 bi bi-graph-up"></i>                   
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="text-muted text-uppercase mb-0">
+                                            Student Transactions today
+                                            <h3 class="fs-2 fw-bold"><span id="transactions-student-today"></span></h3>
+                                        </span>               
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                     <div class="row p-0 m-0">
@@ -295,7 +313,30 @@ $counterNumber = $token->counterNumber;
     </div>
 
     <?php after_js()?>
-    <script>       
+    <script>
+        let transactions_student_today = document.getElementById('transactions-student-today');
+        function fetchStudentTransaction() {
+            let params = new URLSearchParams({
+                transactions: true,
+                date_range: "today",
+                students: true,
+                desc: true
+            });
+            $.ajax({
+                url: '/public/api/api_endpoint.php?' + params,
+                type: 'GET',
+                success: function(response) {
+                    let transactions = response.transactions;
+                    // Count that transactions
+                    let transactionsCount = transactions.length;
+                    transactions_student_today.textContent = transactionsCount;
+                },
+                error: function(response) {
+                    // console.log(response);
+                }
+            });
+        }
+
         var page_counter = 1;
         var page_transaction = 1;
         var page_employee = 1;
@@ -678,6 +719,7 @@ $counterNumber = $token->counterNumber;
 
         setInterval(function() {
             if (operational) {
+                fetchStudentTransaction();
                 updateTransactionChart(getTransactionChart());
                 rtTransaction();
             }
@@ -695,7 +737,7 @@ $counterNumber = $token->counterNumber;
         });
 
         $.ajax({
-            url: `${realHost}/public/api/api_endpoint.php?${params}`,
+            url: '/public/api/api_endpoint.php?' + params,
             type: 'GET',
             success: function(response) {
                 console.log(response);

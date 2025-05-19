@@ -272,6 +272,7 @@ $counterNumber = $token->counterNumber;
                 transactions: true,
                 employee_id: this_employee_id,
                 students: 1,
+                email: "palawan.edu.ph",
                 desc: true
             });
         
