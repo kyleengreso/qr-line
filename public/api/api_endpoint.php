@@ -141,14 +141,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             setcookie("token", $encToken, time() + (86400 * 30), "/");
 
             // Log the login
-            $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
+            $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at, device_name) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql_cmd);
             
             $user_id = $employee[0]['id'];
             $comment = "LOG_IN: " . $employee[0]['username'] . " is logged in";
             $curdate = date("Y-m-d H:i:s");
-
-            $stmt->bind_param("sss", $user_id, $comment, $curdate);
+            $device_name = $data->device_name ?? null;
+            $stmt->bind_param("ssss", $user_id, $comment, $curdate, $device_name);
             $stmt->execute();
             $stmt->close();
 

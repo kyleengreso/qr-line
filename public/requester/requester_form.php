@@ -108,7 +108,7 @@ foreach ($everyday as $day) {
                         Schedule End: <span class="text-danger fw-bold"><?php echo $time_end ?></span><br>
                     </p>
                 </div>
-              <?php endif ;?>
+            <?php endif ;?>
         </div>
     </div>
 
