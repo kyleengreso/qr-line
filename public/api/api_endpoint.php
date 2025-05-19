@@ -2614,7 +2614,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // exit;
     
         // Get your counter number based from token
-        $stmt = $conn->prepare("SELECT t.queue_number, c.counterNumber, t.idcounter, t.status, c.queue_count
+        $stmt = $conn->prepare("SELECT t.queue_number, c.counterNumber, t.idcounter, t.status
                                 FROM transactions t
                                 LEFT JOIN counters c ON t.idcounter = c.idcounter
                                 WHERE t.token_number = ?

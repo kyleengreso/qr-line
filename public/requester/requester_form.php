@@ -68,18 +68,6 @@ foreach ($everyday as $day) {
                 <div class="input-group mb-2">
                     <div class="input-group-text"><i class="bi bi-sort-up-alt"></i></div>
                     <div class="form-floating">
-                        <select class="form-select"  name="transaction-history-pwd" id="transaction-history-pwd">
-                            <option value="none">None</option>
-                            <option value="pregnant">Pregnant</option>
-                            <option value="elderly">Elderly</option>
-                            <option value="disability">Disability</option>
-                        </select>
-                        <label for="transaction-history-pwd" class="form-label">PWD</label>
-                    </div>
-                </div>
-                <div class="input-group mb-2">
-                    <div class="input-group-text"><i class="bi bi-sort-up-alt"></i></div>
-                    <div class="form-floating">
                         <select class="form-select"  name="transaction-history-student" id="transaction-history-student">
                             <option value="0">No</option>
                             <option value="1">Yes</option>
@@ -152,7 +140,6 @@ foreach ($everyday as $day) {
         }
 
         var payment = null;
-        var pwd = null;
         var student = null;
 
         $('#transaction-history-student').change(function() {
@@ -160,14 +147,6 @@ foreach ($everyday as $day) {
             if (student == '0') {
                 student = null;
             }
-        });
-
-        $('#transaction-history-pwd').change(function() {
-            pwd = $(this).val();
-            if (pwd == 'null') {
-                pwd = null;
-            }
-            console.log(pwd);
         });
 
         $('#transaction-history-payment').change(function() {
@@ -189,7 +168,6 @@ foreach ($everyday as $day) {
                 name: $('#name').val(),
                 email: $('#email').val(),
                 payment: payment,
-                pwd: pwd,
                 is_student: student,
                 website: `${realHost}/public/requester/requester_number.php`
             };

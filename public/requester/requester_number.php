@@ -67,7 +67,6 @@ include './../base.php';
         </div>
     </div>
     <?php after_js()?>
-    <script src="./../asset/js/requester_number.js"></script>
     <script>
         let this_requester_status_alert = document.getElementById("this_requester_status_alert");
         let this_requester_status_info = document.getElementById("this_requester_status_info");
