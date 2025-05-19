@@ -420,7 +420,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $password = $data->password;
         $email = $data->email;
         $role_type = $data->role_type;
-        $active = $data->active;
+        $active = $data->active ?? 1;
 
         $sql_cmd = "SELECT e.id
                     FROM employees e
@@ -1374,15 +1374,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $name = $data->name;
         $email = $data->email;
         $payment = $data->payment;
+        $pwd = $data->pwd ?? "none";
         $website = $data->website;
     
         $conn->begin_transaction();
     
         try {
             // Commit the request transaction
-            $sql_cmd = "INSERT INTO requesters (name, email, payment) VALUES (?, ?, ?)";
+            $sql_cmd = "INSERT INTO requesters (name, email, payment, pwd) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("sss", $name, $email, $payment);
+            $stmt->bind_param("ssss", $name, $email, $payment, $pwd);
             $stmt->execute();
             $requester_id = $stmt->insert_id;
             $stmt->close();

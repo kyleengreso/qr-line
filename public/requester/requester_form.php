@@ -65,6 +65,18 @@ foreach ($everyday as $day) {
                         <label for="email" class="form-label">Email</label>
                     </div>
                 </div>
+                <div class="input-group mb-2">
+                    <div class="input-group-text"><i class="bi bi-sort-up-alt"></i></div>
+                    <div class="form-floating">
+                        <select class="form-select"  name="transaction-history-pwd" id="transaction-history-pwd">
+                            <option value="none">None</option>
+                            <option value="pregnant">Pregnant</option>
+                            <option value="elderly">Elderly</option>
+                            <option value="disability">Disability</option>
+                        </select>
+                        <label for="transaction-history-pwd" class="form-label">PWD</label>
+                    </div>
+                </div>
                 <div class="input-group mb-3">
                     <div class="input-group-text"><i class="bi bi-cash"></i></div>
                     <div class="form-floating">
@@ -96,7 +108,7 @@ foreach ($everyday as $day) {
                         Schedule End: <span class="text-danger fw-bold"><?php echo $time_end ?></span><br>
                     </p>
                 </div>
-            <?php endif ;?>
+              <?php endif ;?>
         </div>
     </div>
 
@@ -130,13 +142,20 @@ foreach ($everyday as $day) {
         }
 
         var payment = null;
+        var pwd = null;
+        $('#transaction-history-pwd').change(function() {
+            pwd = $(this).val();
+            if (pwd == 'null') {
+                pwd = null;
+            }
+            console.log(pwd);
+        });
+
         $('#transaction-history-payment').change(function() {
             payment = $(this).val();
             if (payment == 'null') {
                 payment = null;
-                // console.log(payment);
             }
-            console.log(payment);
         });
 
         $('#frmUserForm').submit(function(e) {
@@ -151,6 +170,7 @@ foreach ($everyday as $day) {
                 name: $('#name').val(),
                 email: $('#email').val(),
                 payment: payment,
+                pwd: pwd,
                 website: `${realHost}/public/requester/requester_number.php`
             };
             console.log(user);
