@@ -28,9 +28,9 @@ $counterNumber = $token->counterNumber;
 <body>
     <?php include "./../includes/navbar.php"; ?>
     <div class="container-lg d-flex justify-content-center align-items-center before-footer" style="margin-top: 100px">
-        <div class="text-center w-100" style="max-width: 800px;" id="employeeDashboard">
-            <div class="d-flex justify-content-center align-items-center" style="max-width: 400px; margin: auto;">
-                <div class="w-100">
+        <div class="text-center w-100" style="max-width: 1200px;" id="employeeDashboard">
+            <div class="row d-flex justify-content-center align-items-start" style="margin: auto;">
+                <div class="col-12 col-md-6">
                     <div class="alert text-start alert-success d-none" id="logOutNotify">
                         <span><?php echo $username ?> has logged out successfully</span>
                     </div>
@@ -83,11 +83,8 @@ $counterNumber = $token->counterNumber;
                         </div>
                     </div>
                 </div>
-            </div>
-
-
-            <div class="w-100">
-                <div class="card border-1 p-4">
+                <div class="col-12 col-md-6">
+                <div class="card border-1 p-4" style="min-height:100%">
                     <table class="table table-striped table-members" id="table-transactions-student">
                         <thead>
                             <tr>
@@ -98,6 +95,9 @@ $counterNumber = $token->counterNumber;
                     </table>
                 </div>
             </div>
+            </div>
+
+
         </div>
     </div>
 
