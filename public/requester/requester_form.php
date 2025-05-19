@@ -77,11 +77,21 @@ foreach ($everyday as $day) {
                         <label for="transaction-history-pwd" class="form-label">PWD</label>
                     </div>
                 </div>
+                <div class="input-group mb-2">
+                    <div class="input-group-text"><i class="bi bi-sort-up-alt"></i></div>
+                    <div class="form-floating">
+                        <select class="form-select"  name="transaction-history-student" id="transaction-history-student">
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                        <label for="transaction-history-pwd" class="form-label">Are you a student in this campus?</label>
+                    </div>
+                </div>
                 <div class="input-group mb-3">
                     <div class="input-group-text"><i class="bi bi-cash"></i></div>
                     <div class="form-floating">
                         <select class="form-select"  name="transaction-history-payment" id="transaction-history-payment">
-                            <option value="null">Payment</option>
+                            <option value="null">--</option>
                             <option value="registrar">Registrar</option>
                             <option value="assessment">Assessment</option>
                         </select>
@@ -143,6 +153,15 @@ foreach ($everyday as $day) {
 
         var payment = null;
         var pwd = null;
+        var student = null;
+
+        $('#transaction-history-student').change(function() {
+            student = $(this).val();
+            if (student == '0') {
+                student = null;
+            }
+        });
+
         $('#transaction-history-pwd').change(function() {
             pwd = $(this).val();
             if (pwd == 'null') {
@@ -171,6 +190,7 @@ foreach ($everyday as $day) {
                 email: $('#email').val(),
                 payment: payment,
                 pwd: pwd,
+                is_student: student,
                 website: `${realHost}/public/requester/requester_number.php`
             };
             console.log(user);

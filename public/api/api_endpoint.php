@@ -1350,7 +1350,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "No changes made"
+                "message" => "Already cancelled this transaction"
             ));
         } else {
             echo json_encode(array(
@@ -1376,14 +1376,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $payment = $data->payment;
         $pwd = $data->pwd ?? "none";
         $website = $data->website;
+        $student = $data->is_student ?? 0;
     
         $conn->begin_transaction();
     
         try {
             // Commit the request transaction
-            $sql_cmd = "INSERT INTO requesters (name, email, payment, pwd) VALUES (?, ?, ?, ?)";
+            $sql_cmd = "INSERT INTO requesters (name, email, payment, pwd, is_student) VALUES (?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("ssss", $name, $email, $payment, $pwd);
+            $stmt->bind_param("sssss", $name, $email, $payment, $pwd, $student);
             $stmt->execute();
             $requester_id = $stmt->insert_id;
             $stmt->close();
@@ -2102,6 +2103,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $params[] = $_GET['status'];
                 $types .= "s";
             }
+        }
+
+        if (isset($_GET['students'])) {
+
         }
 
         if (isset($_GET['payment'])) {
