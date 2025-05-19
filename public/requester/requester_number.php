@@ -21,7 +21,7 @@ include './../base.php';
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:100px;flex-direction:column">
+    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:50px;margin-bottom:100px;flex-direction:column">
         <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:100px;flex-direction:column">
             <div class="alert alert-info" id="this_requester_status_alert">
                 Status: <span class="fw-bold" id="this_requester_status_info"></span>
@@ -107,6 +107,25 @@ include './../base.php';
                             this_requester_status_alert.classList.add('alert-danger');
                             this_requester_status_info.textContent = response.requester_status.toUpperCase();
                         }
+
+                        // Update button based on status
+                        const actionButton = document.getElementById('btnCancelRequestModal');
+                        if (response.requester_status == "completed") {
+                            actionButton.textContent = 'Exit';
+                            actionButton.classList.remove('btn-primary');
+                            actionButton.classList.add('btn-success');
+                            actionButton.setAttribute('data-toggle', '');
+                            actionButton.setAttribute('data-target', '');
+                            actionButton.href = '/public/requester/requester_form.php';
+                        } else {
+                            actionButton.textContent = 'Cancel Request';
+                            actionButton.classList.remove('btn-success');
+                            actionButton.classList.add('btn-primary');
+                            actionButton.setAttribute('data-toggle', 'modal');
+                            actionButton.setAttribute('data-target', '#requestCancelModal');
+                            actionButton.href = '#';
+                        }
+
                         $('#queueNumber').text(response.queueNumber);
                         $('#counterNumber').text(response.counterNumber);
                         $('#currentQueueNumber').text(response.currentQueueNumber);
