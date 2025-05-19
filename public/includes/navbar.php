@@ -21,9 +21,9 @@ if (isset($_COOKIE['token'])) {
 
         <!-- Project Name -->
         <a class="text-decoration-none" href="/public">
-            <span class="navbar-brand mb-0 text-white d-flex align-items-start align-md-items-center mx-auto">
+            <span class="navbar-brand mb-0 text-white d-flex align-items-center">
                 <img src="./../asset/images/logo.png" alt="PSU logo" width="40" height="40" class="me-2">
-                <span class="d-none d-md-block fs-5 fw-normal fs-4"><?php echo $project_name_full; ?></span>
+                <span class="fs-5 fw-normal d-md-inline d-none"><?php echo $project_name_full; ?></span>
             </span>
         </a>
 
@@ -31,16 +31,13 @@ if (isset($_COOKIE['token'])) {
         <div class="d-flex align-items-center">
             <?php if (isset($token) && $token) : ?>
                 <span class="text-white me-3 d-none d-md-block">
-                    <!-- <i class="bi bi-person-circle"></i> -->
                     <span class="fs-5"><?php echo $token->username; ?></span>
                 </span>
             <?php endif; ?>
             <span class="text-white me-3 d-none d-md-block" id="navbar-clock">
-                <!-- <i class="bi bi-clock"></i> -->
                 <span id="current-time"></span>
             </span>
-            <!-- Logout Button 1 -->
-            <a class="d-none d-md-block btn btn-primary text-decoration-none" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" id="btn-logout-1" aria-label="Logout">
+            <a class="btn btn-primary text-decoration-none" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" id="btn-logout-1" aria-label="Logout">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </div>
