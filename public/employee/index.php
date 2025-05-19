@@ -28,80 +28,78 @@ $counterNumber = $token->counterNumber;
 <body>
     <?php include "./../includes/navbar.php"; ?>
     <div class="container-lg d-flex justify-content-center align-items-center before-footer" style="margin-top: 100px">
-        <div class="text-center w-100" style="max-width: 400px;" id="employeeDashboard">
-            <div class="alert text-start alert-success d-none" id="logOutNotify">
-                <span><?php echo $username ?> has logged out successfully</span>
-            </div>
-            <div class="alert text-start alert-success d-none" id="cutOffNotification">Operational</div>
-            <h3 class="fw-bold">
-                COUNTER <span id="employee-counter-number"><?php echo $counterNumber ?></span>
-                <span class="text-danger d-none" id="cutOffState">(Cut-Off)</span>
-            </h3>
-        
-            <p class="mb-3">Current Serving</p>
-            <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
-                <span id="queue-number">N/A</span>
-            </div>
-            <form method="POST" id="frmNextTransaction">
-                <div class="w-100 mb-4">
-                    <div class="mb-4">
-                        <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
-                        <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+        <div class="text-center w-100" style="max-width: 800px;" id="employeeDashboard">
+            <div class="d-flex justify-content-center align-items-center" style="max-width: 400px; margin: auto;">
+                <div class="w-100">
+                    <div class="alert text-start alert-success d-none" id="logOutNotify">
+                        <span><?php echo $username ?> has logged out successfully</span>
                     </div>
-                    <div>
-                    <a class="btn btn-danger ms-auto" id="employee-cut-off">Cut-Off</a>
+                    <div class="alert text-start alert-success d-none" id="cutOffNotification">Operational</div>
+                    <h3 class="fw-bold">
+                        COUNTER <span id="employee-counter-number"><?php echo $counterNumber ?></span>
+                        <span class="text-danger d-none" id="cutOffState">(Cut-Off)</span>
+                    </h3>
+                    
+                    <p class="mb-3">Current Serving</p>
+                    <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
+                        <span id="queue-number">N/A</span>
                     </div>
-                </div>
-            </form>
-
-            <div class="w-100">
-                <div class="card border-1 p-4 text-center">
-                    <form class="d-none" action="" id="frmCutOff_trigger">
-                        <div class="alert alert-info text-start d-none" id="cutOff_trigger_notification">
-                            <span id="cutOff_trigger_message">
-                                Standby...
-                            </span>
-                        </div>
-                        <div class="form-floating mb-4">
-                            <select class="form-select" name="cut_off_select" id="cut_off_select">
-                                <option value="null">No action</option>
-                                <option value="1">After this queue</option>
-                                <option value="3">After 3 queries</option>
-                                <option value="5">After 5 queries</option>
-                                <option value="10">After 10 queries</option>
-
-                                <!-- On production -->
-                                <!-- <option value="last">Until no transaction</option> -->
-                            </select>
-                            <label for="cut_off_select">Auto-cut off action</label>
+                    <form method="POST" id="frmNextTransaction">
+                        <div class="w-100 mb-4">
+                            <div class="mb-4">
+                                <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
+                                <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
+                            </div>
+                            <div>
+                                <a class="btn btn-danger ms-auto" id="employee-cut-off">Cut-Off</a>
+                            </div>
                         </div>
                     </form>
-                    <div class="alert alert-info d-none" id="frmCutOff_trigger_message">
-                        <span>You need to resume to show Auto-cut off feature</span>
+                    
+                    <div class="w-100 mb-4">
+                        <div class="card border-1 p-4 text-center">
+                            <form class="d-none" action="" id="frmCutOff_trigger">
+                                <div class="alert alert-info text-start d-none" id="cutOff_trigger_notification">
+                                    <span id="cutOff_trigger_message">
+                                        Standby...
+                                    </span>
+                                </div>
+                                <div class="form-floating mb-4">
+                                    <select class="form-select" name="cut_off_select" id="cut_off_select">
+                                        <option value="null">No action</option>
+                                        <option value="1">After this queue</option>
+                                        <option value="3">After 3 queries</option>
+                                        <option value="5">After 5 queries</option>
+                                        <option value="10">After 10 queries</option>
+                                        <!-- On production -->
+                                        <!-- <option value="last">Until no transaction</option> -->
+                                    </select>
+                                    <label for="cut_off_select">Auto-cut off action</label>
+                                </div>
+                            </form>
+                            <div class="alert alert-info d-none" id="frmCutOff_trigger_message">
+                                <span>You need to resume to show Auto-cut off feature</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <!-- <div class="py-3">
-                <a class="btn btn-danger fw-bold text-white" id="employee-cut-off">Cut Off</a>
-            </div> -->
-        </div>
-    </div>
 
-    <!-- <div class="modal fade" id="cutOffModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Employee: <?php echo $username?> is cut off</h5>
-                </div>
-                <div class="modal-body py-4 px-6 fw-bold" id="viewEmployeeBody">
-                    You are cut off for temporary.
-                </div>
-                <div class="modal-footer col" id="viewEmployeeFooter">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="employee-resume">Close</button>
+
+            <div class="w-100">
+                <div class="card border-1 p-4">
+                    <table class="table table-striped table-members" id="table-transactions-student">
+                        <thead>
+                            <tr>
+                                <th scope="col-2">#</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Payment</th>                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
-    </div> -->
+    </div>
 
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
@@ -266,6 +264,43 @@ $counterNumber = $token->counterNumber;
             });
         });
 
+        // Students
+        let table_transactions_student = document.getElementById('table-transactions-student');
+        let this_employee_id = <?php echo $id?>;
+        function fetchStudentTransaction() {
+            const params = new URLSearchParams({
+                transactions: true,
+                employee_id: this_employee_id,
+                students: 1,
+                desc: true
+            });
+        
+            $.ajax({
+                url: '/public/api/api_endpoint.php?' + params,
+                type: 'GET',
+                success: function(response) {
+                    let transactions = response.transactions;
+                    while (table_transactions_student.rows.length > 1) {
+                        table_transactions_student.deleteRow(-1);
+                    }
+                    transactions.forEach((transaction) => {
+                        let row = table_transactions_student.insertRow();
+                        let cell1 = row.insertCell(0);
+                        let cell2 = row.insertCell(1);
+                        let cell3 = row.insertCell(2);
+                        cell1.innerHTML = transaction.queue_number;
+                        cell2.innerHTML = transaction.email;
+                        cell3.innerHTML = transaction.payment;
+                    });
+
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+
+
         // Cut Off Feature
 
         var operational = false;
@@ -395,6 +430,7 @@ $counterNumber = $token->counterNumber;
             queue_remain_get();
             if (operational) {
                 fetchTransaction();
+                fetchStudentTransaction();
             }
             // Schedule the next execution
             setTimeout(daemon, 5000);

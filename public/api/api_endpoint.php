@@ -2105,8 +2105,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
 
-        if (isset($_GET['students'])) {
+        if (isset($_GET['search'])) {
+            $sql_cmd .= "AND r.name LIKE ? ";
+            $params[] = "%" . $_GET['search'] . "%";
+            $types .= "s";
+        }
 
+        if (isset($_GET['employee_id'])) {
+            $sql_cmd .= "AND t.idemployee = ? ";
+            $params[] = $_GET['employee_id'];
+            $types .= "s";
+        }
+        
+        if (isset($_GET['students'])) {
+            $sql_cmd .= "AND r.is_student = ? ";
+            $params[] = 1;
+            $types .= "s";
         }
 
         if (isset($_GET['payment'])) {
