@@ -48,7 +48,7 @@ foreach ($everyday as $day) {
                 <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
             </div>
             <?php if ($time_now > $time_start && $time_now < $time_end && $schedule_present) :?>
-            <h4 class="text-center fw-bold">PWD FORM</h4>
+            <h4 class="text-center fw-bold">Priority FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
             <form method="post" id="frmUserForm">
                 <div class="input-group mb-2">
@@ -68,13 +68,17 @@ foreach ($everyday as $day) {
                 <div class="input-group mb-2">
                     <div class="input-group-text"><i class="bi bi-sort-up-alt"></i></div>
                     <div class="form-floating">
-                        <select class="form-select"  name="transaction-history-pwd" id="transaction-history-pwd">
-                            <option value="none">None</option>
+                        <select class="form-select"  name="transaction-history-priority" id="transaction-history-priority">
+                            <option value="none">--</option>
                             <option value="pregnant">Pregnant</option>
                             <option value="elderly">Elderly</option>
                             <option value="disability">Disability</option>
                         </select>
-                        <label for="transaction-history-pwd" class="form-label">PWD</label>
+<<<<<<< HEAD
+                        <label for="transaction-history-priority" class="form-label">Priority</label>
+=======
+                        <label for="transaction-history-pwd" class="form-label">Priority</label>
+>>>>>>> 4627329 (change pwd to priority)
                     </div>
                 </div>
                 <div class="input-group mb-3">
@@ -142,14 +146,14 @@ foreach ($everyday as $day) {
         }
 
         var payment = null;
-        var pwd = null;
+        var priority = null;
 
-        $('#transaction-history-pwd').change(function() {
-            pwd = $(this).val();
-            if (pwd == 'null') {
-                pwd = null;
+        $('#transaction-history-priority').change(function() {
+            priority = $(this).val();
+            if (priority == 'null') {
+                priority = null;
             }
-            console.log(pwd);
+            console.log(priority);
         });
 
         $('#transaction-history-payment').change(function() {
@@ -171,7 +175,7 @@ foreach ($everyday as $day) {
                 name: $('#name').val(),
                 email: $('#email').val(),
                 payment: payment,
-                pwd: pwd,
+                priority: priority,
                 website: `${realHost}/public/requester/requester_number.php`
             };
             console.log(user);
@@ -179,7 +183,6 @@ foreach ($everyday as $day) {
         });
 
     </script>
-    <!-- <script src="./../asset/js/counters.js"></script> -->
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>

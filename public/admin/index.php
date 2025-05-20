@@ -327,7 +327,6 @@ $counterNumber = $token->counterNumber;
                 type: 'GET',
                 success: function(response) {
                     let transactions = response.transactions;
-                    // Count that transactions
                     let transactionsCount = transactions.length;
                     transactions_student_today.textContent = transactionsCount;
                 },

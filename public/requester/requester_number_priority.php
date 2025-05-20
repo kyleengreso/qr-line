@@ -157,7 +157,7 @@ include './../base.php';
                         console.log(response);
                         if (response.status) {
                             alert(response.message);
-                            window.location.href = '/public/requester/requester_form_pwd.php';
+                            window.location.href = '/public/requester/requester_form_priority.php';
                         } else {
                             alert(response.message);
                         }

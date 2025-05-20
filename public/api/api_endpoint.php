@@ -1374,7 +1374,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $name = $data->name;
         $email = $data->email;
         $payment = $data->payment;
-        $pwd = $data->pwd ?? "none";
+        $priority = $data->priority ?? "none";
         $website = $data->website;
         $student = $data->is_student ?? 0;
     
@@ -1382,9 +1382,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
         try {
             // Commit the request transaction
-            $sql_cmd = "INSERT INTO requesters (name, email, payment, pwd, is_student) VALUES (?, ?, ?, ?, ?)";
+            $sql_cmd = "INSERT INTO requesters (name, email, payment, priority, is_student) VALUES (?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("sssss", $name, $email, $payment, $pwd, $student);
+            $stmt->bind_param("sssss", $name, $email, $payment, $priority, $student);
             $stmt->execute();
             $requester_id = $stmt->insert_id;
             $stmt->close();
@@ -2146,7 +2146,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         r.name,
                         r.email,
                         r.payment,
-                        r.pwd,
+                        r.priority,
                         c.counterNumber
                     FROM transactions t
                     LEFT JOIN 
