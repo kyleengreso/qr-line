@@ -1,11 +1,11 @@
 <?php
 
 // Local DB
-// $servername = "127.0.0.1";
-// $username = "root";
-// $password = "root";
-// $dbname = "qr_queue_system";
-// $port = 3306;
+$servername = "127.0.0.1";
+$username = "root";
+$password = "root";
+$dbname = "qr_queue_system";
+$port = 3306;
 
 // PROD DB
 // $servername = "77.37.35.51";
@@ -14,12 +14,12 @@
 // $dbname = "u273960544_qrline";
 
 // PROD DB 2
-$servername = "qrliners-qrline.k.aivencloud.com";
-$username = "prod";
-$password = "AVNS_3m8N9PgsxvAYmyKK6sh";
-$dbname = "qr_queue_system";
-$port = 22410;
-$ca_cert = __DIR__ . "/ca.pem";
+// $servername = "qrliners-qrline.k.aivencloud.com";
+// $username = "prod";
+// $password = "AVNS_3m8N9PgsxvAYmyKK6sh";
+// $dbname = "qr_queue_system";
+// $port = 22410;
+// $ca_cert = __DIR__ . "/ca.pem";
 // $ssl_options = [
 //     MYSQLI_OPT_SSL_VERIFY_SERVER_CERT => true,
 //     MYSQLI_OPT_SSL_CA => $ca_cert,

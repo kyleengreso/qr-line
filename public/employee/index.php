@@ -13,6 +13,7 @@ $username = $token->username;
 $role_type = $token->role_type;
 $email = $token->email;
 $counterNumber = $token->counterNumber;
+$priority = $token->priority;
 ?>
 
 <!DOCTYPE html>
@@ -108,6 +109,7 @@ $counterNumber = $token->counterNumber;
         var notify_priority_timer = 5;
         var cutOff_auto = false;
         var queue_remain = null;
+        var this_counter_priority = "<?php echo $priority; ?>";
 
         let frmCutOff_trigger = document.getElementById('frmCutOff_trigger');
         let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
@@ -188,14 +190,17 @@ $counterNumber = $token->counterNumber;
         let x = <?php echo $counterNumber . $id?>;
         function fetchTransaction() {
             let resp = null;
-            const params = new URLSearchParams({
+            console.log("Priority: ", this_counter_priority);
+            var params = new URLSearchParams({
                 cashier: true,
                 employee_id: <?php echo $id?>
             });
+            // console.log("Params", params.toString());
             $.ajax({
                 url: '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
                 success: function(response) {
+                    console.log("RECV:", response);
                     let queue_number = document.getElementById('queue-number');
                     if (response.status === 'success') {
                         resp = response;
@@ -210,6 +215,8 @@ $counterNumber = $token->counterNumber;
                     }
                 },
                 error: function(xhr, status, error) {
+                    // Check phph erro message json
+                    console.log(xhr.responseText);
                     // console.error('AJAX Error:', status, error);
                 }
             });
@@ -273,7 +280,8 @@ $counterNumber = $token->counterNumber;
                 employee_id: this_employee_id,
                 students: 1,
                 email: "palawan.edu.ph",
-                desc: true
+                desc: true,
+                date_range: 'today'
             });
         
             $.ajax({
@@ -284,15 +292,19 @@ $counterNumber = $token->counterNumber;
                     while (table_transactions_student.rows.length > 1) {
                         table_transactions_student.deleteRow(-1);
                     }
-                    transactions.forEach((transaction) => {
-                        let row = table_transactions_student.insertRow();
-                        let cell1 = row.insertCell(0);
-                        let cell2 = row.insertCell(1);
-                        let cell3 = row.insertCell(2);
-                        cell1.innerHTML = transaction.queue_number;
-                        cell2.innerHTML = transaction.email;
-                        cell3.innerHTML = transaction.payment;
-                    });
+                    if (Array.isArray(transactions) && transactions.length > 0) {
+                        transactions.forEach((transaction) => {
+                            let row = table_transactions_student.insertRow();
+                            let cell1 = row.insertCell(0);
+                            let cell2 = row.insertCell(1);
+                            let cell3 = row.insertCell(2);
+                            cell1.innerHTML = transaction.queue_number;
+                            cell2.innerHTML = transaction.email;
+                            cell3.innerHTML = transaction.payment;
+                        });
+                    } else {
+                        // console.warn("No transactions found or invalid data format.");
+                    }
 
                 },
                 error: function(xhr, status, error) {
@@ -434,7 +446,7 @@ $counterNumber = $token->counterNumber;
                 fetchStudentTransaction();
             }
             // Schedule the next execution
-            setTimeout(daemon, 5000);
+            setTimeout(daemon, 500);
         }
         
         // Start the daemon loop

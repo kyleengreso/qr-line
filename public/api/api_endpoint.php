@@ -9,7 +9,18 @@ header("Content-Type: application/json");
 
 global $conn;
 
-
+if (isset($_COOKIE['token'])) {
+    $token = $_COOKIE['token'];
+    $decToken = decryptToken($token, $master_key);
+    if ($decToken) {
+        $this_username = $decToken['username'];
+        $this_role_type = $decToken['role_type'];
+        $this_email = $decToken['email'];
+        $this_counterNumber = $decToken['counterNumber'] ?? null;
+        $this_priority = $decToken['priority'] ?? null;
+        $this_user_id = $decToken['id'];
+    }
+} 
 if (!$conn) {
     echo json_encode(array(
         "status" => "error",
@@ -111,7 +122,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             
             // Get Counter if was assigned
             if ($employee[0]['role_type'] == 'employee') {
-                $sql_cmd = "SELECT c.counterNumber
+                $sql_cmd = "SELECT c.counterNumber, c.counter_priority
                             FROM counters c
                             WHERE c.idemployee = ?";
                 $stmt = $conn->prepare($sql_cmd);
@@ -136,7 +147,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "role_type" => $employee[0]['role_type'],
                 "email" => $employee[0]['email'],
                 "counterNumber" => $counter[0]['counterNumber'] ?? null,
+                "priority" => $counter[0]['counter_priority'] ?? null,
             );
+
             $encToken = encryptToken($token, $master_key);
             setcookie("token", $encToken, time() + (86400 * 30), "/");
 
@@ -152,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt->execute();
             $stmt->close();
 
-
+        
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Login successful",
@@ -1110,16 +1123,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
             }
 
+        } else if ($stmt->affected_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No transaction was assigned"
+            ));
+        } else if ($stmt->affected_rows > 0) {
             echo json_encode(array(
                 "status" => "success",
-                "message" => "Success Transaction updated successfully"
+                "message" => "Transaction success successfully"
             ));
-            // exit;
-        } else if ($stmt->affected_rows == 0) {
-            // echo json_encode(array(
-            //     "status" => "error",
-            //     "message" => "No changes made"
-            // ));
         } else {
             echo json_encode(array(
                 "status" => "error",
@@ -1454,8 +1467,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             exit;
         }
-    } else if ($method == "requester_form_cancel") {
-        // WAIT LANG
     } else if ($method == "counter_queue_remain") {
         if (!isset($data->counter_number)) {
             echo json_encode(array(
@@ -2046,7 +2057,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         if (isset($_GET['available'])) {
-            $sql_cmd = "SELECT e.username, e.id, e.active, e.role_type,
+            $sql_cmd = "SELECT
+                            e.username, e.id, e.active, e.role_type,
                         CASE 
                             WHEN c.queue_count IS NULL THEN 'Available'
                             ELSE 'Assigned' 
@@ -2142,6 +2154,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         t.token_number,
                         t.transaction_time,
                         t.status,
+                        t.queue_number,
                         r.is_student,
                         r.name,
                         r.email,
@@ -2338,7 +2351,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             // Counting if theres transaction today was recorded in current day
-            $queue_count = 0;
+            // $queue_count = 0;
             $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
                         FROM transactions t
                         WHERE DATE(t.transaction_time) = CURDATE()";
@@ -2353,8 +2366,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             // Checking if the transaction was already assigned
             $sql_cmd = "SELECT *
-                        FROM transactions
-                        WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
+                        FROM
+                            transactions t
+                        WHERE
+                            t.idcounter = ? AND
+                            t.idemployee = ? AND
+                            DATE(t.transaction_time) = CURDATE() AND
+                            t.status = 'serve'";
+            if (isset($this_priority) && $this_priority == "Y") {
+                $sql_cmd = "SELECT *
+                            FROM transactions t
+                            LEFT JOIN requesters r ON t.idrequester = r.id
+                            WHERE 
+                                t.idcounter = ? AND
+                                idemployee = ? AND
+                                status = 'serve' AND
+                                DATE(t.transaction_time) = DATE(CURDATE()) AND
+                                (
+                                    r.priority = 'pregnant' OR
+                                    r.priority = 'elderly' OR
+                                    r.priority = 'disability'  
+                                ) 
+                            ";
+            }
             $stmt = $conn->prepare($sql_cmd);
             $stmt->bind_param("ss", $counters[0]['idcounter'], $_GET['employee_id']);
             $stmt->execute();
@@ -2371,9 +2405,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             $sql_cmd  = "SELECT *
                         FROM transactions t
-                        WHERE t.status = 'pending' AND t.idcounter IS NULL AND t.idemployee IS NULL
+                        WHERE
+                            t.status = 'pending' AND
+                            t.idcounter IS NULL AND
+                            t.idemployee IS NULL AND
+                            DATE(t.transaction_time) = DATE(CURDATE())
                         ORDER BY t.transaction_time ASC
                         LIMIT 1";
+            if (isset($this_priority) && $this_priority == "Y") {
+                $sql_cmd = "SELECT *
+                            FROM transactions t
+                            LEFT JOIN requesters r ON t.idrequester = r.id
+                            WHERE
+                                t.status = 'pending' AND
+                                t.idcounter IS NULL AND
+                                t.idemployee IS NULL AND
+                                DATE(t.transaction_time) = DATE(CURDATE()) AND
+                                (
+                                    r.priority = 'pregnant' OR
+                                    r.priority = 'elderly' OR
+                                    r.priority = 'disability'    
+                                )
+                            ORDER BY t.transaction_time ASC
+                            LIMIT 1";
+            }
+
             $stmt = $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -2396,15 +2452,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             DATE(t.transaction_time) = CURDATE()
                         ORDER BY t.transaction_time ASC
                         LIMIT 1";
+            if (isset($this_priority) && $this_priority == "Y") {
+                $sql_cmd = "SELECT *
+                            FROM transactions t
+                            LEFT JOIN requesters r ON t.idrequester = r.id
+                            WHERE
+                                t.status = 'pending' AND
+                                t.idcounter IS NULL AND
+                                t.idemployee IS NULL AND
+                                DATE(t.transaction_time) = DATE(CURDATE()) AND
+                                (
+                                    r.priority = 'pregnant' OR
+                                    r.priority = 'elderly' OR
+                                    r.priority = 'disability'    
+                                )
+                            ORDER BY t.transaction_time ASC
+                            LIMIT 1";
+            }
             $stmt= $conn->prepare($sql_cmd);
             $stmt->execute();
             $result = $stmt->get_result();
             $transactions = $result->fetch_all(MYSQLI_ASSOC);
             $stmt->close();
+
+            
             if ($result->num_rows > 0) {
-
-                
-
 
                 $sql_cmd = "UPDATE transactions
                             SET idcounter = ?, idemployee = ?,  status = 'serve'
@@ -2424,7 +2496,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                 $sql_cmd = "SELECT *
                         FROM transactions t
-                        WHERE t.transaction_time > ?
+                        WHERE
+                            t.transaction_time > ? AND
+                            DATE(t.transaction_time) = DATE(CURDATE())
                         ORDER BY t.transaction_time ASC
                         LIMIT 4, 1";
                 $stmt = $conn->prepare($sql_cmd);
@@ -2453,43 +2527,46 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = $stmt->get_result();
                 $requester = $result->fetch_all(MYSQLI_ASSOC);
                 $stmt->close();
-                // if ($result->num_rows > 0) {
-                //     echo json_encode(array(
-                //         "status" => "success",
-                //         "message" => "Requester found",
-                //         "data" => $requester
-                //     ));
-                //     exit;
-                // }
-
+                
                 include "./email_content.php";
 
-                $requester = $requester[0];
-                $requester_name = $requester['name'];
-                $requester_email = $requester['email'];
-                $requester_payment = $requester['payment'];
-                $requester_token = $transaction_f[0]['token_number'];
-                $request_data = array(
-                    "name" => $requester_name,
-                    "email" => $requester_email,
-                    "payment" => $requester_payment,
-                    "transaction_id" => $transaction_f[0]['idtransaction'],
-                    "queue_count_int" => $transaction_f[0]['queue_number'],
-                    "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
-                );
-                echo json_encode($request_data);
-                send_email_notify_before_5($request_data);
+                if ($result->num_rows > 0) {
+                    // echo json_encode(array(
+                    //     "status" => "success",
+                    //     "message" => "Requester found",
+                    //     "data" => $requester
+                    // ));
+                    // exit;
+                    $requester = $requester[0];
+                    $requester_name = $requester['name'];
+                    $requester_email = $requester['email'];
+                    $requester_payment = $requester['payment'];
+                    $requester_token = $transaction_f[0]['token_number'];
+                    $request_data = array(
+                        "name" => $requester_name,
+                        "email" => $requester_email,
+                        "payment" => $requester_payment,
+                        "transaction_id" => $transaction_f[0]['idtransaction'],
+                        "queue_count_int" => $transaction_f[0]['queue_number'],
+                        "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
+                    );
+                    // echo json_encode($request_data);
+                    send_email_notify_before_5($request_data);
+                    exit;
+                }
+
+
 
                 //////////////////////////////////////////////
                 // Cancel the past 3
 
                 $sql_cmd = "SELECT *
-                        FROM transactions t
-                        WHERE t.transaction_time < ? AND
-                        DATE(t.transaction_time) = CURDATE() AND
-                        t.status = 'missed'
-                        ORDER BY t.transaction_time DESC
-                        LIMIT 2, 1";
+                            FROM transactions t
+                            WHERE t.transaction_time < ? AND
+                            DATE(t.transaction_time) = CURDATE() AND
+                            t.status = 'missed'
+                            ORDER BY t.transaction_time DESC
+                            LIMIT 2, 1";
                 $stmt = $conn->prepare($sql_cmd);
                 $stmt->bind_param("s", $transactions[0]['transaction_time']);
                 $stmt->execute();
@@ -2565,6 +2642,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         exit;
 
+    }  else if (isset($_GET['requester_priority'])) {
+        // Reserved
+        
+        
     // REQUESTER
     } else if (isset($_GET['requesters'])) {
         // Display Requester Number
@@ -3080,6 +3161,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             exit;
         }
+    } else if (isset($_GET['refresh_data'])) {
+        // Incase for issue
+        $conn->begin_transaction();
+        try {
+            $conn->query("CALL `employeeMonitor`()");
+            $conn->query("CALL `requesterCount`()");
+            $conn->query("CALL `TransactionsHistoryStats`()");
+            $conn->query("CALL `TransactionsToday`()");
+            $conn->commit();
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Data refreshed successfully"
+            ));
+            exit;
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo json_encode(array(
+                "status" => "error",
+                "message" => $e->getMessage()
+            ));
+        }
+        exit;
     }
     
     else 
