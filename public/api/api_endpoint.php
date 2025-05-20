@@ -1650,6 +1650,61 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
         }
         exit;
+    
+    // Transaction limit
+    } else if ($method == "transaction_limiter") {
+        if (!isset($data->transaction_limit)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Please fill up the information for transaction limit."
+            ));
+            exit;
+        }
+
+        $transaction_limit = $data->transaction_limit;
+
+        // Check if the transaction limit is exist
+
+        $sql_cmd = "SELECT *
+                    FROM setup_system
+                    WHERE setup_key = 'transaction_limit'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_limit_check = $result->fetch_all(MYSQLI_ASSOC);
+        if ($result->num_rows == 0) {
+            // Insert the transaction limit
+            $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value_int)
+                        VALUES ('transaction_limit', ?)";
+            $stmt = $conn->prepare($sql_cmd);
+            $stmt->bind_param("s", $transaction_limit);
+            $stmt->execute();
+        }
+        $stmt->close();
+
+        // Update the transaction limit
+        $sql_cmd = "UPDATE setup_system
+                    SET setup_value_int = ?
+                    WHERE setup_key = 'transaction_limit'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->bind_param("s", $transaction_limit);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction limit updated successfully"
+            ));
+        } else if ($stmt->affected_rows == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "No changes made"
+            ));
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . $conn->error
+            ));
+        }
     }
 
 } else if ($_SERVER["REQUEST_METHOD"] === "GET") {
@@ -2079,10 +2134,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // TRANSACTIONS HISTORY
     } else if (isset($_GET['transactions'])) {
-        $sql_cmd = "SELECT *
+        $sql_cmd = "SELECT 
+                        t.idtransaction,
+                        t.idrequester,
+                        t.idemployee,
+                        t.idcounter,
+                        t.token_number,
+                        t.transaction_time,
+                        t.status,
+                        r.is_student,
+                        r.name,
+                        r.email,
+                        r.payment,
+                        r.pwd,
+                        c.counterNumber
                     FROM transactions t
-                    LEFT JOIN requesters r ON t.idrequester = r.id
-                    WHERE 1=1 ";
+                    LEFT JOIN 
+                        requesters r ON t.idrequester = r.id
+                    LEFT JOIN
+                        counters c ON t.idcounter = c.idcounter
+                    WHERE 
+                        1=1 ";
         $params = [];
         $types = "";
 
@@ -2162,13 +2234,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 } else if ($_GET['date_range'] == 'last_year') {
                     $sql_cmd .= "AND YEAR(t.transaction_time) = YEAR(CURDATE() - INTERVAL 1 YEAR) ";
                 }
-            }
-        }
-
-        // Group by student
-        if (isset($_GET['students_group'])) {
-            if ($_GET['group_by'] == 'student') {
-                $sql_cmd .= "GROUP BY r.is_student";
             }
         }
     
@@ -2992,7 +3057,34 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             exit;
         }
-    } else {
+    } else if (isset($_GET['transaction_limiter'])) {
+        $sql_cmd = "SELECT *
+                    FROM setup_system
+                    WHERE setup_key = 'transaction_limit'";
+        $stmt = $conn->prepare($sql_cmd);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $transaction_limiter = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        if ($result->num_rows > 0) {
+            echo json_encode(array(
+                "status" => "success",
+                "message" => "Transaction limiter found",
+                "data" => $transaction_limiter[0]
+            ));
+            exit;
+        } else {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Transaction limiter not found"
+            ));
+            exit;
+        }
+    }
+    
+    else 
+    
+    {
         echo json_encode(array(
             "status" => "error",
             "message" => "Invalid request"

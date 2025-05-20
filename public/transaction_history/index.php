@@ -27,7 +27,7 @@ $email = $token->email;
     <?php include "./../includes/navbar.php"; ?>
 
     <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:900px">
-        <div class="col-md-6" style="min-width:400px;">
+        <div class="col-md-10" style="min-width:400px;">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username?> has logged out successfully</span>
             </div>
@@ -116,6 +116,7 @@ $email = $token->email;
                     </div>
                     <table class="table table-striped table-members" id="table-transactions-history">
                         <thead>
+                            <th>Counter No</th>
                             <th>Transaction Time</th>
                             <th>#</th>
                             <th class="d-none d-md-none d-lg-block">Email</th>
@@ -216,6 +217,7 @@ $email = $token->email;
                     transactions.forEach((transaction) => {
                         let row = table_transactions_history.insertRow(-1);
                         row.innerHTML += `
+                            <td>${transaction.counterNumber}</td>
                             <td>${transaction.transaction_time}</td>
                             <td>${transaction.idtransaction}</td>
                             <td class="d-none d-md-none d-lg-block">

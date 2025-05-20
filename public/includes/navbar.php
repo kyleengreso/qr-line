@@ -139,7 +139,7 @@ if (isset($_COOKIE['token'])) {
                                 <i class="bi bi-gear-fill"></i>
                             </div>
                             <div class="col-10">
-                                <span>Schedules</span>    
+                                <span>Settings</span>    
                             </div>
                         </div>
                     </a>

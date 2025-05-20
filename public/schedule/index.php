@@ -19,7 +19,7 @@ $counterNumber = $token->counterNumber;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php head_icon() ?>
-    <title>Schedule | <?php echo $project_name ?></title>
+    <title>Settings | <?php echo $project_name ?></title>
     <?php head_css() ?>
     <?php before_js() ?>
 </head>
@@ -35,13 +35,54 @@ $counterNumber = $token->counterNumber;
                 <nav aria-label="breadcrumb mx-4">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="/public/admin" style="text-decoration:none;color:black">Dashboard</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Schedule</li>
+                        <li class="breadcrumb-item active" aria-current="page">Settings</li>
                     </ol>
                 </nav>
             </div>
-            <div class="card shadow">
+            <div class="card shadow mb-4">
                 <div class="card-header">
-                    Schedule: Requester
+                    Transaction: Limit Rate/day
+                </div>
+                <form id="frmTransactionLimitForm"> 
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <span>This feature will set limit transaction requests per day.</span>
+                        </div>
+                        <div class="alert alert-success d-none" id="notify-transaction-limit">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <span id="notify-transaction-limit-message">Transaction limit set successfully.</span>
+                        </div>
+                        <div class="mb-4 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="schedule_requester_enable" id="schedule_requester_enable" value="1">
+                            <label class="form-check-label" for="schedule_requester_enable">Enable</label>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <span>Transaction Limit:</span>
+                            </div>
+                            <div class="col-12">
+                                <div class="input-group mb-2">
+                                    <div class="input-group-text"><i class="bi bi-hourglass-top"></i></div>
+                                    <div class="form-floating">
+                                        <input type="number" name="transaction_limit" id="transaction_limit" class="form-control" placeholder="Transaction Limit" value="10">
+                                        <label for="transaction_limit">Transaction Limit</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary w-100 w-md-25" type="submit">
+                            <i class="bi bi-check-lg"></i> 
+                            <span>
+                                Save
+                            </span>   
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    Schedule: Time Range
                 </div>
                 <form id="frmScheduleRequesterForm">
                     <div class="card-body">
