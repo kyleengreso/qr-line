@@ -734,9 +734,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
         // Insert counter
-        $sql_cmd = "INSERT INTO counters (idemployee, counterNumber) VALUES (?, ?)";
+        $sql_cmd = "INSERT INTO counters (idemployee, counterNumber, counter_priority) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $data->idemployee, $data->counterNumber);
+        $stmt->bind_param("sss", $data->idemployee, $data->counterNumber, $data->counter_priority);
         $stmt->execute();
         if ($stmt->affected_rows > 0) {
             echo json_encode(array(
@@ -760,7 +760,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $id = $data->id;                        // idcounter
         $counterNumber = $data->counterNumber;  // counterNumber
         $employee_id = $data->idemployee;       // idemployee
-
+        $priority = $data->counter_priority; // counter_priority
         // check if exists about idemployee
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
         $stmt = $conn->prepare($sql_cmd);
@@ -2043,7 +2043,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     // COUNTERS
     } else if (isset($_GET['counters'])) {
-        $sql_cmd = "SELECT c.idcounter, c.counterNumber, c.idemployee, c.queue_count, e.username, c.created_at, e.role_type, e.active
+        $sql_cmd = "SELECT
+                        c.idcounter,
+                        c.counterNumber,
+                        c.idemployee,
+                        c.queue_count,
+                        e.username,
+                        c.created_at,
+                        e.role_type,
+                        e.active,
+                        c.counter_priority
                     FROM counters c
                     LEFT JOIN employees e ON c.idemployee = e.id
                     WHERE 1=1 AND e.role_type = 'employee' ";
@@ -2368,11 +2377,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT *
                         FROM
                             transactions t
+                        LEFT JOIN requesters r ON t.idrequester = r.id
                         WHERE
                             t.idcounter = ? AND
                             t.idemployee = ? AND
-                            DATE(t.transaction_time) = CURDATE() AND
-                            t.status = 'serve'";
+                            DATE(t.transaction_time) = DATE(CURDATE()) AND
+                            t.status = 'serve' AND
+                            (
+                                r.priority = 'none'  
+                            ) 
+                            ";
             if (isset($this_priority) && $this_priority == "Y") {
                 $sql_cmd = "SELECT *
                             FROM transactions t
@@ -2405,11 +2419,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             $sql_cmd  = "SELECT *
                         FROM transactions t
+                        LEFT JOIN requesters r ON t.idrequester = r.id
                         WHERE
                             t.status = 'pending' AND
                             t.idcounter IS NULL AND
                             t.idemployee IS NULL AND
-                            DATE(t.transaction_time) = DATE(CURDATE())
+                            DATE(t.transaction_time) = DATE(CURDATE()) AND
+                            (
+                                r.priority = 'none'  
+                            )
                         ORDER BY t.transaction_time ASC
                         LIMIT 1";
             if (isset($this_priority) && $this_priority == "Y") {
@@ -2445,11 +2463,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Or get the transaction where can still available for today
             $sql_cmd = "SELECT *
                         FROM transactions t
+                        LEFT JOIN requesters r ON t.idrequester = r.id
                         WHERE 
                             t.status = 'pending' AND
                             t.idcounter IS NULL AND
                             t.idemployee IS NULL AND
-                            DATE(t.transaction_time) = CURDATE()
+                            DATE(t.transaction_time) = DATE(CURDATE()) AND
+                            (
+                                r.priority = 'none'  
+                            )
                         ORDER BY t.transaction_time ASC
                         LIMIT 1";
             if (isset($this_priority) && $this_priority == "Y") {

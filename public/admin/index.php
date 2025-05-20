@@ -793,7 +793,7 @@ $counterNumber = $token->counterNumber;
                             cutOffState.classList.remove('d-none');
                             setTimeout(() => {
                                 cutOffNotification.classList.add('d-none');
-                            }, 5000);      
+                            }, 2000);      
                         }
                     },
                     error: function(xhr, status, error) {

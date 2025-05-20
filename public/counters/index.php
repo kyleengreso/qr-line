@@ -164,6 +164,16 @@ $counterNumber = $token->counterNumber;
                                 <label for="counter_no_add">Counter Number</label>
                             </div>
                         </div>
+                        <div class="input-group mb-2">
+                            <div class="input-group-text" ><i class="bi bi-sort-up-alt"></i></div>
+                            <div class="form-floating">
+                                <select class="form-select" name="transaction-filter-priority-add" id="transaction-filter-priority-add">
+                                    <option value="N">No</option>
+                                    <option value="Y">Yes</option>
+                                </select>
+                                <label for="transaction-filter-status">Priority Lane</label>
+                            </div>
+                        </div>
                         <div class="modal-footer">
                             <div class="d-flex justify-content-end">
                                 <a class="btn btn-secondary" style="width:max-content;margin-right:10px" data-dismiss="modal">Cancel</a>
@@ -209,6 +219,10 @@ $counterNumber = $token->counterNumber;
                                 <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
                                 <label for="updateSearchUsername">Search Username</label>
                             </div>
+                        </div>
+                        <div class="input-group mb-2">
+                            <span style="margin-right:20px">Priority Lane:</span>
+                            <span class="fw-bold"id="counter-priority-lane-update"></span>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Employees Available</label>
@@ -459,7 +473,7 @@ $counterNumber = $token->counterNumber;
             const formData = new FormData(this);
             const employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
             const counter_number = formData.get('counter_no_add');
-
+            const priority = formData.get('transaction-filter-priority');
             // console.log(employee_id, counter_number);
 
             $.ajax({
@@ -469,6 +483,7 @@ $counterNumber = $token->counterNumber;
                     method: "counter-add",
                     idemployee: employee_id,
                     counterNumber: counter_number,
+                    counter_priority: priority
                 }),
                 success: function(response) {
                     console.log(response);
@@ -520,6 +535,8 @@ $counterNumber = $token->counterNumber;
                     updateCounterUsername.innerText = counter.username;
                     let updateCounterNumber = document.getElementById('updateCounterNumber');
                     updateCounterNumber.innerText = counter.counterNumber;
+                    let counter_priority_lane_update = document.getElementById('counter-priority-lane-update');
+                    counter_priority_lane_update.textContent = counter.counter_priority === 'Y' ? 'Yes' : 'No';
                     let update_id = document.getElementById('update_id');
                     update_id.value = counter.idcounter;
                     console.log(counter);
@@ -633,7 +650,6 @@ $counterNumber = $token->counterNumber;
                     method: "counters-update",
                     id: idcounter,
                     counterNumber: counter_number,
-                    counter_pwd: false,
                     idemployee: employee_id,
                 }),
                 success: function(response) {
