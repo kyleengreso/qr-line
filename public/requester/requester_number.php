@@ -21,8 +21,8 @@ include './../base.php';
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:50px;margin-bottom:100px;flex-direction:column">
-        <div class="container d-flex justify-content-center align-items-center container-set" style="margin-top:100px;flex-direction:column">
+    <div class="container d-flex justify-content-center align-items-center" style="margin-top:100px;margin-bottom:100px;flex-direction:column">
+        <div class="container d-flex justify-content-center align-items-center" style="flex-direction:column">
             <div class="alert alert-info" id="this_requester_status_alert">
                 Status: <span class="fw-bold" id="this_requester_status_info"></span>
             </div>
