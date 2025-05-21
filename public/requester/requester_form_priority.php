@@ -74,11 +74,7 @@ foreach ($everyday as $day) {
                             <option value="elderly">Elderly</option>
                             <option value="disability">Disability</option>
                         </select>
-<<<<<<< HEAD
                         <label for="transaction-history-priority" class="form-label">Priority</label>
-=======
-                        <label for="transaction-history-pwd" class="form-label">Priority</label>
->>>>>>> 4627329 (change pwd to priority)
                     </div>
                 </div>
                 <div class="input-group mb-3">

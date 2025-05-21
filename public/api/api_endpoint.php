@@ -5,6 +5,13 @@
 require_once __DIR__ . '/./../base.php';
 require_once __DIR__ . '/./../includes/system_auth.php';
 
+/**
+ *  NOTE:
+ * This API reponse must less than 100ms
+ * 
+ * 
+ * 
+ */
 header("Content-Type: application/json");
 
 global $conn;
@@ -33,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = json_decode(file_get_contents("php://input"));
     
     if (!isset($data->method)) {
+        $conn->close();
         echo json_encode(array(
             "status" => "error",
             "message" => "Invalid request"
@@ -69,12 +77,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 if ($web) {
                     header("Location: " . "/../auth/login.php");
                 }
+                $conn->close();
                 exit;
             } else {
                 echo json_encode(array(
                     "status" => "error",
                     "message" => "Invalid token"
                 ));
+                $conn->close();
                 exit;
             }
         } else {
@@ -82,6 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "No token found"
             ));
+            $conn->close();
             exit;
         }
     } else if ($method == "login") {
@@ -90,6 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username and password!"
             ));
+            $conn->close();
             exit;
         }
         $username = $data->username;
@@ -109,6 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Username or Password is invalid"
             ));
+            $conn->close();
             exit;
         }
         if ($employee[0]['active'] == 0) {
@@ -116,6 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Account is deactivated"
             ));
+            $conn->close();
             exit;
         }
         if (password_verify($password, $employee[0]['password'])) {
@@ -137,6 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "status" => "error",
                         "message" => "Cashier was not assigned yet"
                     ));
+                    $conn->close();
                     exit;
                 }
             }
@@ -171,6 +186,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Login successful",
                 "data" => $token
             ));
+            $conn->close();
             exit;
         } else {
             // Attempt login
@@ -207,6 +223,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "attempt" => $attempt,
                     "message" => "Username or Password is invalid"
                 ));
+                $conn->close();
                 exit;
             } else {
                 // Deactivate
@@ -227,12 +244,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "status" => "error",
                     "message" => "Account is deactivated"
                 ));
+                $conn->close();
                 exit;
             }
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Username or Password is invalid"
             ));
+            $conn->close();
             exit;
         }
     // REGISTER
@@ -242,6 +261,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username, password and email!"
             ));
+            $conn->close();
             exit;
         }
         $username = $data->username;
@@ -262,6 +282,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Username or Email already exists"
             ));
+            $conn->close();
             exit;
         } else {
             $hash_password = password_hash($password, PASSWORD_DEFAULT);
@@ -273,12 +294,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "status" => "success",
                     "message" => "Employee registered successfully"
                 ));
+                $conn->close();
                 exit;
             } else {
                 echo json_encode(array(
                     "status" => "success",
                     "message" => "Error: " . $conn->error
                 ));
+                $conn->close();
                 exit;
             }
         }
@@ -291,6 +314,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username!"
             ));
+            $conn->close();
             exit;
         }
 
@@ -312,6 +336,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Can't find username " . $username . "."
             ));
+            $conn->close();
             exit;
         }
 
@@ -338,17 +363,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Password reset successfully",
                 "new_password" => $password
             ));
+            $conn->close();
             exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
             exit;
         }
 
@@ -359,6 +388,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id!"
             ));
+            $conn->close();
             exit;
         }
         
@@ -377,6 +407,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not found"
             ));
+            $conn->close();
             exit;
         }
 
@@ -415,11 +446,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "cut_off" => $cut_off,
                 "message" => $message
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
     } else if ($method == "employees-add") {
         if (!isset($data->username) || !isset($data->password) || !isset($data->email) || !isset($data->role_type)) {
@@ -427,6 +462,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username, password, email and role type!"
             ));
+            $conn->close();
             exit;
         }
         $username = $data->username;
@@ -449,6 +485,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Username or Email already exists"
             ));
+            $conn->close();
             exit;
         }
         $hash_password = password_hash($password, PASSWORD_DEFAULT);
@@ -471,12 +508,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Employee registered successfully"
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
             exit;
         }
         exit;
@@ -486,6 +525,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id, username, email and role type!"
             ));
+            $conn->close();
             exit;
         }
 
@@ -511,6 +551,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Username already exists"
             ));
+            $conn->close();
             exit;
         }
 
@@ -530,6 +571,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Email already exists"
             ));
+            $conn->close();
             exit;
         }
 
@@ -540,6 +582,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please select the role type"
             ));
+            $conn->close();
             exit;
         }
 
@@ -550,6 +593,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Invalid active status"
             ));
+            $conn->close();
             exit;
         }
 
@@ -592,16 +636,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Employee updated successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
         exit;
     } else if ($method == "employees-delete") {
@@ -610,6 +660,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id!"
             ));
+            $conn->close();
             exit;
         }
         $id = $data->id;
@@ -622,18 +673,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Employee deleted successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee is not found"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
-        $stmt->close();
+        $conn->close();
         exit;
     } else if ($method == "employees-reset") {
         if (!isset($data->id)) {
@@ -641,6 +698,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id!"
             ));
+            $conn->close();
             exit;
         }
         $id = $data->id;
@@ -653,18 +711,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Employee password reset successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
-        $stmt->close();
+        $conn->close();
         exit;
     
     // COUNTERS
@@ -674,6 +738,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input counter number and employee id!"
             ));
+            $conn->close();
             exit;
         }
         // check if only counterNumber is exist
@@ -688,6 +753,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Counter number already assigned"
             ));
+            $conn->close();
             exit;
         }
 
@@ -703,6 +769,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee already assigned to another counter"
             ));
+            $conn->close();
             exit;
         }
 
@@ -717,6 +784,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Counter number already registered"
             ));
+            $conn->close();
             exit;
         }
         // Employee checking
@@ -731,6 +799,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not found"
             ));
+            $conn->close();
             exit;
         }
         // Insert counter
@@ -743,11 +812,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Counter registered successfully"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
     } else if ($method == "counters-update") {
         if (!isset($data->id) || !isset($data->counterNumber) || !isset($data->idemployee)) {
@@ -755,6 +828,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id, counter number and employee id!"
             ));
+            $conn->close();
             exit;
         }
         $id = $data->id;                        // idcounter
@@ -773,6 +847,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not found"
             ));
+            $conn->close();
             exit;
         }
 
@@ -788,6 +863,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee already assigned to another counter"
             ));
+            $conn->close();
             exit;
         }
 
@@ -804,6 +880,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Counter number already registered"
             ));
+            $conn->close();
             exit;
         }
 
@@ -817,18 +894,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Counter updated successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
-        $stmt->close();
+        $conn->close();
         exit;
     
     } else if ($method == "counters-delete") {
@@ -837,6 +920,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id!"
             ));
+            $conn->close();
             exit;
         }
 
@@ -859,16 +943,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Counter deleted successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter is not found"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
     } else if ($method == "refresh-count") {
         // Employee Section
@@ -997,7 +1087,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "message" => "Refresh count successfully",
             "data" => $stats[0]
         ));
-        exit();
+        $conn->close();
+        exit;
     // REQUESTER: PUSH SUCCESS
     } else if ($method == "cashier-success") {
         // counterNumber
@@ -1009,6 +1100,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input idemployee!"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1026,6 +1118,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not found"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1047,6 +1140,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not assigned in counter"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1069,6 +1163,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             //     "status" => "error",
             //     "message" => "No transaction found"
             // ));
+            // $conn->close();
             // exit;
         } else {
             // echo json_encode(array(
@@ -1076,6 +1171,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             //     "message" => "Transaction found",
             //     "data" => $transaction
             // ));
+            // $conn->close();
             // exit;
         }
 
@@ -1128,16 +1224,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "No transaction was assigned"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction success successfully"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
             exit;
         }
         exit;
@@ -1151,6 +1252,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input idemployee!"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1168,6 +1270,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not found"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1189,6 +1292,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not assigned in counter"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1211,6 +1315,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             //     "status" => "error",
             //     "message" => "No transaction found"
             // ));
+            // $conn->close();
             // exit;
         } else {
             // echo json_encode(array(
@@ -1218,6 +1323,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             //     "message" => "Transaction found",
             //     "data" => $transaction
             // ));
+            // $conn->close();
             // exit;
         }
 
@@ -1267,18 +1373,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Missed Transaction updated successfully"
             ));
+            $conn->close();
             exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No transaction was assigned"
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
             exit;
         }
         exit;
@@ -1290,6 +1399,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please input token number."
             ));
+            $conn->close();
             exit;
         }
         $token_number = $data->token_number;
@@ -1309,6 +1419,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Transaction was not found"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1327,6 +1438,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Transaction was already cancelled"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1345,6 +1457,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Transaction was already completed"
             ));
+            $conn->close();
             exit;
         }
 
@@ -1360,16 +1473,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Transaction cancelled successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Already cancelled this transaction"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
 
 
@@ -1381,6 +1500,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information."
             ));
+            $conn->close();
             exit;
         }
     
@@ -1467,18 +1587,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             exit;
         }
+        $conn->close();
+        exit;
     } else if ($method == "counter_queue_remain") {
         if (!isset($data->counter_number)) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter Number is required"
             ));
+            $conn->close();
+            exit;
         }
         // if (!isset($data->queue_remain)) {
         //     echo json_encode(array(
         //         "status" => "error",
         //         "message" => "Queue Reamin is required"
         //     ));
+        //     $conn->close();
+        //     exit;
         // }
         $counter_number = $data->counter_number;
         $queue_remain = $data->queue_remain;
@@ -1497,6 +1623,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Counter number not found"
             ));
+            $conn->close();
             exit;
         }
         $stmt->close();
@@ -1512,19 +1639,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Queue remain updated successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
+
+        $conn->close();
         exit;
-    
     // Schedule
     } else if ($method == "schedule-create") {
         if (!isset($data->enable) || !isset($data->schedule_type) || !isset($data->schedule_key)) {
@@ -1532,6 +1666,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information for schedule."
             ));
+            $conn->close();
             exit;
         }
 
@@ -1555,16 +1690,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Schedule created successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
     } else if ($method == "schedule-update-requester_form") {
         if (!isset($data->time_start) || !isset($data->time_end) || !isset($data->enable)) {
@@ -1572,6 +1713,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information for schedule."
             ));
+            $conn->close();
             exit;
         }
 
@@ -1612,6 +1754,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Schedule not found, however the schedule will reset to default."
             ));
+            $conn->close();
             exit;
         } else if ($result->num_rows > 1) {
             // Delete all requester_form schedule_key related
@@ -1649,16 +1792,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Schedule updated successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
         exit;
     
@@ -1669,6 +1818,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information for transaction limit."
             ));
+            $conn->close();
             exit;
         }
 
@@ -1705,16 +1855,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Transaction limit updated successfully"
             ));
+            $conn->close();
+            exit;
         } else if ($stmt->affected_rows == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
+            $conn->close();
+            exit;
         }
     }
 
@@ -1753,6 +1909,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "message" => "Dashboard stats successfully retrieved",
             "data" => $stats
         ));
+        $conn->close();
         exit;
 
     // GENERATE REPORT
@@ -1763,6 +1920,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please provide the tentative year and month."
             ));
+            $conn->close();
             exit;
             }
 
@@ -1951,7 +2109,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         $pdf->Output();
-        
+        $conn->close();
         exit;
     }
         
@@ -2017,6 +2175,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "total_employees" => $employees[0]['total_employees']
             ));
+            $conn->close();
             exit;
         } else if ($result->num_rows > 0) {
             if (isset($_GET['id'])) {
@@ -2025,6 +2184,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "employee" => $employees[0],
                     "message" => "Employee found",
                 ));
+                $conn->close();
                 exit;
             }
             echo json_encode(array(
@@ -2032,12 +2192,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "employees" => $employees,
                 "message" => "Employees found",
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No employees found",
             ));
+            $conn->close();
+            exit;
         }
         exit;
     
@@ -2128,6 +2291,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "total_counters" => $counters[0]['total_counters']
             ));
+            $conn->close();
             exit;
         } else if ($result->num_rows > 0) {
             if (isset($_GET['id'])) {
@@ -2136,6 +2300,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "counter" => $counters[0],
                     "message" => "Counter found",
                 ));
+                $conn->close();
                 exit;
             }
             echo json_encode(array(
@@ -2143,13 +2308,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "counters" => $counters,
                 "message" => "Counters found",
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No counters found",
             ));
+            $conn->close();
+            exit;
         }
+        $conn->close();
         exit;
 
 
@@ -2294,6 +2463,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "total_transactions" => $transactions[0]['total_transactions']
             ));
+            $conn->close();
             exit;
         } else if ($result->num_rows > 0) {
             echo json_encode(array(
@@ -2301,12 +2471,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "transactions" => $transactions,
                 "message" => "Transactions found",
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No transactions found",
             ));
+            $conn->close();
             exit;
         }
     exit;
@@ -2331,6 +2503,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "status" => "error",
                     "message" => "Employee not found"
                 ));
+                $conn->close();
                 exit;
             }
 
@@ -2356,6 +2529,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "status" => "error",
                     "message" => "Counter not found"
                 ));
+                $conn->close();
                 exit;
             }
 
@@ -2415,6 +2589,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "message" => "Transaction already assigned",
                     "data" => $transactions[0]
                 ));
+                $conn->close();
                 exit;
             }
             $sql_cmd  = "SELECT *
@@ -2458,6 +2633,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "status" => "error",
                     "message" => "No transaction available for today"
                 ));
+                $conn->close();
                 exit;
             }
             // Or get the transaction where can still available for today
@@ -2659,9 +2835,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "status" => "error",
                     "message" => "No transactions available for today"
                 ));
+                $conn->close();
                 exit;
             }
         }
+        $conn->close();
         exit;
 
     }  else if (isset($_GET['requester_priority'])) {
@@ -2688,12 +2866,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "message" => "Requester found",
                     "data" => $requesters[0]
                 ));
+                $conn->close();
                 exit;
             } else {
                 echo json_encode(array(
                     "status" => "error",
                     "message" => "Requester not found"
                 ));
+                $conn->close();
                 exit;
             }
         }
@@ -2752,12 +2932,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "requester" => $requester_latest[0]['queue_number'] ?? "No queue",
                 "message" => "Counters found",
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No counters found",
             ));
+            $conn->close();
+            exit;
         }
+        $conn->close();
         exit;
 
     
@@ -2770,6 +2955,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please provide the requester token that you submitted."
             ));
+            $conn->close();
             exit;
         }
     
@@ -2819,6 +3005,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "currentQueueNumber" => $queue_count_int ?? "N/A",
             "requester_status" => $row['status'] ?? "N/A"
         ));
+        $conn->close();
         exit;
     } else if (isset($_GET['transaction_reminder'])) {
         if (!isset($_GET['idtransaction'])) {
@@ -2826,6 +3013,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please provide the transaction id."
             ));
+            $conn->close();
             exit;
         }
 
@@ -2884,16 +3072,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "transaction_id" => $transaction_get['idtransaction'],
                 "queue_count_int" => $transaction_get['queue_number']
             );
-            send_email_notify_before_5($request_data);
-
-            
+            send_email_notify_before_5($request_data); 
         }
+        $conn->close();
+        exit;
     } else if (isset($_GET['employeeCutOff'])) {
         if (!isset($_GET['id'])) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Please provide the employee id."
             ));
+            $conn->close();
             exit;
         }
 
@@ -2912,6 +3101,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Employee not found"
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
@@ -2919,6 +3109,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "cut_off_state" => $employee[0]['cut_off_state'],
                 "message" => "Employee found"
             ));
+            $conn->close();
+            exit;
         }
     
     // Transaction Stats
@@ -2929,6 +3121,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please provide the data range."
             ));
+            $conn->close();
             exit;
         }
         $data_range = $_GET['data_range'];
@@ -2951,6 +3144,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
 
         // CURRENT WEEK
         } else if ($data_range === "week") {
@@ -2971,6 +3166,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
         // LAST WEEK
         } else if ($data_range === "last-week") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
@@ -2990,6 +3187,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
 
         // This Month
         } else if ($data_range === "month") {
@@ -3010,6 +3209,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
 
         // Last 30 days
         } else if ($data_range === "last-30-days") {
@@ -3029,6 +3230,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
 
         // LAST 3 MONTHS
         } else if ($data_range === "last-3-months") {
@@ -3048,6 +3251,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
 
         // LAST 12 MONTHS
         } else if ($data_range === "last-12-months") {
@@ -3067,6 +3272,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
+
         // This year
         } else if (isset($_GET['year'])) {
             $sql_cmd = "SELECT 
@@ -3086,19 +3294,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
+            $conn->close();
+            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Invalid request"
             ));
+            $conn->close();
+            exit;
         }
-    
+        $conn->close();
+        exit;
     } else if (isset($_GET['counter_queue_remain'])) {
         if (!isset($_GET['counter_number'])) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Please provide the counter number."
             ));
+            $conn->close();
             exit;
         }
 
@@ -3117,6 +3331,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Counter is not assigned"
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
@@ -3124,6 +3339,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "queue_remain" => $counters[0]['queue_remain'],
                 "message" => "Counter found"
             ));
+            $conn->close();
             exit;
         }
         exit;
@@ -3152,12 +3368,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Schedule found",
                 "data" => $schedule[0]
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Schedule not found"
             ));
+            $conn->close();
             exit;
         }
     } else if (isset($_GET['transaction_limiter'])) {
@@ -3175,12 +3393,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Transaction limiter found",
                 "data" => $transaction_limiter[0]
             ));
+            $conn->close();
             exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Transaction limiter not found"
             ));
+            $conn->close();
             exit;
         }
     } else if (isset($_GET['refresh_data'])) {
@@ -3196,6 +3416,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Data refreshed successfully"
             ));
+            $conn->close();
             exit;
         } catch (Exception $e) {
             $conn->rollback();
@@ -3203,6 +3424,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => $e->getMessage()
             ));
+            $conn->close();
+            exit;
         }
         exit;
     }
@@ -3214,7 +3437,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "status" => "error",
             "message" => "Invalid request"
         ));
+        $conn->close();
         exit;
     }
-
 };
