@@ -109,7 +109,7 @@ include './../base.php';
 
                         // Update button based on status
                         const actionButton = document.getElementById('btnCancelRequestModal');
-                        if (response.requester_status == "completed") {
+                        if (response.requester_status == "completed" || response.requester_status == "cancelled") {
                             actionButton.textContent = 'Exit';
                             actionButton.classList.remove('btn-primary');
                             actionButton.classList.add('btn-success');

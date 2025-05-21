@@ -217,7 +217,7 @@ $email = $token->email;
                     transactions.forEach((transaction) => {
                         let row = table_transactions_history.insertRow(-1);
                         row.innerHTML += `
-                            <td>${transaction.counterNumber}</td>
+                            <td>${transaction.counterNumber ? transaction.counterNumber : "Not Countered" }</td>
                             <td>${transaction.transaction_time}</td>
                             <td>${transaction.idtransaction}</td>
                             <td class="d-none d-md-none d-lg-block">
