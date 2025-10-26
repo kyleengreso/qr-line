@@ -84,8 +84,8 @@ if ($resp) {
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 m-0">
-                            <div class="" id="aboutCard" style="border-radius:12px;">
+                        <div class="col-12 m-0" style="min-height:auto">
+                            <div style="border-radius:12px">
                                 <div class="row g-2">
                                     <div class="col-6 col-md-3 mb-2">
                                         <div class="bg-white rounded shadow-sm border h-100 p-2">
@@ -166,70 +166,57 @@ if ($resp) {
                             </div>
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-members" id="table-employees">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Username</th>
-                                    <th>Role</th>
-                                    <th>Email</th>
-                                    <th>Created</th>
-                                    <th>Last Login</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($employees)) {
-                                    foreach ($employees as $employee) {
-                                        $id = htmlspecialchars($employee['id']);
-                                        $username = htmlspecialchars($employee['username']);
-                                        $role = htmlspecialchars($employee['role_type'] ?? '');
-                                        $emailAddr = htmlspecialchars($employee['email'] ?? '');
-                                        $created = htmlspecialchars($employee['created_at'] ?? '');
-                                        $lastLogin = htmlspecialchars($employee['employee_last_login'] ?? '');
-                                        $active = isset($employee['active']) && $employee['active'] == 1;
-                                        $statusBadge = $active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
-                                        echo "<tr>\n";
-                                        echo "<td class=\"col-1\">{$id}</td>\n";
-                                        $iconHtml = '';
-                                        $usernameHtml = '<strong>' . $username . '</strong>';
-                                        if (isset($employee['role_type']) && $employee['role_type'] === 'admin') {
-                                            $iconHtml = '<i class="bi bi-person-fill-gear" style="color:rgb(37, 99, 235)"></i>';
-                                            $usernameHtml = '<strong style="color:rgb(37, 99, 235)">' . $username . '</strong>';
-                                        } else {
-                                            $iconHtml = '<i class="bi bi-person-fill text-success"></i>';
-                                            $usernameHtml = '<strong class="text-success">' . $username . '</strong>';
-                                        }
-                                        echo "<td>\n<div class=\"d-flex align-items-center\">" . $iconHtml . $usernameHtml . "</div>\n<small class=\"text-muted d-block\">" . ($emailAddr ? $emailAddr : '&mdash;') . "</small>\n</td>\n";
-                                        echo "<td>{$role}</td>\n";
-                                        echo "<td>" . ($emailAddr ? $emailAddr : '&mdash;') . "</td>\n";
-                                        echo "<td>" . ($created ? $created : '&mdash;') . "</td>\n";
-                                        echo "<td>" . ($lastLogin ? $lastLogin : '&mdash;') . "</td>\n";
-                                        echo "<td>{$statusBadge}</td>\n";
-                                        echo "<td>\n<div class=\"btn-group\">\n";
-                                        echo "<a class=\"btn btn-sm btn-outline-info text-info\" id=\"view-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#viewEmployeeModal\"><i class=\"bi bi-eye-fill\"></i></a>\n";
-                                        echo "<a class=\"btn btn-sm btn-outline-primary text-primary\" id=\"update-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#updateEmployeeModal\"><i class=\"bi bi-pencil-square\"></i></a>\n";
-                                        echo "<a class=\"btn btn-sm btn-outline-danger text-danger\" id=\"delete-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#deleteEmployeeModal\"><i class=\"bi bi-trash-fill\"></i></a>\n";
-                                        echo "</div>\n</td>\n";
-                                        echo "</tr>\n";
-                                    }
+                    <div id="employeesList" class="row g-3">
+                        <?php if (!empty($employees)) {
+                            foreach ($employees as $employee) {
+                                $id = htmlspecialchars($employee['id']);
+                                $username = htmlspecialchars($employee['username']);
+                                $role = htmlspecialchars($employee['role_type'] ?? '');
+                                $emailAddr = htmlspecialchars($employee['email'] ?? '');
+                                $created = htmlspecialchars($employee['created_at'] ?? '');
+                                $lastLogin = htmlspecialchars($employee['employee_last_login'] ?? '');
+                                $active = isset($employee['active']) && $employee['active'] == 1;
+                                $statusBadge = $active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
+                                $iconHtml = '';
+                                $usernameHtml = '<strong>' . $username . '</strong>';
+                                if (isset($employee['role_type']) && $employee['role_type'] === 'admin') {
+                                    $iconHtml = '<i class="bi bi-person-fill-gear text-primary me-2"></i>';
+                                    $usernameHtml = '<strong class="text-primary">' . $username . '</strong>';
                                 } else {
-                                    echo "<tr><td colspan=\"8\" class=\"fw-bold text-center\">No employees assigned</td></tr>";
-                                } ?>
-                            </tbody>
-                        </table>
+                                    $iconHtml = '<i class="bi bi-person-fill text-success me-2"></i>';
+                                    $usernameHtml = '<strong class="text-success">' . $username . '</strong>';
+                                }
+                                echo "<div class=\"col-12\">\n";
+                                echo "  <div class=\"card shadow-sm\">\n";
+                                // card body: first line -> icon + username + status; second line -> email
+                                echo "    <div class=\"card-body d-flex justify-content-between align-items-start\">\n";
+                                echo "      <div>\n";
+                                echo "        <div class=\"d-flex align-items-center\">\n";
+                                echo "          {$iconHtml}\n";
+                                echo "          <div>\n";
+                                echo "            <div class=\"d-flex align-items-center\">{$usernameHtml}<div class=\"ms-2\">{$statusBadge}</div></div>\n";
+                                echo "            <div class=\"small text-muted\">" . ($emailAddr ? $emailAddr : '&mdash;') . "</div>\n";
+                                echo "          </div>\n";
+                                echo "        </div>\n";
+                                echo "      </div>\n";
+                                echo "      <div class=\"ms-3\">\n";
+                                echo "        <div class=\"btn-group\">\n";
+                                echo "          <a class=\"btn btn-sm btn-outline-info text-info\" id=\"view-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#viewEmployeeModal\"><i class=\"bi bi-eye-fill\"></i></a>\n";
+                                echo "          <a class=\"btn btn-sm btn-outline-primary text-primary\" id=\"update-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#updateEmployeeModal\"><i class=\"bi bi-pencil-square\"></i></a>\n";
+                                echo "          <a class=\"btn btn-sm btn-outline-danger text-danger\" id=\"delete-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#deleteEmployeeModal\"><i class=\"bi bi-trash-fill\"></i></a>\n";
+                                echo "        </div>\n";
+                                echo "      </div>\n";
+                                echo "    </div>\n";
+                                echo "  </div>\n";
+                                echo "</div>\n";
+                            }
+                        } else {
+                            echo "<div class=\"col-12\">\n<div class=\"card\">\n<div class=\"card-body fw-bold text-center\">No employees assigned</div>\n</div>\n</div>";
+                        } ?>
                     </div>
-                    <nav aria-label="Page navigation example">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item">
-                                <a class="page-link" id="pagePrevEmployees">Previous</a>
-                            </li>
-                            <!-- Page number reserved -->
-                            <li class="page-item">
-                                <a class="page-link" id="pageNextEmployees">Next</a>
-                            </li>
+                    <nav aria-label="Page navigation">
+                        <ul class="mt-4 pagination justify-content-center" id="employeesPagination">
+
                         </ul>
                     </nav>
                 </div>
@@ -491,124 +478,325 @@ if ($resp) {
         var paginate = 10;
         var role_type_employee = 'none';
 
-        // Search
-        let search = document.getElementById('search');
-        search.addEventListener('keyup', (e)=> {
-            page_employees = 1;
-            employee_search = e.target.value;
-            loadEmployees();
+        const search = document.getElementById('search');
+        const getRoleType = document.getElementById('getRoleType');
 
+        // Initialize from URL query params if present (search, role_type, page, paginate)
+        (function initFromUrl() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('search')) {
+                    employee_search = urlParams.get('search') || '';
+                    if (search) search.value = employee_search;
+                }
+                if (urlParams.has('role_type')) {
+                    role_type_employee = urlParams.get('role_type') || 'none';
+                    if (getRoleType) getRoleType.value = role_type_employee;
+                }
+                if (urlParams.has('page')) {
+                    const p = parseInt(urlParams.get('page'), 10);
+                    if (!isNaN(p) && p > 0) page_employees = p;
+                }
+                if (urlParams.has('paginate')) {
+                    const pg = parseInt(urlParams.get('paginate'), 10);
+                    if (!isNaN(pg) && pg > 0) paginate = pg;
+                }
+            } catch (e) {
+                // ignore URL parsing errors
+                console.warn('Failed to parse URL params for employees filters', e);
+            }
+        })();
+        function debounce(fn, wait) {
+            let t = null;
+            return function (...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), wait);
+            };
+        }
+
+        function showEmployeesLoading() {
+            const employeesList = document.getElementById('employeesList');
+            if (!employeesList) return;
+            employeesList.innerHTML = `
+                <div class="col-12 text-center py-4" id="employeesLoading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Hide loading is implicit when content is replaced by response
+
+        // Debounced search (300ms). Enter triggers immediate search.
+        const debouncedSearch = debounce((value) => {
+            page_employees = 1;
+            employee_search = value;
+            loadEmployees();
+        }, 300);
+
+        search.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                page_employees = 1;
+                employee_search = e.target.value;
+                loadEmployees();
+                return;
+            }
+            debouncedSearch(e.target.value);
         });
 
-        let getRoleType = document.getElementById('getRoleType');
         getRoleType.addEventListener('change', (e) => {
             page_employees = 1;
             role_type_employee = e.target.value;
             loadEmployees();
         });
 
-        function loadEmployees() {
-            let table_employees = document.getElementById('table-employees');
-            if (table_employees) {
-                const params = new URLSearchParams({
-                    employees: true,
-                    page: page_employees,
-                    paginate: paginate,
-                    search: employee_search,
-                    role_type: role_type_employee
-                });
-                $.ajax({
-                    url: '/public/api/api_endpoint.php?' + params,
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function (response) {
-                        console.log(response);
-                        while (table_employees.rows.length > 1) {
-                            table_employees.deleteRow(-1);
-                        }
-                            if (response.status === 'success') {
-                            const employees = response.employees;
+        // Render pagination when totalPages is known
+        function renderPagination(totalPages, currentPage) {
+            const container = document.getElementById('employeesPagination');
+            if (!container) return;
+            let items = '';
 
-                            // update About card counts
-                            const total = employees.length;
-                            const activeCount = employees.filter(e => e.active == 1).length;
-                            const inactiveCount = total - activeCount;
-                            const adminsCount = employees.filter(e => e.role_type === 'admin').length;
+            const makeItem = (label, page, disabled, active, id) => {
+                return `<li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}"><a href="#" class="page-link" ${id ? `id="${id}"` : ''} data-page="${page}">${label}</a></li>`;
+            };
 
-                            document.getElementById('empTotalCount').innerText = total;
-                            document.getElementById('empActiveCount').innerText = activeCount;
-                            document.getElementById('empInactiveCount').innerText = inactiveCount;
-                            document.getElementById('empAdminsCount').innerText = adminsCount;
+            // First
+            items += makeItem('First', 1, currentPage === 1, false, 'pageFirstEmployees');
+            // Prev
+            items += makeItem('Previous', Math.max(1, currentPage - 1), currentPage === 1, false, 'pagePrevEmployees');
 
-                            if (employees.length < paginate) {
-                                pageNextEmployees.classList.add('disabled');
-                            } else {
-                                pageNextEmployees.classList.remove('disabled');
-                            }
+            // Page numbers with collapsing
+            const CAP = 5; // number of middle pages to try to show
+            let start = Math.max(2, currentPage - 2);
+            let end = Math.min(totalPages - 1, currentPage + 2);
+            if (currentPage <= 3) { start = 2; end = Math.min(totalPages - 1, CAP); }
+            if (currentPage > totalPages - 3) { start = Math.max(2, totalPages - CAP); end = totalPages - 1; }
 
-                            employees.forEach((employee) => {
-                                // role-specific icon HTML: admin -> blue person + gear, employee -> green person
-                                let iconHtml = '';
-                                let usernameHtml = '';
-                                if (employee.role_type === 'admin') {
-                                    iconHtml = '<i class="bi bi-person-fill text-primary me-1"></i><i class="bi bi-gear-fill text-primary me-2"></i>';
-                                    usernameHtml = `<strong class="text-primary me-2">${employee.username}</strong>`;
-                                } else {
-                                    iconHtml = '<i class="bi bi-person-fill text-success me-2"></i>';
-                                    usernameHtml = `<strong class="text-success me-2">${employee.username}</strong>`;
-                                }
-
-                                let row = table_employees.insertRow(-1);
-                                row.innerHTML = `
-                                    <tr>
-                                        <td class="col-1">${employee.id}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">${iconHtml}${usernameHtml}</div>
-                                            <small class="text-muted d-block">${employee.email ? employee.email : '—'}</small>
-                                        </td>
-                                        <td>${employee.role_type}</td>
-                                        <td>${employee.email ? employee.email : '—'}</td>
-                                        <td>${employee.created_at ? employee.created_at : '—'}</td>
-                                        <td>${employee.employee_last_login ? employee.employee_last_login : '—'}</td>
-                                        <td>${employee.active == 1 ? textBadge('Active','success') : textBadge('Inactive','danger')}</td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a class="btn btn-sm btn-outline-info text-info" id="view-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#viewEmployeeModal"><i class="bi bi-eye-fill"></i></a>
-                                                <a class="btn btn-sm btn-outline-primary text-primary" id="update-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#updateEmployeeModal"><i class="bi bi-pencil-square"></i></a>
-                                                <a class="btn btn-sm btn-outline-danger text-danger" id="delete-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#deleteEmployeeModal"><i class="bi bi-trash-fill"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `;
-                            });
-                            // sync about card height to match table height
-                            syncAboutCardHeight();
-                        } else {
-                            let row = table_employees.insertRow(-1);
-                            row.innerHTML = `
-                                <tr>
-                                    <td colspan="8" class="fw-bold text-center">No employees assigned</td>
-                                </tr>            
-                            `;
-                            // ensure about card height remains consistent when no rows
-                            syncAboutCardHeight();
-                        }
-                    },
-                });
+            // first page
+            items += `<li class="page-item ${currentPage === 1 ? 'active' : ''}"><a href="#" class="page-link" data-page="1">1</a></li>`;
+            if (start > 2) {
+                items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
             }
+
+            for (let p = start; p <= end; p++) {
+                items += `<li class="page-item ${p === currentPage ? 'active' : ''}"><a href="#" class="page-link" data-page="${p}">${p}</a></li>`;
+            }
+
+            if (end < totalPages - 1) {
+                items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
+            }
+
+            if (totalPages > 1) {
+                items += `<li class="page-item ${currentPage === totalPages ? 'active' : ''}"><a href="#" class="page-link" data-page="${totalPages}">${totalPages}</a></li>`;
+            }
+
+            // Next
+            items += makeItem('Next', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false, 'pageNextEmployees');
+            // Last
+            items += makeItem('Last', totalPages, currentPage === totalPages, false, 'pageLastEmployees');
+
+            container.innerHTML = items;
         }
 
-        // Set about card min-height to table height to visually match the table size
+        // Render pagination when total is unknown: show simple Prev, current, Next
+        function renderPaginationUnknown(currentPage, hasMore) {
+            const container = document.getElementById('employeesPagination');
+            if (!container) return;
+            const prevDisabled = currentPage === 1;
+            const nextDisabled = !hasMore;
+            const items = `
+                <li class="page-item ${prevDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${Math.max(1, currentPage - 1)}">Previous</a></li>
+                <li class="page-item active"><span class="page-link">${currentPage}</span></li>
+                <li class="page-item ${nextDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${currentPage + 1}">Next</a></li>
+            `;
+            container.innerHTML = items;
+        }
+
+        function loadEmployees() {
+            const employeesList = document.getElementById('employeesList');
+            if (!employeesList) return;
+
+            // show spinner
+            showEmployeesLoading();
+
+            // disable pagination while loading
+            const employeesPagination = document.getElementById('employeesPagination');
+            if (employeesPagination) {
+                employeesPagination.querySelectorAll('a.page-link').forEach(a => a.classList.add('disabled'));
+            }
+
+            const params = new URLSearchParams({
+                employees: true,
+                page: page_employees,
+                paginate: paginate,
+                search: employee_search,
+                role_type: role_type_employee
+            });
+
+            $.ajax({
+                // use absolute path to the API endpoint to avoid relative-path resolution issues
+                url: '/public/api/api_endpoint.php?' + params,
+                type: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    employeesList.innerHTML = '';
+
+                    if (response.status === 'success') {
+                        const employees = response.employees;
+
+                        // If API provides a total count, prefer it for overall totals/pagination
+                        const total = (typeof response.total !== 'undefined') ? parseInt(response.total, 10) : employees.length;
+                        const activeCount = employees.filter(e => e.active == 1).length;
+                        const inactiveCount = employees.length - activeCount;
+                        const adminsCount = employees.filter(e => e.role_type === 'admin').length;
+
+                        const totalElem = document.getElementById('empTotalCount');
+                        const activeElem = document.getElementById('empActiveCount');
+                        const inactiveElem = document.getElementById('empInactiveCount');
+                        const adminsElem = document.getElementById('empAdminsCount');
+                        if (totalElem) totalElem.innerText = total;
+                        if (activeElem) activeElem.innerText = activeCount;
+                        if (inactiveElem) inactiveElem.innerText = inactiveCount;
+                        if (adminsElem) adminsElem.innerText = adminsCount;
+
+                        // Pagination: render full numeric pagination when API provides total, otherwise render a simple prev/current/next
+                        if (typeof response.total !== 'undefined') {
+                            const totalPages = Math.max(1, Math.ceil(total / paginate));
+                            renderPagination(totalPages, page_employees);
+                        } else {
+                            const hasMore = employees.length === paginate;
+                            renderPaginationUnknown(page_employees, hasMore);
+                        }
+
+                        employees.forEach((employee) => {
+                            let iconHtml = '';
+                            let usernameHtml = '';
+                            if (employee.role_type === 'admin') {
+                                iconHtml = '<i class="bi bi-person-fill-gear text-primary me-2"></i>';
+                                usernameHtml = `<strong class="text-primary">${employee.username}</strong>`;
+                            } else {
+                                iconHtml = '<i class="bi bi-person-fill text-success me-2"></i>';
+                                usernameHtml = `<strong class="text-success">${employee.username}</strong>`;
+                            }
+
+                            const card = `
+                                <div class="col-12">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="d-flex align-items-center">
+                                                    ${iconHtml}
+                                                    <div>
+                                                        <div class="d-flex align-items-center">${usernameHtml}<div class="ms-2">${employee.active == 1 ? textBadge('Active','success') : textBadge('Inactive','danger')}</div></div>
+                                                        <div class="small text-muted">${employee.email ? employee.email : '—'}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="ms-3">
+                                                <div class="btn-group">
+                                                    <a class="btn btn-sm btn-outline-info text-info" id="view-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#viewEmployeeModal"><i class="bi bi-eye-fill"></i></a>
+                                                    <a class="btn btn-sm btn-outline-primary text-primary" id="update-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#updateEmployeeModal"><i class="bi bi-pencil-square"></i></a>
+                                                    <a class="btn btn-sm btn-outline-danger text-danger" id="delete-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#deleteEmployeeModal"><i class="bi bi-trash-fill"></i></a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                            employeesList.insertAdjacentHTML('beforeend', card);
+                        });
+
+                        syncAboutCardHeight();
+                    } else {
+                        const noCard = `
+                            <div class="col-12">
+                              <div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div>
+                            </div>
+                        `;
+                        employeesList.insertAdjacentHTML('beforeend', noCard);
+                        syncAboutCardHeight();
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Employees load error', status, error, xhr && xhr.responseText);
+
+                    // reset counters in the About card
+                    const totalElem = document.getElementById('empTotalCount');
+                    const activeElem = document.getElementById('empActiveCount');
+                    const inactiveElem = document.getElementById('empInactiveCount');
+                    const adminsElem = document.getElementById('empAdminsCount');
+                    if (totalElem) totalElem.innerText = 0;
+                    if (activeElem) activeElem.innerText = 0;
+                    if (inactiveElem) inactiveElem.innerText = 0;
+                    if (adminsElem) adminsElem.innerText = 0;
+
+                    // Handle specific HTTP statuses for friendlier UX
+                    let handled = false;
+                    // Try to parse JSON body if present
+                    let body = null;
+                    try {
+                        body = xhr && xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                    } catch (e) {
+                        body = null;
+                    }
+
+                    // If API returned a JSON message saying 'No employees found', treat as empty state
+                    if (body && body.message && body.message.toLowerCase().includes('no employees')) {
+                        const noCard = `
+                            <div class="col-12">
+                              <div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div>
+                            </div>
+                        `;
+                        employeesList.innerHTML = noCard;
+                        handled = true;
+                    }
+
+                    // 404 explicitly -> empty state
+                    if (!handled && xhr && xhr.status === 404) {
+                        const noCard = `
+                            <div class="col-12">
+                              <div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div>
+                            </div>
+                        `;
+                        employeesList.innerHTML = noCard;
+                        handled = true;
+                    }
+
+                    // 400 with other message -> bad request
+                    if (!handled && xhr && xhr.status === 400) {
+                        employeesList.innerHTML = `<div class="col-12"><div class="alert alert-warning">Bad request. Check filters and try again.</div></div>`;
+                        handled = true;
+                    }
+
+                    // fallback
+                    if (!handled) {
+                        employeesList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Failed to load employees. Try again.</div></div>`;
+                    }
+
+                    // ensure About card height is updated
+                    try { syncAboutCardHeight(); } catch (e) {}
+                }
+            });
+        }
+
         function syncAboutCardHeight() {
             const aboutCard = document.getElementById('aboutCard');
-            const table = document.getElementById('table-employees');
-            if (!aboutCard || !table) return;
-            // compute table height including pagination and margins
-            const tableRect = table.getBoundingClientRect();
-            // Use offsetHeight which includes borders/padding
-            const height = table.offsetHeight;
-            // Force exact height to match the table (may clip on small screens)
-            aboutCard.style.height = height + 'px';
+            const list = document.getElementById('employeesList');
+            if (!aboutCard || !list) return;
+
+            if (window.innerWidth < 768) {
+                aboutCard.style.minHeight = '';
+                aboutCard.style.height = '';
+                return;
+            }
+
+            const height = list.offsetHeight || list.scrollHeight || 0;
+            const CAP = 380;
+
+            aboutCard.style.height = 'auto';
+            aboutCard.style.minHeight = (height > CAP ? CAP : height) + 'px';
         }
 
         // keep in sync on resize (debounced)
@@ -617,7 +805,6 @@ if ($resp) {
             clearTimeout(_syncTimeout);
             _syncTimeout = setTimeout(syncAboutCardHeight, 120);
         });
-
 
         // View Employee
         $(document).on('click', '[id^="view-employee-"]', function (e) {
@@ -668,14 +855,16 @@ if ($resp) {
 
         // Add Employee
         let btnAddEmployeeModal = document.getElementById('btn-add-employee');
-        btnAddEmployeeModal.addEventListener('click', (e) => {
-            e.preventDefault();
-            let form = document.getElementById('frmAddEmployee');
-            form.reset();
-        });
+        if (btnAddEmployeeModal) {
+            btnAddEmployeeModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                let form = document.getElementById('frmAddEmployee');
+                if (form) form.reset();
+            });
+        }
 
         let frmAddEmployee = document.getElementById('frmAddEmployee');
-        frmAddEmployee.addEventListener('submit', function (e) {
+        if (frmAddEmployee) frmAddEmployee.addEventListener('submit', function (e) {
             e.preventDefault();
 
             let formAlert = document.getElementById('addEmployeeAlert');
@@ -730,7 +919,8 @@ if ($resp) {
                     }
                 },
                 error: function(x, s, e) {
-                    formAlertMsg.innerText = 'Error: ' + x.responseText;
+                    console.error('Add employee error', s, e, x && x.responseText);
+                    formAlertMsg.innerText = 'Error: ' + (x.responseText || s);
                     formAlert.classList.remove('d-none');
                     setTimeout(() => {
                         formAlert.classList.add('d-none');
@@ -781,7 +971,7 @@ if ($resp) {
         });
 
         let frmUpdateEmployee = document.getElementById('frmUpdateEmployee');
-        frmUpdateEmployee.addEventListener('submit', function (e) {
+        if (frmUpdateEmployee) frmUpdateEmployee.addEventListener('submit', function (e) {
             e.preventDefault();
 
             let formAlert = document.getElementById('updateEmployeeAlert');
@@ -846,7 +1036,8 @@ if ($resp) {
                     }
                 },
                 error: function(x, s, e) {
-                    formAlertMsg.innerText = 'Error: ' + x.responseText;
+                    console.error('Update employee error', s, e, x && x.responseText);
+                    formAlertMsg.innerText = 'Error: ' + (x.responseText || s);
                     formAlert.classList.remove('d-none');
                     setTimeout(() => {
                         formAlert.classList.add('d-none');
@@ -891,7 +1082,7 @@ if ($resp) {
         });
 
         let frmDeleteEmployee = document.getElementById('frmDeleteEmployee');
-        frmDeleteEmployee.addEventListener('submit', function (e) {
+        if (frmDeleteEmployee) frmDeleteEmployee.addEventListener('submit', function (e) {
             e.preventDefault();
 
             let formAlert = document.getElementById('deleteEmployeeAlert');
@@ -929,7 +1120,8 @@ if ($resp) {
                     }
                 },
                 error: function(x, s, e) {
-                    formAlertMsg.innerText = 'Error: ' + x.responseText;
+                    console.error('Delete employee error', s, e, x && x.responseText);
+                    formAlertMsg.innerText = 'Error: ' + (x.responseText || s);
                     formAlert.classList.remove('d-none');
                     setTimeout(() => {
                         formAlert.classList.add('d-none');
@@ -938,26 +1130,23 @@ if ($resp) {
             });
         });
 
-        let pagePrevEmployees = document.getElementById('pagePrevEmployees');
-        let pageNextEmployees = document.getElementById('pageNextEmployees');
-
-        pagePrevEmployees.addEventListener('click', (e) => {
-            if (page_employees > 1) {
-                page_employees--;
-                if (page_employees === 1) {
-                    pagePrevEmployees.classList.add('disabled');
+        // Delegated click handler for dynamic pagination links
+        const employeesPagination = document.getElementById('employeesPagination');
+        if (employeesPagination) {
+            employeesPagination.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = e.target.closest('a.page-link');
+                if (!target) return;
+                const pageAttr = target.getAttribute('data-page');
+                if (pageAttr) {
+                    const p = parseInt(pageAttr, 10);
+                    if (!isNaN(p) && p > 0) {
+                        page_employees = p;
+                        loadEmployees();
+                    }
                 }
-                loadEmployees();    
-            }
-        });
-
-        pageNextEmployees.addEventListener('click', (e) => {
-            page_employees++;
-            if (page_employees > 1) {
-                pagePrevEmployees.classList.remove('disabled');
-            }
-            loadEmployees();
-        });
+            });
+        }
 
         loadEmployees();
     </script>

@@ -2168,19 +2168,64 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if (isset($_GET['role_type'])) {
             if ($_GET['role_type'] != 'none') {
+                // validate role_type
+                $allowed_roles = array('admin', 'employee');
+                if (!in_array($_GET['role_type'], $allowed_roles)) {
+                    http_response_code(400);
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => "Bad request. Check filters and try again."
+                    ));
+                    $conn->close();
+                    exit;
+                }
+
                 $sql_cmd .= "AND e.role_type = ? ";
                 $params[] = $_GET['role_type'];
                 $types .= "s";
             }
         }
 
+        // Validate active filter if present
+        if (isset($_GET['active'])) {
+            if ($_GET['active'] !== '0' && $_GET['active'] !== '1') {
+                http_response_code(400);
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Bad request. Check filters and try again."
+                ));
+                $conn->close();
+                exit;
+            }
+        }
+
+        // Validate and apply pagination parameters if provided
         if (isset($_GET['page']) && isset($_GET['paginate'])) {
-            $limit = $_GET['paginate'];
-            $offset = ($_GET['page'] - 1) * $limit;
-            $sql_cmd .= " LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-            $types .= "ss";
+            if (!is_numeric($_GET['page']) || !is_numeric($_GET['paginate'])) {
+                http_response_code(400);
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Bad request. Check filters and try again."
+                ));
+                $conn->close();
+                exit;
+            }
+
+            // LIMIT and OFFSET must be positive integers. Cast to int to avoid quoted values in SQL.
+            $limit = (int) $_GET['paginate'];
+            $page_val = (int) $_GET['page'];
+            if ($limit < 1 || $page_val < 1) {
+                http_response_code(400);
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Bad request. Check filters and try again."
+                ));
+                $conn->close();
+                exit;
+            }
+
+            $offset = (int) (($page_val - 1) * $limit);
+            $sql_cmd .= " LIMIT " . $limit . " OFFSET " . $offset;
         }
 
         $stmt = $conn->pdo->prepare($sql_cmd);
@@ -2216,6 +2261,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $conn->close();
             exit;
         } else {
+            http_response_code(200);
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No employees found",
