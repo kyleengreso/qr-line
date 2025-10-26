@@ -1,17 +1,21 @@
 <?php
-// QR-LINE Self-Endpoint v2
-// (c) QR-Line. All Rights Reserved 2025
+/*
+
+    QR-LINE API Endpoint
+    Copyright (c) 2025 Mark Cedie Buday. All Rights Reserved
+
+*/
 
 require_once __DIR__ . '/./../base.php';
 require_once __DIR__ . '/./../includes/system_auth.php';
 
-/**
- *  NOTE:
- * This API reponse must less than 100ms
- * 
- * 
- * 
- */
+/*
+   NOTE: This API reponse must less than 100ms
+  
+  
+  
+*/
+
 header("Content-Type: application/json");
 
 global $conn;

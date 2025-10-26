@@ -79,7 +79,7 @@ date_default_timezone_set("Asia/Manila");
         Default: null   [null, "https://www.yourwebsite.com"]
 */
 
-$social_media_show = true;      // To show the social media links
+$social_media_show = true;          // To show the social media links
 $social_facebook_link = null;
 $social_twitter_link = null;
 $social_direct_link = null;
@@ -188,21 +188,19 @@ function after_js() {
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/message.js"></script>
     
-    ';
-    
-    // <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+    ';    
     return;
 }
-// <script src="./../asset/js/popper.min.js" ></script>
 
 function project_year() {
+    
     // Get year for today
-    $today = date("Y-m-d"); // Gets today's date in "YYYY-MM-DD" format
-    $year = date("Y", strtotime($today)); // Extracts the year from the date
-    return $year; // Returns the year
+    $today = date("Y-m-d");                 // Gets today's date in "YYYY-MM-DD" format
+    $year = date("Y", strtotime($today));   // Extracts the year from the date
+    return $year;                           // Returns the year
 }
 
-// COUNTER TEXT
+// COUNTER TEXTS
 function counter_no_assigned() {
     return "No counter assigned";
 }
