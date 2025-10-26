@@ -36,14 +36,16 @@ try {
     die("Unable to connect to the database: " . $e->getMessage());
 }
 
-// Minimal compatibility wrapper to emulate the small subset of mysqli behaviour used in the project
+if (!defined('MYSQLI_ASSOC')) define('MYSQLI_ASSOC', 1);
+if (!defined('MYSQLI_NUM')) define('MYSQLI_NUM', 2);
+if (!defined('MYSQLI_BOTH')) define('MYSQLI_BOTH', 3);
+
 class DBResult {
     public $rows = [];
     public $num_rows = 0;
 
     public function __construct($stmt)
     {
-        // fetch all rows into memory (the original code frequently expects fetch_all and num_rows)
         try {
             $this->rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -66,19 +68,20 @@ class DBResult {
 class DBStatement {
     private $stmt;
     private $params = [];
+    private $pdo;
     public $affected_rows = 0;
+    public $insert_id = null;
 
-    public function __construct($stmt)
+    public function __construct($stmt, $pdo)
     {
         $this->stmt = $stmt;
+        $this->pdo = $pdo;
     }
 
-    // mimic mysqli_stmt::bind_param -- ignore types, collect values
     public function bind_param()
     {
         $args = func_get_args();
         if (count($args) == 0) return;
-        // first arg is types string, drop it
         if (is_string($args[0])) {
             array_shift($args);
         }
@@ -88,9 +91,20 @@ class DBStatement {
     public function execute()
     {
         try {
+
             // execute with parameters
             $ok = $this->stmt->execute($this->params);
             $this->affected_rows = $this->stmt->rowCount();
+
+            // set insert_id from PDO lastInsertId if available
+            try {
+                $last = $this->pdo->lastInsertId();
+                if ($last !== "0") {
+                    $this->insert_id = $last;
+                }
+            } catch (Exception $e) {
+
+            }
             return $ok;
         } catch (Exception $e) {
             // store error for compatibility
@@ -111,7 +125,8 @@ class DBStatement {
 }
 
 class DBWrapper {
-    private $pdo;
+
+    public $pdo = null;
     public $error = null;
 
     public function __construct($pdo)
@@ -123,16 +138,42 @@ class DBWrapper {
     {
         try {
             $stmt = $this->pdo->prepare($sql);
-            return new DBStatement($stmt);
+            return new DBStatement($stmt, $this->pdo);
         } catch (Exception $e) {
             $this->error = $e->getMessage();
             return null;
         }
     }
 
+    public function query($sql)
+    {
+        try {
+            $stmt = $this->pdo->query($sql);
+            if ($stmt === false) return false;
+            return new DBResult($stmt);
+        } catch (Exception $e) {
+            $this->error = $e->getMessage();
+            return false;
+        }
+    }
+
+    public function begin_transaction()
+    {
+        return $this->pdo->beginTransaction();
+    }
+
+    public function commit()
+    {
+        return $this->pdo->commit();
+    }
+
+    public function rollback()
+    {
+        return $this->pdo->rollBack();
+    }
+
     public function set_charset($cs)
     {
-        // noop: PDO uses charset in DSN
         return true;
     }
 
