@@ -211,15 +211,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $encToken = encryptToken($token, $master_key);
             setcookie("token", $encToken, time() + (86400 * 30), "/");
 
-            // Log the login
-            $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at, device_name) VALUES (?, ?, ?, ?)";
-            $stmt = $conn->pdo->prepare($sql_cmd);
-
+            // Log the login — try to include device_name if the column exists, otherwise fall back
             $user_id = $employee[0]['id'];
             $comment = "LOG_IN: " . $employee[0]['username'] . " is logged in";
             $curdate = date("Y-m-d H:i:s");
             $device_name = $data->device_name ?? null;
-            $stmt->execute([$user_id, $comment, $curdate, $device_name]);
+
+            try {
+                $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at, device_name) VALUES (?, ?, ?, ?)";
+                $stmt = $conn->pdo->prepare($sql_cmd);
+                $stmt->execute([$user_id, $comment, $curdate, $device_name]);
+            } catch (PDOException $e) {
+                // If the column doesn't exist (SQLSTATE 42S22 / error 1054), retry without device_name
+                $msg = $e->getMessage();
+                $sqlstate = $e->getCode();
+                if ($sqlstate === '42S22' || stripos($msg, 'unknown column') !== false || stripos($msg, '1054') !== false) {
+                    $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
+                    $stmt = $conn->pdo->prepare($sql_cmd);
+                    $stmt->execute([$user_id, $comment, $curdate]);
+                } else {
+                    // Re-throw other PDO exceptions so they can be handled/visible
+                    throw $e;
+                }
+            }
 
         
             echo json_encode(array(
