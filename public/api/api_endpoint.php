@@ -1599,6 +1599,72 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $time_start = $data->time_start ?? null;
         $time_end = $data->time_end ?? null;
         $enable = $data->enable;
+
+        // Ensure scheduler table/columns match expected DDL from reference.
+        // Best-effort: create table if missing and add/modify minimal columns when possible.
+        try {
+            $tblCheckSql = "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler'";
+            $tblStmt = $conn->pdo->prepare($tblCheckSql);
+            $tblStmt->execute();
+            $tblExists = (int) $tblStmt->fetchColumn();
+
+            if ($tblExists === 0) {
+                $createSql = "CREATE TABLE `scheduler` (
+                    `schedule_id` int NOT NULL AUTO_INCREMENT,
+                    `enable` tinyint NOT NULL DEFAULT 0,
+                    `schedule_key` varchar(50) NOT NULL DEFAULT '0',
+                    `date_start` date DEFAULT NULL,
+                    `date_end` date DEFAULT NULL,
+                    `time_start` time DEFAULT NULL,
+                    `time_end` time DEFAULT NULL,
+                    `comment` text,
+                    `repeat` enum('daily','weekly','month','Sun','Mon','Tue','Wed','Thu','Fri','Sat') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                    `everyday` text,
+                    `schedule_type` enum('requester','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                    `managed_by` int DEFAULT NULL,
+                    PRIMARY KEY (`schedule_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Schedule for whole operation'";
+                $conn->pdo->exec($createSql);
+            } else {
+                // ensure `everyday` exists
+                $colCheckSql = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'everyday'";
+                $colStmt = $conn->pdo->prepare($colCheckSql);
+                $colStmt->execute();
+                $everydayExists = (int) $colStmt->fetchColumn();
+                if ($everydayExists === 0) {
+                    try {
+                        $conn->pdo->exec("ALTER TABLE scheduler ADD COLUMN everyday TEXT NULL");
+                    } catch (PDOException $ignore) {
+                        // ignore
+                    }
+                }
+
+                // try to align `repeat` enum
+                try {
+                    $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `repeat` ENUM('daily','weekly','month','Sun','Mon','Tue','Wed','Thu','Fri','Sat') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL");
+                } catch (PDOException $ignore) {
+                }
+
+                // ensure other minimal defs
+                try { $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `enable` TINYINT NOT NULL DEFAULT 0"); } catch (PDOException $ignore) {}
+                try { $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `schedule_key` VARCHAR(50) NOT NULL DEFAULT '0'"); } catch (PDOException $ignore) {}
+                try { $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `schedule_type` ENUM('requester','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL"); } catch (PDOException $ignore) {}
+
+                // ensure managed_by exists
+                $colCheckSql2 = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'managed_by'";
+                $colStmt2 = $conn->pdo->prepare($colCheckSql2);
+                $colStmt2->execute();
+                $managedExists = (int) $colStmt2->fetchColumn();
+                if ($managedExists === 0) {
+                    try {
+                        $conn->pdo->exec("ALTER TABLE scheduler ADD COLUMN managed_by INT DEFAULT NULL");
+                    } catch (PDOException $ignore) {
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // ignore schema changes if not permitted
+        }
         $schedule_type = $data->schedule_type;
         $schedule_key = $data->schedule_key;
         $repeat = $data->repeat ?? null;
@@ -1649,6 +1715,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt = $conn->pdo->prepare($sql_cmd);
         $stmt->execute();
         $schedule = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Normalize repeat/everyday values: prefer incoming payload, otherwise keep existing DB values
+        $repeat = $data->repeat ?? null;
+        $everyday = $data->everyday ?? null;
+        if (count($schedule) === 1) {
+            $existing = $schedule[0];
+            if ($repeat === null) {
+                $repeat = $existing['repeat'] ?? null;
+            }
+            if ($everyday === null) {
+                $everyday = $existing['everyday'] ?? null;
+            }
+            // capture schedule_type/key in case other branches rely on them
+            $schedule_type = $existing['schedule_type'] ?? $schedule_type ?? null;
+            $schedule_key = $existing['schedule_key'] ?? $schedule_key ?? null;
+        }
 
         if (count($schedule) == 0) {
 

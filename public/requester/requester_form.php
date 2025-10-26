@@ -7,25 +7,119 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $schedule = $result->fetch_assoc();
-if (!$schedule) {
 
-}
-
-$schedule_present = $schedule['enable'];
-$time_start = date("H:i:s", strtotime($schedule['time_start']));
-$time_end = date("H:i:s", strtotime($schedule['time_end']));
-$time_now = date("H:i:s");
-$everyday = explode(";", $schedule['everyday']);
-$day_of_week = strtolower(date("D"));
+// Defaults
 $schedule_present = false;
-foreach ($everyday as $day) {
-    if ($day == $day_of_week) {
-        $schedule_present = true;
-        $schedule_day_announcment = "Come back later at";
-        break;
-    } else {
-        $schedule_day_announcment = "Schedule is closed for today";
+$schedule_day_announcment = "Schedule is closed";
+$time_now = date("h:i:s A");
+
+if ($schedule) {
+    $enabled = (int)($schedule['enable'] ?? 0);
+    $db_time_start = $schedule['time_start'] ?? null;
+    $db_time_end = $schedule['time_end'] ?? null;
+
+    // compute timestamps for today
+    $now_ts = time();
+    $start_ts = $db_time_start ? strtotime(date('Y-m-d') . ' ' . $db_time_start) : null;
+    $end_ts = $db_time_end ? strtotime(date('Y-m-d') . ' ' . $db_time_end) : null;
+
+    // handle `everyday` formats: null (means every day), semicolon list, or JSON
+    $everyday_raw = $schedule['everyday'] ?? null;
+    $allowed_today = true; // default allow
+
+    if ($everyday_raw !== null && trim($everyday_raw) !== '') {
+        $today_short = strtolower(date('D')); // e.g. Sun, Mon -> sun
+
+        // try JSON
+        $parsed = json_decode($everyday_raw, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($parsed)) {
+            // Support formats: {"sun":true} or ["sun","mon"]
+            if (array_values($parsed) === $parsed) {
+                // numeric array
+                $allowed_today = in_array($today_short, array_map('strtolower', $parsed));
+            } else {
+                $allowed_today = !empty($parsed[strtolower($today_short)]) || !empty($parsed[$today_short]);
+            }
+        } else {
+            // assume semicolon or comma separated tokens
+            $tokens = preg_split('/[;,\s]+/', $everyday_raw, -1, PREG_SPLIT_NO_EMPTY);
+            $tokens = array_map('strtolower', $tokens);
+            // accept common forms: mon, monday, Mon
+            $map = [
+                'sun' => ['sun','sunday'],
+                'mon' => ['mon','monday'],
+                'tue' => ['tue','tues','tuesday'],
+                'wed' => ['wed','wednesday'],
+                'thu' => ['thu','thur','thursday'],
+                'fri' => ['fri','friday'],
+                'sat' => ['sat','saturday']
+            ];
+            $allowed_today = false;
+            foreach ($map as $short => $variants) {
+                if (in_array($today_short, [$short, strtoupper($short)])) {
+                    foreach ($variants as $v) {
+                        if (in_array($v, $tokens)) {
+                            $allowed_today = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    if ($enabled === 1 && $allowed_today && $start_ts !== null && $end_ts !== null && $now_ts >= $start_ts && $now_ts <= $end_ts) {
+        $schedule_present = true;
+        $schedule_day_announcment = "Open now";
+    } else {
+        if ($enabled !== 1) {
+            $schedule_day_announcment = "Schedule is disabled";
+        } elseif (!$allowed_today) {
+            $next = null;
+            if ($everyday_raw !== null && trim($everyday_raw) !== '') {
+                $week = ['sun','mon','tue','wed','thu','fri','sat'];
+                $allowed = [];
+                $parsed = json_decode($everyday_raw, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($parsed)) {
+                    if (array_values($parsed) === $parsed) {
+                        $allowed = array_map('strtolower', $parsed);
+                    } else {
+                        foreach ($parsed as $k => $v) {
+                            if ($v) $allowed[] = strtolower($k);
+                        }
+                    }
+                } else {
+                    $tokens = preg_split('/[;,\s]+/', $everyday_raw, -1, PREG_SPLIT_NO_EMPTY);
+                    $allowed = array_map('strtolower', $tokens);
+                }
+                $todayIndex = (int)date('w'); // 0 (Sun) - 6
+                for ($i=1;$i<=7;$i++) {
+                    $idx = ($todayIndex + $i) % 7;
+                    $short = $week[$idx];
+                    if (in_array($short, $allowed)) {
+                        $next = ucfirst($short);
+                        break;
+                    }
+                }
+            }
+            if ($next) {
+                $schedule_day_announcment = "Schedule is closed today — next open on {$next}";
+            } else {
+                $schedule_day_announcment = "Schedule is closed for today";
+            }
+        } else {
+            // time window
+            if ($start_ts !== null) {
+                $schedule_day_announcment = "Come back later at " . date('g:i A', $start_ts);
+            } else {
+                $schedule_day_announcment = "Schedule is closed for today";
+            }
+        }
+    }
+
+    // format times for display
+    $time_start = $db_time_start ? date("g:i A", strtotime($db_time_start)) : 'N/A';
+    $time_end = $db_time_end ? date("g:i A", strtotime($db_time_end)) : 'N/A';
 }
 
 ?>

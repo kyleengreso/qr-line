@@ -54,8 +54,8 @@ $counterNumber = $token->counterNumber;
                             <span id="notify-transaction-limit-message">Transaction limit set successfully.</span>
                         </div>
                         <div class="mb-4 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="schedule_requester_enable" id="schedule_requester_enable" value="1">
-                            <label class="form-check-label" for="schedule_requester_enable">Enable</label>
+                            <input class="form-check-input" type="checkbox" name="transaction_limit_enable" id="transaction_limit_enable" value="1">
+                            <label class="form-check-label" for="transaction_limit_enable">Enable</label>
                         </div>
                         <div class="row mb-2">
                             <div class="col-12">
@@ -191,19 +191,45 @@ $counterNumber = $token->counterNumber;
                         document.getElementById('schedule_requester_time_end').value = schedule.time_end;
         
                         // Validate and process `schedule.everyday`
-                        if (schedule.everyday && schedule.everyday.trim() !== '') {
-                            let days = schedule.everyday.split(';');
-                            days.forEach(day => {
-                                console.log(`Checking day: ${day}`);
-                                let checkbox = document.getElementById(day);
-                                if (checkbox) {
-                                    checkbox.checked = true;
-                                } else {
-                                    console.error(`Checkbox with id "${day}" not found`);
-                                }
+                        // treat null/empty as "every day" and support JSON array/object or semicolon/comma separated strings
+                        if (!schedule.everyday || schedule.everyday.trim() === '') {
+                            // No restriction -> check all day boxes
+                            ['sun','mon','tue','wed','thu','fri','sat'].forEach(id => {
+                                const cb = document.getElementById(id);
+                                if (cb) cb.checked = true;
                             });
                         } else {
-                            console.warn("No days found in `schedule.everyday`");
+                            let raw = schedule.everyday;
+                            try {
+                                const parsed = JSON.parse(raw);
+                                if (Array.isArray(parsed)) {
+                                    parsed.forEach(d => {
+                                        const id = String(d).toLowerCase();
+                                        const cb = document.getElementById(id);
+                                        if (cb) cb.checked = true;
+                                    });
+                                } else if (parsed && typeof parsed === 'object') {
+                                    Object.keys(parsed).forEach(k => {
+                                        if (parsed[k]) {
+                                            const id = String(k).toLowerCase();
+                                            const cb = document.getElementById(id);
+                                            if (cb) cb.checked = true;
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                // not JSON, try semicolon/comma separated
+                                let days = raw.split(/[,;\s]+/).filter(Boolean);
+                                days.forEach(day => {
+                                    const id = String(day).toLowerCase();
+                                    const checkbox = document.getElementById(id);
+                                    if (checkbox) {
+                                        checkbox.checked = true;
+                                    } else {
+                                        console.error(`Checkbox with id "${day}" not found`);
+                                    }
+                                });
+                            }
                         }
                     } else {
                         console.error(response.message);
