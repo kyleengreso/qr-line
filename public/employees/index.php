@@ -386,7 +386,7 @@ $counterNumber = $token->counterNumber;
                     role_type: role_type_employee
                 });
                 $.ajax({
-                    url: realHost + '/public/api/api_endpoint.php?' + params,
+                    url: '/public/api/api_endpoint.php?' + params,
                     type: 'GET',
                     success: function (response) {
                         while (table_employees.rows.length > 1) {
@@ -445,7 +445,7 @@ $counterNumber = $token->counterNumber;
             });
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
+                url: '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
                 success: function (response) {
                     console.log(response);
@@ -561,7 +561,7 @@ $counterNumber = $token->counterNumber;
             });
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
+                url: '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
                 success: function (response) {
                     console.log(response);
@@ -620,7 +620,7 @@ $counterNumber = $token->counterNumber;
             }
             
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
+                url: '/public/api/api_endpoint.php',
                 type: 'POST',
                 data: JSON.stringify({
                     id: employeeId,
@@ -672,7 +672,7 @@ $counterNumber = $token->counterNumber;
             });
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
+                url: '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
                 success: function (response) {
                     console.log(response);
@@ -705,7 +705,7 @@ $counterNumber = $token->counterNumber;
             console.log('ID: ' + employeeId);
             
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
+                url: '/public/api/api_endpoint.php',
                 type: 'POST',
                 data: JSON.stringify({
                     id: employeeId,
