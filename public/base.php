@@ -170,15 +170,15 @@ function head_icon() {
 }
 function head_css() {
     echo '
-        <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.css">
-        <link rel="stylesheet" href="/node_modules/bootstrap-icons/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
         <link rel="stylesheet" href="./../asset/css/theme.css">
     ';
 }
 function before_js() {
-    // <script src="/node_modules/@fortawesome/fontawesome-free/js/fontawesome.js"></script>
     echo '
-    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/js/all.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
     ';
 }
 
@@ -187,8 +187,7 @@ function after_js() {
     <script src="./../asset/js/base.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/message.js"></script>
-    <script src="/public/asset/js/bootstrap.bundle.js"></script>
-
+    
     ';
     
     // <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
