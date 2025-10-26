@@ -176,6 +176,7 @@ $counterNumber = $token->counterNumber;
     <script src="./../asset/js/message.js"></script>
     <script>
         let frmScheduleRequesterForm = document.getElementById('frmScheduleRequesterForm');
+        let frmTransactionLimitForm = document.getElementById('frmTransactionLimitForm');
 
         // Load the current schedule settings
         function load_schedule_requester_form() {
@@ -242,6 +243,79 @@ $counterNumber = $token->counterNumber;
         }
 
         load_schedule_requester_form();
+        load_transaction_limiter();
+        
+        // Load transaction limiter settings and populate the form
+        function load_transaction_limiter() {
+            $.ajax({
+                url: '/public/api/api_endpoint.php?transaction_limiter',
+                type: 'GET',
+                success: function(response) {
+                    console.log('Transaction limiter GET:', response);
+                    if (response.status === 'success') {
+                        const data = response.data || {};
+                        // If a numeric value exists, populate the input
+                        const limit = (typeof data.setup_value_int !== 'undefined' && data.setup_value_int !== null) ? data.setup_value_int : document.getElementById('transaction_limit').value;
+                        document.getElementById('transaction_limit').value = limit;
+                        // If the record exists, enable the checkbox. If not, leave as unchecked.
+                        document.getElementById('transaction_limit_enable').checked = (typeof data.setup_value_int !== 'undefined' && data.setup_value_int !== null);
+                    } else {
+                        console.error('Transaction limiter:', response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error (transaction_limiter):', status, error);
+                }
+            });
+        }
+
+        // Submit handler for transaction limit form
+        if (frmTransactionLimitForm) {
+            frmTransactionLimitForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                let transaction_limit_enable = formData.get('transaction_limit_enable') ? formData.get('transaction_limit_enable') : 0;
+                let transaction_limit = formData.get('transaction_limit') || 0;
+
+                console.log('Transaction Limit Form Data:', { transaction_limit_enable, transaction_limit });
+
+                let notify = document.getElementById('notify-transaction-limit');
+                let notify_message = document.getElementById('notify-transaction-limit-message');
+
+                $.ajax({
+                    url: './../api/api_endpoint.php',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        transaction_limit: parseInt(transaction_limit, 10),
+                        method: 'transaction_limiter'
+                    }),
+                    success: function(response) {
+                        notify.classList.remove('alert-success', 'alert-danger', 'alert-info');
+                        if (response.status === 'success') {
+                            notify.classList.add('alert-success');
+                            notify_message.innerHTML = response.message;
+                            notify.classList.remove('d-none');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1200);
+                        } else {
+                            notify.classList.add('alert-danger');
+                            notify_message.innerHTML = response.message;
+                            notify.classList.remove('d-none');
+                            setTimeout(() => {
+                                notify.classList.add('d-none');
+                            }, 2000);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        notify.classList.add('alert-danger');
+                        notify_message.innerHTML = 'Network or server error';
+                        notify.classList.remove('d-none');
+                        setTimeout(() => { notify.classList.add('d-none'); }, 2000);
+                    }
+                });
+            });
+        }
         frmScheduleRequesterForm.addEventListener('submit', function(e) {
             e.preventDefault();
             let formData = new FormData(this);

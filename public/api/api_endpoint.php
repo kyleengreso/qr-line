@@ -403,7 +403,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
@@ -658,7 +658,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
@@ -694,7 +694,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee is not found"
@@ -731,7 +731,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
@@ -945,7 +945,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter is not found"
@@ -1181,14 +1181,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
             }
 
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No transaction was assigned"
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows > 0) {
+    } else if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction success successfully"
@@ -1323,7 +1323,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No transaction was assigned"
@@ -1681,7 +1681,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
@@ -1817,48 +1817,89 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
 
-        $transaction_limit = $data->transaction_limit;
+        /*
+            {
+                "method": "transaction_limiter",
+                "transaction_limit": 100,
+                "enable": 1
+            }
+        */
 
-        // Check if the transaction limit is exist
+        // Accept either `enable` or `transaction_limit_enable` from the client
+        $transaction_limit_enable = isset($data->enable)
+            ? (int)$data->enable
+            : (isset($data->transaction_limit_enable) ? (int)$data->transaction_limit_enable : 0);
+        $transaction_limit = isset($data->transaction_limit) ? (int)$data->transaction_limit : 0;
 
+        // Check if the transaction_limit_enable is exist
+        $sql_cmd = "SELECT *
+                    FROM setup_system
+                    WHERE setup_key = 'transaction_limit_enable'";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute();
+        $transaction_limit_enable_check = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (count($transaction_limit_enable_check) == 0) { 
+            // Insert enable flag using provided value (default 0)
+            $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value_int)
+                        VALUES ('transaction_limit_enable', ?)";
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$transaction_limit_enable]);
+        }
+
+        // Check if the transaction_limit is exist
         $sql_cmd = "SELECT *
                     FROM setup_system
                     WHERE setup_key = 'transaction_limit'";
         $stmt = $conn->pdo->prepare($sql_cmd);
         $stmt->execute();
         $transaction_limit_check = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if (count($transaction_limit_check) == 0) {
-            // Insert the transaction limit
+        
+        if (count($transaction_limit_check) == 0) {            
             $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value_int)
                         VALUES ('transaction_limit', ?)";
             $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute([$transaction_limit]);
         }
 
-        // Update the transaction limit
-        $sql_cmd = "UPDATE setup_system
-                    SET setup_value_int = ?
-                    WHERE setup_key = 'transaction_limit'";
-        $stmt = $conn->pdo->prepare($sql_cmd);
-        $stmt->execute([$transaction_limit]);
-        if ($stmt->rowCount() > 0) {
+        // Update the transaction_limit and transaction_limit_enable values separately
+        $updatedRows = 0;
+
+        try {
+            $sql_cmd = "UPDATE setup_system
+                        SET setup_value_int = ?
+                        WHERE setup_key = 'transaction_limit'";
+            $stmt1 = $conn->pdo->prepare($sql_cmd);
+            $stmt1->execute([$transaction_limit]);
+            $updatedRows += $stmt1->rowCount();
+
+            // Persist the enable flag as an integer in setup_value_int
+            $sql_cmd2 = "UPDATE setup_system
+                         SET setup_value_int = ?
+                         WHERE setup_key = 'transaction_limit_enable'";
+            $stmt2 = $conn->pdo->prepare($sql_cmd2);
+            $stmt2->execute([$transaction_limit_enable]);
+            $updatedRows += $stmt2->rowCount();
+        } catch (PDOException $e) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . ($e->getMessage() ?? 'unknown')
+            ));
+            $conn->close();
+            exit;
+        }
+
+        if ($updatedRows > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction limit updated successfully"
             ));
             $conn->close();
             exit;
-        } else if ($stmt->affected_rows == 0) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "No changes made"
-            ));
-            $conn->close();
-            exit;
         } else {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Error: " . $conn->error
+                "message" => "No changes made"
             ));
             $conn->close();
             exit;
@@ -3277,10 +3318,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $sql_cmd = "SELECT *
                     FROM setup_system
                     WHERE setup_key = 'transaction_limit'";
-    $stmt = $conn->pdo->prepare($sql_cmd);
-    $stmt->execute();
-    $transaction_limiter = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (count($transaction_limiter) > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute();
+        $transaction_limiter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($transaction_limiter) > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction limiter found",
@@ -3289,15 +3330,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $conn->close();
             exit;
         } else {
+            // Return a sensible default instead of error so UI can load without a DB row.
+            $default = array(
+                'setup_key' => 'transaction_limit',
+                'setup_value_int' => 10
+            );
             echo json_encode(array(
-                "status" => "error",
-                "message" => "Transaction limiter not found"
+                "status" => "success",
+                "message" => "Transaction limiter not found, using default",
+                "data" => $default
             ));
             $conn->close();
             exit;
         }
+
     } else if (isset($_GET['refresh_data'])) {
-        // Incase for issue
+        /*
+        
+            Refresh data for incase scheduler has problem
+            
+        */
         $conn->begin_transaction();
         try {
             $conn->query("CALL `employeeMonitor`()");
