@@ -8,9 +8,12 @@
 
 require_once __DIR__ . '/./../base.php';
 require_once __DIR__ . '/./../includes/system_auth.php';
+require_once __DIR__ . '/./../includes/config.php';
 
 /*
-   NOTE: This API reponse must less than 100ms
+   NOTE:
+   
+   This API reponse must less than 100ms between 
   
   
   
@@ -18,7 +21,51 @@ require_once __DIR__ . '/./../includes/system_auth.php';
 
 header("Content-Type: application/json");
 
+// Start output buffering so we can normalize HTTP status codes based on JSON responses
+if (!ob_get_level()) {
+    ob_start();
+}
+
 global $conn;
+
+function determine_http_status_code(array $data): int {
+    $status = isset($data['status']) ? strtolower($data['status']) : '';
+    $message = isset($data['message']) ? strtolower($data['message']) : '';
+
+    if ($status === 'success') {
+        if (strpos($message, 'created') !== false || strpos($message, 'registered') !== false || strpos($message, 'generated') !== false || strpos($message, 'queued') !== false) {
+            return 201;
+        }
+        return 200;
+    }
+
+    if (strpos($message, 'database') !== false || strpos($message, 'error:') !== false || strpos($message, 'exception') !== false) return 500;
+    if (strpos($message, 'invalid token') !== false || strpos($message, 'no token') !== false || (strpos($message, 'invalid') !== false && strpos($message, 'password') !== false)) return 401;
+    if (strpos($message, 'deactivated') !== false || strpos($message, 'forbidden') !== false) return 403;
+    if (strpos($message, 'not found') !== false || strpos($message, 'not assigned') !== false || strpos($message, 'no transactions') !== false) return 404;
+    if (strpos($message, 'already') !== false || strpos($message, 'exists') !== false || strpos($message, 'already registered') !== false) return 409;
+    if (strpos($message, 'input') !== false || strpos($message, 'please') !== false || strpos($message, 'invalid request') !== false) return 400;
+
+    return 400;
+}
+
+register_shutdown_function(function() {
+    if (!ob_get_level()) return;
+    $buffer = ob_get_contents();
+    if ($buffer === '') {
+        if (ob_get_level()) ob_end_flush();
+        return;
+    }
+    $decoded = json_decode($buffer, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded) && isset($decoded['status'])) {
+        $code = determine_http_status_code($decoded);
+        header('Content-Type: application/json', true, $code);
+        ob_end_clean();
+        echo json_encode($decoded);
+        return;
+    }
+    if (ob_get_level()) ob_end_flush();
+});
 
 if (isset($_COOKIE['token'])) {
     $token = $_COOKIE['token'];
