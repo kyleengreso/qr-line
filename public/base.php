@@ -175,6 +175,12 @@ function head_css() {
         <link rel="stylesheet" href="./../asset/css/theme.css">
     ';
 }
+/**
+ * Optional meta helper for pages to inject small modern meta tags
+ */
+function head_meta() {
+    echo "<meta name=\"theme-color\" content=\"#ff6e37\">\n";
+}
 function before_js() {
     echo '
     <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/js/all.min.js" crossorigin="anonymous"></script>
