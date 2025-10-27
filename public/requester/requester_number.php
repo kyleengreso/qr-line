@@ -45,7 +45,7 @@ include './../base.php';
         </div>
         <div class="d-flex justify-content-center align-items-center">
             <div class="mt-4 rounded-start p-4 d-flex justify-content-center" style="width: 100%">
-                <a class="btn btn-primary text-white fw-bold" id="btnCancelRequestModal" data-toggle="modal" data-target="#requestCancelModal">Cancel Request</a>
+                <a class="btn btn-primary text-white fw-bold" id="btnCancelRequestModal" data-bs-toggle="modal" data-bs-target="#requestCancelModal">Cancel Request</a>
             </div>
         </div>
     </div>
@@ -60,8 +60,8 @@ include './../base.php';
                     Do you want to cancel you current transaction?
                 </div>
                 <div class="modal-footer col" id="viewEmployeeFooter">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="btnCancelRequest">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" id="btnCancelRequest">Cancel</button>
                 </div>
             </div>
         </div>
@@ -113,15 +113,15 @@ include './../base.php';
                             actionButton.textContent = 'Exit';
                             actionButton.classList.remove('btn-primary');
                             actionButton.classList.add('btn-success');
-                            actionButton.setAttribute('data-toggle', '');
-                            actionButton.setAttribute('data-target', '');
+                            actionButton.removeAttribute('data-bs-toggle');
+                            actionButton.removeAttribute('data-bs-target');
                             actionButton.href = '/public/requester/requester_form.php';
                         } else {
                             actionButton.textContent = 'Cancel Request';
                             actionButton.classList.remove('btn-success');
                             actionButton.classList.add('btn-primary');
-                            actionButton.setAttribute('data-toggle', 'modal');
-                            actionButton.setAttribute('data-target', '#requestCancelModal');
+                            actionButton.setAttribute('data-bs-toggle', 'modal');
+                            actionButton.setAttribute('data-bs-target', '#requestCancelModal');
                             actionButton.href = '#';
                         }
 
@@ -141,7 +141,7 @@ include './../base.php';
 
         let btnCancelRequest = document.getElementById("btnCancelRequest");
         if (btnCancelRequest) {
-            btnCancelRequest.addEventListener("click", function () {
+                btnCancelRequest.addEventListener("click", function () {
                 // get token from url
                 const token = new URLSearchParams(window.location.search).get('requester_token');
                 console.log(token);
@@ -153,13 +153,27 @@ include './../base.php';
                     url: '/public/api/api_endpoint.php',
                     type: "POST",
                     data: JSON.stringify(data),
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
                     success: function (response) {
                         console.log(response);
-                        if (response.status) {
+                        if (response && response.status === 'success') {
+                            // hide modal (bootstrap 5)
+                            try {
+                                var modalEl = document.getElementById('requestCancelModal');
+                                var modalInstance = bootstrap.Modal.getInstance(modalEl);
+                                if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
+                                modalInstance.hide();
+                            } catch (e) {
+                                // ignore if bootstrap not available
+                            }
+
                             alert(response.message);
-                            window.location.href = '/public/requester/requester_form.php';
+                            // refresh UI and redirect after short delay
+                            fetchYourQuery();
+                            setTimeout(function() { window.location.href = '/public/requester/requester_form.php'; }, 900);
                         } else {
-                            alert(response.message);
+                            alert(response ? response.message : 'Unknown error');
                         }
                     },
                     error: function (xhr, status, error) {

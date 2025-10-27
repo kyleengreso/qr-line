@@ -167,16 +167,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Username or Password is invalid"
             ));
-            
-            
-        }
+                    http_response_code(401);
+                    return;
+                }
         if ($employee[0]['active'] == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Account is deactivated"
             ));
-            
-            
+            http_response_code(403);
+            return;
         }
         if (password_verify($password, $employee[0]['password'])) {
             
@@ -194,8 +194,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "status" => "error",
                         "message" => "Cashier was not assigned yet"
                     ));
-                    
-                    
+                    http_response_code(404);
+                    return;
+                    exit(0);
                 }
             }
 
@@ -271,6 +272,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "attempt" => $attempt,
                     "message" => "Username or Password is invalid"
                 ));
+                http_response_code(401);
+                return;
                 
                 
             } else {
@@ -297,7 +300,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Username or Password is invalid"
             ));
-            
+            http_response_code(401);
+            return;
             
         }
     // REGISTER
@@ -576,8 +580,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Username already exists"
             ));
-            
-            
+            http_response_code(409);
+            return;
         }
 
         // Check if the email is already exists
@@ -593,7 +597,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Email already exists"
             ));
-            
+            http_response_code(409);
+            return;
             
         }
 
@@ -604,8 +609,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please select the role type"
             ));
-            
-            
+            http_response_code(409);
+            return;
         }
 
         // Check active
@@ -659,18 +664,73 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             
             
     } else if ($stmt->rowCount() == 0) {
+            // If no rows were affected, check whether the current DB row already matches
+            // the requested values or if there was a parameter mismatch.
+            try {
+                $sql_cmd = "SELECT id, username, password, email, role_type, active FROM employees WHERE id = ?";
+                $checkStmt = $conn->pdo->prepare($sql_cmd);
+                $checkStmt->execute([$id]);
+                $current = $checkStmt->fetch(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                $current = null;
+            }
+
+            // Build a helpful debug message when the update reports 0 rows affected.
+            $debugMsg = 'No changes made';
+            if ($current) {
+                $differences = [];
+                if (isset($username) && $current['username'] !== $username) $differences[] = 'username';
+                // Note: password is hashed in DB; we only report if a new password was provided
+                if (isset($password) && strlen($password) > 0) {
+                    $differences[] = 'password';
+                }
+                if (isset($email) && $current['email'] !== $email) $differences[] = 'email';
+                if (isset($role_type) && $current['role_type'] !== $role_type) $differences[] = 'role_type';
+                if (isset($active) && (int)$current['active'] !== (int)$active) $differences[] = 'active';
+
+                if (count($differences) > 0) {
+                    $debugMsg = 'Update executed but 0 rows affected. Fields that differ from DB: ' . implode(', ', $differences);
+                    // include limited debug info for troubleshooting (non-sensitive)
+                    $debugExtra = [
+                        'current' => [
+                            'username' => $current['username'],
+                            'email' => $current['email'],
+                            'role_type' => $current['role_type'],
+                            'active' => (int)$current['active']
+                        ],
+                        'attempt' => [
+                            'username' => $username,
+                            'email' => $email,
+                            'role_type' => $role_type,
+                            'active' => (int)$active
+                        ]
+                    ];
+
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => $debugMsg,
+                        "debug" => $debugExtra
+                    ));
+                    http_response_code(409);
+                    return;
+                }
+            }
+
+            // Fallback generic response
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            
+            http_response_code(409);
+            return;
             
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            
+            http_response_code(500);
+            return;
             
         }
         
@@ -1386,7 +1446,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Complete
         $sql_cmd = "SELECT *
                     FROM transactions t 
-                    WHERE t.token_number = ? AND t.status = 'completed'";
+                    WHERE t.token_number = ?
+                    AND t.status = 'completed'
+                    AND DATE(t.transaction_time) = CURDATE()";
         $stmt = $conn->pdo->prepare($sql_cmd);
         $stmt->execute([$token_number]);
         $transaction = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1505,9 +1567,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "queue_count_int" => $queue_count_int
             );
 
-            // Send the email
-            include "./email_content.php";
-            send_email_request_submit($request_data);
+            // Send the emailrequester_form_submit
+            if ($email_feature == true) {
+                include "./email_content.php";
+                send_email_request_submit($request_data);
+            }
+            return;
+
         } catch (Exception $e) {
             $conn->rollback();
             echo json_encode(array(
@@ -1518,7 +1584,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             
         }
         
-        
+        return;
+
     } else if ($method == "counter_queue_remain") {
         if (!isset($data->counter_number)) {
             echo json_encode(array(
@@ -1604,8 +1671,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Ensure scheduler table/columns match expected DDL from reference.
         // Best-effort: create table if missing and add/modify minimal columns when possible.
         try {
-            $tblCheckSql = "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler'";
-            $tblStmt = $conn->pdo->prepare($tblCheckSql);
+            $tblsql_cmd = "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler'";
+            $tblStmt = $conn->pdo->prepare($tblsql_cmd);
             $tblStmt->execute();
             $tblExists = (int) $tblStmt->fetchColumn();
 
@@ -1628,8 +1695,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $conn->pdo->exec($createSql);
             } else {
                 // ensure `everyday` exists
-                $colCheckSql = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'everyday'";
-                $colStmt = $conn->pdo->prepare($colCheckSql);
+                $colsql_cmd = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'everyday'";
+                $colStmt = $conn->pdo->prepare($colsql_cmd);
                 $colStmt->execute();
                 $everydayExists = (int) $colStmt->fetchColumn();
                 if ($everydayExists === 0) {
@@ -1652,8 +1719,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 try { $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `schedule_type` ENUM('requester','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL"); } catch (PDOException $ignore) {}
 
                 // ensure managed_by exists
-                $colCheckSql2 = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'managed_by'";
-                $colStmt2 = $conn->pdo->prepare($colCheckSql2);
+                $colsql_cmd2 = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'managed_by'";
+                $colStmt2 = $conn->pdo->prepare($colsql_cmd2);
                 $colStmt2->execute();
                 $managedExists = (int) $colStmt2->fetchColumn();
                 if ($managedExists === 0) {
@@ -2214,9 +2281,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "employee" => $employees[0],
                     "message" => "Employee found",
                 ));
-                
-                
+                return;
             }
+
             echo json_encode(array(
                 "status" => "success",
                 "employees" => $employees,
