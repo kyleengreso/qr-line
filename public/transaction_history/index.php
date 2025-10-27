@@ -111,32 +111,49 @@ $email = $token->email;
                         
                         </div>
                     </div>
-                    <div class="w-100">
-                        <span>Show 1-100</span>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <small class="text-muted">Showing up to <strong id="showingCount">1-100</strong></small>
+                        </div>
+                        <div id="transactionsLoader" class="d-none">
+                            <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                            <small class="ms-2">Loading...</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination pagination-sm mb-0">
+                                    <li class="page-item">
+                                        <a class="page-link disabled" id="pagePrevTransactions">Previous</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" id="pageNextTransactions">Next</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                            <small id="pageInfo" class="text-muted ms-3">Page 1</small>
+                        </div>
                     </div>
-                    <table class="table table-striped table-members" id="table-transactions-history">
-                        <thead>
-                            <th>Counter No</th>
-                            <th>Transaction Time</th>
-                            <th>#</th>
-                            <th class="d-none d-md-none d-lg-block">Email</th>
-                            <th>Payment</th>
-                        </thead>
-                        <tbody>
-                            <!-- Load -->
-                        </tbody>
-                    </table>
-                    <nav aria-label="Page navigation example">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item">
-                                <a class="page-link disabled" id="pagePrevTransactions">Previous</a>
-                            </li>
-                            <!-- Page number reserved -->
-                            <li class="page-item">
-                                <a class="page-link" id="pageNextTransactions">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="table-transactions-history">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Time</th>
+                                    <th>Txn #</th>
+                                    <th class="d-none d-md-table-cell">Name</th>
+                                    <th class="d-none d-md-table-cell">Email</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th class="d-none d-sm-table-cell">Counter</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Load -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -153,7 +170,7 @@ $email = $token->email;
                 
                 </div>
                 <div class="modal-footer col" id="viewEmployeeFooter">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -166,6 +183,10 @@ $email = $token->email;
     let table_transactions_history = document.getElementById("table-transactions-history");
     let searchEmail = document.getElementById("searchEmail");
     let getPaymentType = document.getElementById("getPaymentType");
+    let pagePrevTransactions = document.getElementById("pagePrevTransactions");
+    let pageNextTransactions = document.getElementById("pageNextTransactions");
+    let transactionsLoader = document.getElementById('transactionsLoader');
+    let pageInfo = document.getElementById('pageInfo');
 
     var page = 1;
     var paginate = 100;
@@ -188,6 +209,13 @@ $email = $token->email;
         getTransactionHistory();
     });
     function getTransactionHistory() {
+        // show loader and disable pagination while loading
+        if (transactionsLoader) transactionsLoader.classList.remove('d-none');
+        if (pageNextTransactions) pageNextTransactions.classList.add('disabled');
+        if (pagePrevTransactions) pagePrevTransactions.classList.add('disabled');
+        // show skeleton rows to indicate loading
+        showSkeletonRows(6);
+
         var params = new URLSearchParams({
             transactions: true,
             page: page,
@@ -202,41 +230,130 @@ $email = $token->email;
         $.ajax({
             url: "/public/api/api_endpoint.php?" + params,
             type: "GET",
+            timeout: 10000,
             success: function (response) {
-                while (table_transactions_history.rows.length > 1) {
-                    table_transactions_history.deleteRow(1);
-                }
+                // clear skeleton / rows
+                const tbody = table_transactions_history.querySelector('tbody');
+                tbody.innerHTML = '';
+
                 if (response.status === 'success') {
-                    const transactions = response.transactions;
-                    // console.log(transactions);
-                    if (transactions.length < paginate) {
-                        pageNextTransactions.classList.add('disabled');
-                    } else {
-                        pageNextTransactions.classList.remove('disabled');
+                    const transactions = response.transactions || [];
+
+                    // server-driven pagination: try common fields
+                    let totalPages = null;
+                    let currentPage = page;
+                    if (typeof response.total_pages !== 'undefined') {
+                        totalPages = Number(response.total_pages);
+                    } else if (response.meta && typeof response.meta.total_pages !== 'undefined') {
+                        totalPages = Number(response.meta.total_pages);
+                    } else if (typeof response.total !== 'undefined') {
+                        totalPages = Math.ceil(Number(response.total) / paginate);
                     }
+                    if (typeof response.page !== 'undefined') currentPage = Number(response.page);
+                    else if (response.meta && typeof response.meta.page !== 'undefined') currentPage = Number(response.meta.page);
+
+                    // update page info
+                    if (pageInfo) {
+                        if (totalPages) pageInfo.innerText = `Page ${currentPage} of ${totalPages}`;
+                        else pageInfo.innerText = `Page ${currentPage}`;
+                    }
+
+                    // update pagination state using totalPages when available
+                    if (totalPages) {
+                        if (currentPage <= 1) pagePrevTransactions.classList.add('disabled'); else pagePrevTransactions.classList.remove('disabled');
+                        if (currentPage >= totalPages) pageNextTransactions.classList.add('disabled'); else pageNextTransactions.classList.remove('disabled');
+                    } else {
+                        if (transactions.length < paginate) pageNextTransactions.classList.add('disabled'); else pageNextTransactions.classList.remove('disabled');
+                        if (page > 1) pagePrevTransactions.classList.remove('disabled');
+                    }
+
+                    // update showing count (best-effort)
+                    document.getElementById('showingCount').innerText = `1-${Math.min(paginate, transactions.length)}`;
+
+                    // render rows
                     transactions.forEach((transaction) => {
-                        let row = table_transactions_history.insertRow(-1);
-                        row.innerHTML += `
-                            <td>${transaction.counterNumber ? transaction.counterNumber : "Not Countered" }</td>
-                            <td>${transaction.transaction_time}</td>
-                            <td>${transaction.idtransaction}</td>
-                            <td class="d-none d-md-none d-lg-block">
-                                <span class="d-none d-md-none d-lg-block">${transaction.email}</span>
+                        const tr = document.createElement('tr');
+
+                        function statusBadge(status) {
+                            switch ((status || '').toLowerCase()) {
+                                case 'completed': return '<span class="badge bg-success">Completed</span>';
+                                case 'pending': return '<span class="badge bg-warning text-dark">Pending</span>';
+                                case 'serve': return '<span class="badge bg-danger">Failed</span>';
+                                case 'cancelled': return '<span class="badge bg-secondary">Cancelled</span>';
+                                default: return `<span class="badge bg-light text-dark">${status || 'Unknown'}</span>`;
+                            }
+                        }
+
+                        function paymentBadge(payment) {
+                            switch ((payment || '').toLowerCase()) {
+                                case 'registrar': return '<span class="badge bg-primary">Registrar</span>';
+                                case 'assessment': return '<span class="badge bg-info text-dark">Assessment</span>';
+                                default: return `<span class="badge bg-light text-dark">${payment || 'N/A'}</span>`;
+                            }
+                        }
+
+                        tr.innerHTML = `
+                            <td><strong>${transaction.token_number || '—'}</strong></td>
+                            <td><small class="text-muted">${transaction.transaction_time}</small></td>
+                            <td>#${transaction.idtransaction}</td>
+                            <td class="d-none d-md-table-cell">${transaction.name || '—'}</td>
+                            <td class="d-none d-md-table-cell"><a href="mailto:${transaction.email}">${transaction.email || '—'}</a></td>
+                            <td>${paymentBadge(transaction.payment)}</td>
+                            <td>${statusBadge(transaction.status)}</td>
+                            <td class="d-none d-sm-table-cell">${transaction.counterNumber ? transaction.counterNumber : '—'}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary btn-view">View</button>
                             </td>
-                            <td>${transaction.payment}</td>
                         `;
+
+                        // attach event
+                        tr.querySelector('.btn-view').addEventListener('click', function () {
+                            showTransactionModal(transaction);
+                        });
+
+                        tbody.appendChild(tr);
                     });
                 } else {
-                    let row = table_transactions_history.insertRow(-1);
-                    pageNextTransactions.classList.add('disabled');
-                    row.innerHTML += `
-                        <td colspan="4" class="text-center">No transactions found</td>
-                    `;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td colspan="9" class="text-center text-muted">No transactions found</td>`;
+                    tbody.appendChild(tr);
                 }
+                // hide loader
+                if (transactionsLoader) transactionsLoader.classList.add('d-none');
+            },
+            error: function (xhr, status, err) {
+                // hide loader and show error row
+                if (transactionsLoader) transactionsLoader.classList.add('d-none');
+                const tbody = table_transactions_history.querySelector('tbody');
+                tbody.innerHTML = '';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="9" class="text-center text-danger">Error loading transactions</td>`;
+                tbody.appendChild(tr);
+                console.error('Transaction load error', status, err);
             }
         });
     }
     getTransactionHistory();
+
+    function showSkeletonRows(count) {
+        const tbody = table_transactions_history.querySelector('tbody');
+        tbody.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="placeholder col-6 placeholder-wave"></span></td>
+                <td><span class="placeholder col-4 placeholder-wave"></span></td>
+                <td><span class="placeholder col-2 placeholder-wave"></span></td>
+                <td class="d-none d-md-table-cell"><span class="placeholder col-6 placeholder-wave"></span></td>
+                <td class="d-none d-md-table-cell"><span class="placeholder col-8 placeholder-wave"></span></td>
+                <td><span class="placeholder col-4 placeholder-wave"></span></td>
+                <td><span class="placeholder col-3 placeholder-wave"></span></td>
+                <td class="d-none d-sm-table-cell"><span class="placeholder col-2 placeholder-wave"></span></td>
+                <td class="text-end"><span class="placeholder col-3 placeholder-wave"></span></td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
 
     searchEmail.addEventListener('keyup', function (e) {
         search_transaction = e.target.value;
@@ -265,5 +382,36 @@ $email = $token->email;
         }
         getTransactionHistory();
     });
+
+    function showTransactionModal(transaction) {
+        const modalTitle = document.getElementById('viewEmployeeTitle');
+        const modalBody = document.getElementById('viewEmployeeBody');
+        modalTitle.innerText = `Transaction #${transaction.idtransaction}`;
+
+        const html = `
+            <div class="row">
+                <div class="col-12 mb-2"><strong>Token:</strong> ${transaction.token_number || '—'}</div>
+                <div class="col-6"><strong>Time:</strong> ${transaction.transaction_time}</div>
+                <div class="col-6"><strong>Counter:</strong> ${transaction.counterNumber || '—'}</div>
+                <div class="col-12 mt-2"><strong>Name:</strong> ${transaction.name || '—'}</div>
+                <div class="col-12"><strong>Email:</strong> <a href="mailto:${transaction.email}">${transaction.email || '—'}</a></div>
+                <div class="col-6 mt-2"><strong>Payment:</strong> ${transaction.payment || '—'}</div>
+                <div class="col-6 mt-2"><strong>Status:</strong> ${transaction.status || '—'}</div>
+            </div>
+        `;
+
+        modalBody.innerHTML = html;
+        // use Bootstrap 5 Modal API (no jQuery dependency)
+        const modalEl = document.getElementById('viewEmployeeModal');
+        if (typeof bootstrap !== 'undefined') {
+            const bsModal = new bootstrap.Modal(modalEl);
+            bsModal.show();
+        } else if (window.$ && typeof window.$ === 'function') {
+            // fallback to jQuery if bootstrap not available globally
+            $('#viewEmployeeModal').modal('show');
+        } else {
+            console.warn('Bootstrap modal not available to show modal');
+        }
+    }
 </script>
 </html>
