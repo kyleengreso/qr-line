@@ -31,11 +31,22 @@ $project_version = "1.0.0";
 // $serverName = "qrline.psu.edu.ph:80"; // Domain name version
 $serverName = "192.168.1.137:80"; // IP Address version
 
-
 // Project Support
 $project_address = " Tiniguiban Heights, Puerto Princesa City, Palawan, Philippines";
 $project_email = " marcsysman@gmail.com";
 $project_phone = " (+63)909-123-4567";
+
+// Simple .env loader
+$envPath = __DIR__ . '/.env';
+if (!file_exists($envPath)) {
+    die('.env file missing.');
+}
+
+foreach (parse_ini_file($envPath) as $key => $value) {
+    $GLOBALS[$key] = $value;
+    putenv("$key=$value");
+}
+
 
 // Website Security Feature
 $enable_http = true;                // Enable HTTP connection. Default: true
@@ -43,7 +54,7 @@ $enable_secure = true;              // Enable HTTPS connection. Default: true
 $master_key = "master";             // Master key for encryption and decryption. Default: "master"
 
 // Email Feature setup
-$email_feature = TRUE;
+$email_feature = FALSE;
 
 // SMTP AUTH
 $smtp_host = "smtp.gmail.com";
