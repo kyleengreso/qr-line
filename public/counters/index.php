@@ -168,76 +168,81 @@ function phpUserStatusIcon($username, $role_type, $active) {
         </div>
     </div>
 
-    <!-- ADD COUNTER -->
+    <!-- ADD COUNTER (redesigned to match Update/Delete) -->
     <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                    <h5 class="modal-title fw-bold" id="addCounterTitle">Add Counter</h5>
+                <div class="modal-header bg-orange-custom d-flex justify-content-between text-white">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="addCounterTitle">Add Counter</h5>
+                        <div class="small text-white-50">Assign an employee and set the counter number</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="h5 mb-0">#<strong id="addCounterDisplay">&mdash;</strong></div>
+                    </div>
                 </div>
-                <form method="POST" id="frmAddCounter">
-                    <div class="modal-body py-4 px-6" id="addCounterBody">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="addCounterAlert">
-                                <span id="addCounterAlertMsg"></span>
+                <div class="modal-body py-3 px-4" id="addCounterBody">
+                    <form method="POST" id="frmAddCounter">
+                        <div class="alert alert-danger w-100 d-none" id="addCounterAlert">
+                            <span id="addCounterAlertMsg"></span>
+                        </div>
+
+                        <input type="hidden" name="counter_no_add" id="counter_no_add">
+
+                        <div class="row g-3 align-items-center mb-3">
+                            <div class="col-12">
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <label class="form-label small">Search available employees</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" class="form-control" id="addSearchUsername" placeholder="Search Username">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Priority Lane</label>
+                                        <select class="form-select" name="transaction-filter-priority-add" id="transaction-filter-priority-add">
+                                            <option value="N">No</option>
+                                            <option value="Y">Yes</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 d-flex align-items-end">
+                                        <label class="form-label small mb-1">Counter Number</label>
+                                        <input type="number" name="counter_no_add_visible" id="counter_no_add_visible" class="form-control ms-2" placeholder="#" min="1">
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
-                                <label for="addSearchUsername">Search Username</label>
-                            </div>
-                        </div>
-                        <div class="mb-4">
+
+                        <div class="mb-3">
                             <label class="form-label">Employees Available</label>
-                            <div class="w-100">
-                                <table class="table table-striped table-members" id="table-add-counter-available">
-                                    <tr>
-                                        <th class="col-2"></th>
-                                        <th>Username</th>
-                                        <th>Available</th>
-                                    </tr>
-                                </table>
-                                <div class="w-100">
+                            <div class="card">
+                                <div class="card-body p-2">
+                                    <div class="row" id="cards-add-counter-available"></div>
+                                </div>
+                                <div class="card-footer bg-white">
                                     <nav class="w-100" aria-label="Page navigation example">
-                                        <ul class="pagination justify-content-center">
-                                            <li class="page-item">
-                                                <a class="page-link disabled" id="pagePrevCounterAvailableAdd">Previous</a>
-                                            </li>
-                                            <li class="page-item">
-                                                <a class="page-link" id="pageNextCounterAvailableAdd">Next</a>
-                                            </li>
+                                        <ul class="mt-4 pagination justify-content-center" id="addCounterPagination">
+                                            <li class="page-item disabled"><a href="#" class="page-link" data-page="1">Previous</a></li>
+                                            <li class="page-item active"><span class="page-link">1</span></li>
+                                            <li class="page-item"><a href="#" class="page-link" data-page="2">Next</a></li>
                                         </ul>
                                     </nav>
                                 </div>
                             </div>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text" ><i class="bi bi-arrow-down-up"></i></div>
-                            <div class="form-floating">
-                                <input type="number" name="counter_no_add" id="counter_no_add" class="form-control" placeholder="Counter Number" required>
-                                <label for="counter_no_add">Counter Number</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text" ><i class="bi bi-sort-up-alt"></i></div>
-                            <div class="form-floating">
-                                <select class="form-select" name="transaction-filter-priority-add" id="transaction-filter-priority-add">
-                                    <option value="N">No</option>
-                                    <option value="Y">Yes</option>
-                                </select>
-                                <label for="transaction-filter-status">Priority Lane</label>
-                            </div>
-                        </div>
+
                         <div class="modal-footer">
-                            <div class="d-flex justify-content-end">
-                                <a class="btn btn-secondary" style="width:max-content;margin-right:10px" data-bs-dismiss="modal">Cancel</a>
-                                <button type="submit" class="btn btn-success" style="width:max-content;margin-right:10px">Add</button>
+                            <div class="d-flex justify-content-end w-100">
+                                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-success" id="btnAddCounterSubmit">Add Counter</button>
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
             </div>
         </div>
     </div>
@@ -447,6 +452,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
 
             let form = document.getElementById('frmAddCounter');
             form.reset();
+            // ensure visible counter field cleared
+            try { const v = document.getElementById('counter_no_add_visible'); if (v) v.value = ''; } catch (ex) {}
             loadAddEmployees();
             // show Add modal after preparing form
             const addModalEl = document.getElementById('addCounterModal');
@@ -455,83 +462,91 @@ function phpUserStatusIcon($username, $role_type, $active) {
         });
 
         function loadAddEmployees() {
-            let table_counters_available = document.getElementById('table-add-counter-available');
-            if (table_counters_available) {
-                const params = new URLSearchParams({
-                    counters: true,
-                    available: true,
-                    search: counter_search,
-                    page: counter_page_modal,
-                    paginate: paginate,
-                });
-                $.ajax({
-                    url: realHost + '/public/api/api_endpoint.php?' + params,
-                    type: 'GET',
-                    success: function (response) {
-                        while (table_counters_available.rows.length > 1) {
-                            table_counters_available.deleteRow(-1);
+            const container = document.getElementById('cards-add-counter-available');
+            if (!container) return;
+
+            const params = new URLSearchParams({
+                counters: true,
+                available: true,
+                search: counter_search,
+                page: counter_page_modal,
+                paginate: paginate,
+            });
+
+            $.ajax({
+                url: realHost + '/public/api/api_endpoint.php?' + params,
+                type: 'GET',
+                success: function (response) {
+                    container.innerHTML = '';
+                    if (response.status === 'success') {
+                        const employees = response.counters || [];
+                        if (employees.length === 0) {
+                            container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                            renderAddPaginationUnknown(counter_page_modal, false);
+                            return;
                         }
-                        if (response.status === 'success') {
-                            const employees = response.counters;
-                            employees.forEach(employee => {
-                                let row = table_counters_available.insertRow(-1);
-                                const checked = (update_selected_employee && update_selected_employee == employee.id) ? 'checked' : '';
-                                row.innerHTML = `
-                                    <tr>
-                                        <td style="min-width:20px;max-width:35px">
-                                            <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}" ${checked}>
-                                        </td>
-                                        <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                                            <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
-                                        </td>
-                                        <td style="min-width:20px;max-width:35px">
+
+                        employees.forEach(employee => {
+                            const card = document.createElement('div');
+                            card.className = 'col-12 mb-2';
+                            card.innerHTML = `
+                                <div class="card">
+                                    <div class="card-body d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}">
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">${escapeHtml(employee.username)}</div>
+                                                <div class="small text-muted">${escapeHtml(employee.role_type || '')}</div>
+                                            </div>
+                                        </div>
+                                        <div>
                                             ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
-                                        </td>
-                                    </tr>
-                                `;
-                            });
-                            // clear after use so subsequent loads don't accidentally re-check
-                            update_selected_employee = null;
-                        } else {
-                            let row = table_counters_available.insertRow(-1);
-                            row.innerHTML = `
-                                <tr>
-                                    <td colspan="3" class="fw-bold text-center fw-bold">No employee available</td> 
-                                </tr>
+                                        </div>
+                                    </div>
+                                </div>
                             `;
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error loading employees:', error);
+                            container.appendChild(card);
+                        });
+
+                        // update pagination UI
+                        try {
+                            const hasMore = employees.length === paginate;
+                            renderAddPaginationUnknown(counter_page_modal, hasMore);
+                        } catch (ex) { console.error(ex); }
+                    } else {
+                        container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                        renderAddPaginationUnknown(counter_page_modal, false);
                     }
-                });
-            }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading employees for add modal:', error);
+                }
+            });
         }
 
-    let pagePrevCounterAvailableAdd = document.getElementById('pagePrevCounterAvailableAdd');
-    if (pagePrevCounterAvailableAdd) pagePrevCounterAvailableAdd.addEventListener('click', function(e) {
-            if (counter_page_modal > 1) {
-                counter_page_modal--;
-                if (counter_page_modal === 1) {
-                    pagePrevCounterAvailableAdd.classList.add('disabled');
+    // Delegated pagination handler for add modal
+    const addCounterPagination = document.getElementById('addCounterPagination');
+    if (addCounterPagination) {
+        addCounterPagination.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = e.target.closest('a.page-link');
+            if (!target) return;
+            const pageAttr = target.getAttribute('data-page');
+            if (pageAttr) {
+                const p = parseInt(pageAttr, 10);
+                if (!isNaN(p) && p > 0) {
+                    counter_page_modal = p;
+                    loadAddEmployees();
                 }
-                loadAddEmployees();
             }
         });
-
-    let pageNextCounterAvailableAdd = document.getElementById('pageNextCounterAvailableAdd');
-    if (pageNextCounterAvailableAdd) pageNextCounterAvailableAdd.addEventListener('click', function(e) {
-            pagePrevCounterAvailableAdd.classList.remove('disabled');
-            e.preventDefault();
-            counter_page_modal++;
-            loadAddEmployees();
-        });
-
+    }
 
     let addSearchUsername = document.getElementById('addSearchUsername');
     if (addSearchUsername) addSearchUsername.addEventListener('keyup', function(e) {
-            page_counterModal = 1;
-            pagePrevCounterAvailableAdd.classList.add('disabled');
+            counter_page_modal = 1;
             e.preventDefault();
             counter_search = this.value;
             loadAddEmployees();
@@ -543,6 +558,16 @@ function phpUserStatusIcon($username, $role_type, $active) {
 
             let formAlert = document.getElementById('addCounterAlert');
             let formAlertMsg = document.getElementById('addCounterAlertMsg');
+
+            // sync visible counter input into hidden field before building FormData
+            try {
+                const visible = document.getElementById('counter_no_add_visible');
+                if (visible) {
+                    const hidden = document.getElementById('counter_no_add');
+                    if (hidden) hidden.value = visible.value;
+                }
+            } catch (ex) { console.error(ex); }
+
             const formData = new FormData(this);
             const selectedRadio = document.querySelector('input[name="employee-counter-set"]:checked');
             if (!selectedRadio) {
@@ -819,6 +844,57 @@ function phpUserStatusIcon($username, $role_type, $active) {
             `;
             container.innerHTML = items;
         }
+
+        // Render simple pagination (unknown total) for add modal
+        function renderAddPaginationUnknown(currentPage, hasMore) {
+            const container = document.getElementById('addCounterPagination');
+            if (!container) return;
+            const prevDisabled = currentPage === 1;
+            const nextDisabled = !hasMore;
+            const items = `
+                <li class="page-item ${prevDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${Math.max(1, currentPage - 1)}">Previous</a></li>
+                <li class="page-item active"><span class="page-link">${currentPage}</span></li>
+                <li class="page-item ${nextDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${currentPage + 1}">Next</a></li>
+            `;
+            container.innerHTML = items;
+        }
+
+        // Highlight selected employee card for add modal; allow clicking a card to select
+        (function setupAddCardSelection() {
+            const container = document.getElementById('cards-add-counter-available');
+            if (!container) return;
+
+            container.addEventListener('change', function(e) {
+                const target = e.target;
+                if (!target || target.name !== 'employee-counter-set') return;
+                container.querySelectorAll('.card').forEach(c => c.classList.remove('border','border-primary','bg-light'));
+                const card = target.closest('.card');
+                if (card) card.classList.add('border','border-primary','bg-light');
+            });
+
+            container.addEventListener('click', function(e) {
+                const card = e.target.closest('.card');
+                if (!card) return;
+                const radio = card.querySelector('input[name="employee-counter-set"]');
+                if (radio) {
+                    if (!radio.checked) {
+                        radio.checked = true;
+                        const ev = new Event('change', { bubbles: true });
+                        radio.dispatchEvent(ev);
+                    }
+                }
+            });
+
+            const observer = new MutationObserver(function() {
+                const checked = container.querySelector('input[name="employee-counter-set"]:checked');
+                if (checked) {
+                    container.querySelectorAll('.card').forEach(c => c.classList.remove('border','border-primary','bg-light'));
+                    const card = checked.closest('.card');
+                    if (card) card.classList.add('border','border-primary','bg-light');
+                }
+            });
+            observer.observe(container, { childList: true, subtree: true });
+        })();
 
         // Highlight selected employee card when its radio is checked; allow clicking a card to select
         (function setupCardSelection() {
