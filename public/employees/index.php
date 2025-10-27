@@ -354,7 +354,7 @@ if ($resp) {
                     <div class="modal-footer">
                         <div class="d-flex justify-content-end w-100">
                             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success" id="btnAddEmployee">Add Employee</button>
+                            <button type="submit" class="btn btn-success" id="btnAddEmployee">Save</button>
                         </div>
                     </div>
                 </form>
@@ -431,7 +431,7 @@ if ($resp) {
                     <div class="modal-footer" id="updateEmployeeFooter">
                         <div class="d-flex justify-content-end w-100">
                             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="btnUpdateEmployee">Update Employee</button>
+                            <button type="submit" class="btn btn-primary" id="btnUpdateEmployee">Save</button>
                         </div>
                     </div>
                 </form>
@@ -467,7 +467,7 @@ if ($resp) {
                         </div>
                         <div class="d-flex justify-content-between mt-4">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Delete Employee</button>
+                            <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Confirm</button>
                         </div>
                     </div>
                 </form>
