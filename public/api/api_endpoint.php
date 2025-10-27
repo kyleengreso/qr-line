@@ -759,26 +759,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $conn->close();
             exit;
         }
-        // check if only counterNumber is exist
-    $sql_cmd = "SELECT * FROM counters WHERE counterNumber = ?";
-    $stmt = $conn->pdo->prepare($sql_cmd);
-    $stmt->execute([$data->counterNumber]);
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (count($result) > 0) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Counter number already assigned"
+            // check if only counterNumber is exist
+        $sql_cmd = "SELECT * FROM counters WHERE counterNumber = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->counterNumber]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Counter number already assigned"
             ));
             $conn->close();
             exit;
         }
 
         // check if only idemployee is exist
-    $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
-    $stmt = $conn->pdo->prepare($sql_cmd);
-    $stmt->execute([$data->idemployee]);
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (count($result) > 0) {
+        $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->idemployee]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee already assigned to another counter"
@@ -788,11 +788,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         // check if exists in both
-    $sql_cmd = "SELECT * FROM counters WHERE counterNumber = ? AND idemployee = ?";
-    $stmt = $conn->pdo->prepare($sql_cmd);
-    $stmt->execute([$data->counterNumber, $data->idemployee]);
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (count($result) > 0) {
+        $sql_cmd = "SELECT * FROM counters WHERE counterNumber = ? AND idemployee = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->counterNumber, $data->idemployee]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter number already registered"
@@ -801,23 +801,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
         // Employee checking
-    $sql_cmd = "SELECT * FROM employees WHERE id = ?";
-    $stmt = $conn->pdo->prepare($sql_cmd);
-    $stmt->execute([$data->idemployee]);
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (count($result) == 0) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Employee not found"
-            ));
-            $conn->close();
+        $sql_cmd = "SELECT * FROM employees WHERE id = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->idemployee]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) == 0) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Employee not found"
+                ));
+                $conn->close();
             exit;
         }
         // Insert counter
-    $sql_cmd = "INSERT INTO counters (idemployee, counterNumber, counter_priority) VALUES (?, ?, ?)";
-    $stmt = $conn->pdo->prepare($sql_cmd);
-    $stmt->execute([$data->idemployee, $data->counterNumber, $data->counter_priority]);
-    if ($stmt->rowCount() > 0) {
+        $sql_cmd = "INSERT INTO counters (idemployee, counterNumber, counter_priority) VALUES (?, ?, ?)";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->idemployee, $data->counterNumber, $data->counter_priority]);
+        if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Counter registered successfully"
@@ -844,7 +844,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $id = $data->id;                        // idcounter
         $counterNumber = $data->counterNumber;  // counterNumber
         $employee_id = $data->idemployee;       // idemployee
-        $priority = $data->counter_priority; // counter_priority
+    // accept either counter_priority or counter_pwd (some clients send counter_pwd)
+    $priority = isset($data->counter_priority) ? $data->counter_priority : (isset($data->counter_pwd) ? $data->counter_pwd : 'N'); // counter_priority
         // check if exists about idemployee
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
         $stmt = $conn->pdo->prepare($sql_cmd);
@@ -888,10 +889,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
 
-        // Update the counter
-        $sql_cmd = "UPDATE counters SET idemployee = ?, counterNumber = ? WHERE idcounter = ?";
-        $stmt = $conn->pdo->prepare($sql_cmd);
-        $stmt->execute([$employee_id, $counterNumber, $id]);
+    // Update the counter (also update priority)
+    $sql_cmd = "UPDATE counters SET idemployee = ?, counterNumber = ?, counter_priority = ? WHERE idcounter = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$employee_id, $counterNumber, $priority, $id]);
         if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
@@ -2333,12 +2334,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         }
         if (isset($_GET['page']) && isset($_GET['paginate'])) {
-            $limit = $_GET['paginate'];
-            $offset = ($_GET['page'] - 1) * $limit;
-            $sql_cmd .= " LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-            $types .= "ss";
+            // cast to integers to avoid SQL quoting issues with LIMIT/OFFSET
+            $limit = (int) $_GET['paginate'];
+            $page = (int) $_GET['page'];
+            if ($limit < 1) $limit = 10;
+            if ($page < 1) $page = 1;
+            $offset = ($page - 1) * $limit;
+            // append integer literals (PDO does not accept placeholders for LIMIT/OFFSET in MySQL)
+            $sql_cmd .= " LIMIT " . $limit . " OFFSET " . $offset;
         }
 
 
@@ -2498,12 +2501,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         if (isset($_GET['page']) && isset($_GET['paginate'])) {
-            $limit = $_GET['paginate'];
-            $offset = ($_GET['page'] - 1) * $limit;
-            $sql_cmd .= " LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-            $types .= "ss";
+            // cast to integers to avoid SQL quoting issues with LIMIT/OFFSET
+            $limit = (int) $_GET['paginate'];
+            $page = (int) $_GET['page'];
+            if ($limit < 1) $limit = 10;
+            if ($page < 1) $page = 1;
+            $offset = ($page - 1) * $limit;
+            // append integer literals (PDO does not accept placeholders for LIMIT/OFFSET in MySQL)
+            $sql_cmd .= " LIMIT " . $limit . " OFFSET " . $offset;
         }
 
         // echo json_encode(array(
