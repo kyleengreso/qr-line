@@ -65,7 +65,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
     <?php include "./../includes/navbar.php"; ?>
 
     <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:500px">
-        <div class="col-md-6" style="min-width:400px;max-width:900px;transform:scale(0.9)">
+    <div class="col-md-6 mx-auto" style="min-width:400px;max-width:900px;">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username?> has logged out successfully</span>
             </div>
@@ -152,8 +152,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
     </div>
 
     <!-- VIEW COUNTER -->
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                 <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Modal title</h5>
@@ -169,8 +169,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
     </div>
 
     <!-- ADD COUNTER (redesigned to match Update/Delete) -->
-    <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog modal-lg" role="document">
+    <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-between text-white">
                     <div>
@@ -178,7 +178,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         <div class="small text-white-50">Assign an employee and set the counter number</div>
                     </div>
                     <div class="text-end">
-                        <div class="h5 mb-0">#<strong id="addCounterDisplay">&mdash;</strong></div>
+                        <div class="h5 mb-0"><strong id="addCounterDisplay"></strong></div>
                     </div>
                 </div>
                 <div class="modal-body py-3 px-4" id="addCounterBody">
@@ -248,8 +248,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
     </div>
 
     <!-- UPDATE COUNTER (redesigned) -->
-    <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog" aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog modal-lg" role="document">
+    <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-between text-white">
                     <div>
@@ -334,8 +334,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
     </div>
 
     <!-- DELETE COUNTER (redesigned) -->
-    <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog" aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog modal-md" role="document">
+    <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-danger d-flex justify-content-between text-white">
                     <div>
@@ -642,8 +642,32 @@ function phpUserStatusIcon($username, $role_type, $active) {
             $.ajax({
                 url: realHost + '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
-                dataType: 'json',
-                success: function (response) {
+                // server sometimes emits multiple JSON objects concatenated which breaks jQuery's parser
+                // request as text and parse the first JSON object manually to be robust
+                dataType: 'text',
+                success: function (raw) {
+                        let response = null;
+                        try {
+                            response = JSON.parse(raw);
+                        } catch (e) {
+                            // try to recover when PHP emitted multiple JSON objects back-to-back like: {...}{...}
+                            const idx = raw.indexOf('}{');
+                            if (idx !== -1) {
+                                const first = raw.substring(0, idx+1);
+                                try {
+                                    response = JSON.parse(first);
+                                } catch (e2) {
+                                    console.error('Failed to parse first JSON object from concatenated response', e2);
+                                }
+                            }
+                        }
+
+                        if (!response) {
+                            console.error('Failed to parse JSON from update counter response');
+                            console.error('Raw response (first 2k chars):\n', raw && raw.substring ? raw.substring(0, 2000) : raw);
+                            return;
+                        }
+
                         if (response.status === 'success') {
                         const counter = response.counter;
                         // Update header display: keep the '#' prefix and bold span
@@ -1024,8 +1048,24 @@ function phpUserStatusIcon($username, $role_type, $active) {
             $.ajax({
                 url: realHost + '/public/api/api_endpoint.php?' + params,
                 type: 'GET',
-                dataType: 'json',
-                success: function (response) {
+                // request as text and parse robustly because server may emit concatenated JSON objects
+                dataType: 'text',
+                success: function (raw) {
+                    let response = null;
+                    try {
+                        response = JSON.parse(raw);
+                    } catch (e) {
+                        const idx = raw.indexOf('}{');
+                        if (idx !== -1) {
+                            const first = raw.substring(0, idx+1);
+                            try { response = JSON.parse(first); } catch (e2) { console.error('Failed to parse first JSON from delete response', e2); }
+                        }
+                    }
+                    if (!response) {
+                        console.error('Failed to parse JSON from delete counter response');
+                        console.error('Raw response (first 2k chars):\n', raw && raw.substring ? raw.substring(0,2000) : raw);
+                        return;
+                    }
                     if (response.status === 'success') {
                         let deleteCounterDisplay = document.getElementById('deleteCounterDisplay');
                         deleteCounterDisplay.innerText = response.counter.counterNumber;
