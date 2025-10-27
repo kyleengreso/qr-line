@@ -136,28 +136,7 @@ $email = $token->email;
                         
                         </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <small class="text-muted">Showing up to <strong id="showingCount">1-100</strong></small>
-                        </div>
-                        <div id="transactionsLoader" class="d-none">
-                            <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
-                            <small class="ms-2">Loading...</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <nav aria-label="Page navigation example">
-                                <ul class="pagination pagination-sm mb-0">
-                                    <li class="page-item">
-                                        <a class="page-link disabled" id="pagePrevTransactions">Previous</a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" id="pageNextTransactions">Next</a>
-                                    </li>
-                                </ul>
-                            </nav>
-                            <small id="pageInfo" class="text-muted ms-3">Page 1</small>
-                        </div>
-                    </div>
+                    <!-- pagination moved below the table to match counters page design -->
 
                     <div class="table-responsive">
                         <table class="table table-hover table-sm align-middle transactions-table" id="table-transactions-history">
@@ -179,6 +158,18 @@ $email = $token->email;
                             </tbody>
                         </table>
                     </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <small class="text-muted">Showing up to <strong id="showingCount">1-100</strong></small>
+                        </div>
+                        <div id="transactionsLoader" class="d-none">
+                            <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                            <small class="ms-2">Loading...</small>
+                        </div>
+                    </div>
+                    <nav aria-label="">
+                        <ul class="pagination justify-content-center mt-3 mb-0" id="transactionsPagination"></ul>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -219,10 +210,12 @@ $email = $token->email;
     let table_transactions_history = document.getElementById("table-transactions-history");
     let searchEmail = document.getElementById("searchEmail");
     let getPaymentType = document.getElementById("getPaymentType");
+    // legacy variables (may be created dynamically by renderPagination)
     let pagePrevTransactions = document.getElementById("pagePrevTransactions");
     let pageNextTransactions = document.getElementById("pageNextTransactions");
     let transactionsLoader = document.getElementById('transactionsLoader');
     let pageInfo = document.getElementById('pageInfo');
+    let transactionsPaginationContainer = document.getElementById('transactionsPagination');
 
     var page = 1;
     var paginate = 100;
@@ -294,13 +287,12 @@ $email = $token->email;
                         else pageInfo.innerText = `Page ${currentPage}`;
                     }
 
-                    // update pagination state using totalPages when available
+                    // render numeric pagination like counters page
                     if (totalPages) {
-                        if (currentPage <= 1) pagePrevTransactions.classList.add('disabled'); else pagePrevTransactions.classList.remove('disabled');
-                        if (currentPage >= totalPages) pageNextTransactions.classList.add('disabled'); else pageNextTransactions.classList.remove('disabled');
+                        renderTransactionsPagination(totalPages, currentPage);
                     } else {
-                        if (transactions.length < paginate) pageNextTransactions.classList.add('disabled'); else pageNextTransactions.classList.remove('disabled');
-                        if (page > 1) pagePrevTransactions.classList.remove('disabled');
+                        // unknown total: render simple prev/current/next
+                        renderTransactionsPaginationUnknown(currentPage, transactions.length >= paginate);
                     }
 
                     // update showing count (best-effort)
@@ -399,23 +391,84 @@ $email = $token->email;
         getTransactionHistory();
     });
 
-    pagePrevTransactions.addEventListener('click', function (e) {
-        if (page > 1) {
-            page--;
-            if (page === 1) {
-                pagePrevTransactions.classList.add('disabled');
+    // Delegated pagination handler for transactions (numeric / counters-style)
+    if (transactionsPaginationContainer) {
+        transactionsPaginationContainer.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = e.target.closest('a.page-link');
+            if (!target) return;
+            const pageAttr = target.getAttribute('data-page');
+            if (pageAttr) {
+                const p = parseInt(pageAttr, 10);
+                if (!isNaN(p) && p > 0) {
+                    page = p;
+                    getTransactionHistory();
+                }
             }
-            getTransactionHistory();
-        }
-    });
+        });
+    }
 
-    pageNextTransactions.addEventListener('click', function (e) {
-        page++;
-        if (page > 1) {
-            pagePrevTransactions.classList.remove('disabled');
+    // Render numeric pagination when totalPages is known
+    function renderTransactionsPagination(totalPages, currentPage) {
+        const container = document.getElementById('transactionsPagination');
+        if (!container) return;
+        let items = '';
+
+        const makeItem = (label, pageNum, disabled, active, id) => {
+            return `<li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}"><a href="#" class="page-link" ${id ? `id="${id}"` : ''} data-page="${pageNum}">${label}</a></li>`;
+        };
+
+        // First
+        items += makeItem('First', 1, currentPage === 1, false, 'pageFirstTransactions');
+        // Prev
+        items += makeItem('Previous', Math.max(1, currentPage - 1), currentPage === 1, false, 'pagePrevTransactions');
+
+        // Page numbers with collapsing
+        const CAP = 5;
+        let start = Math.max(2, currentPage - 2);
+        let end = Math.min(totalPages - 1, currentPage + 2);
+        if (currentPage <= 3) { start = 2; end = Math.min(totalPages - 1, CAP); }
+        if (currentPage > totalPages - 3) { start = Math.max(2, totalPages - CAP); end = totalPages - 1; }
+
+        // first page
+        items += `<li class="page-item ${currentPage === 1 ? 'active' : ''}"><a href="#" class="page-link" data-page="1">1</a></li>`;
+        if (start > 2) {
+            items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
         }
-        getTransactionHistory();
-    });
+
+        for (let p = start; p <= end; p++) {
+            items += `<li class="page-item ${p === currentPage ? 'active' : ''}"><a href="#" class="page-link" data-page="${p}">${p}</a></li>`;
+        }
+
+        if (end < totalPages - 1) {
+            items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
+        }
+
+        if (totalPages > 1) {
+            items += `<li class="page-item ${currentPage === totalPages ? 'active' : ''}"><a href="#" class="page-link" data-page="${totalPages}">${totalPages}</a></li>`;
+        }
+
+        // Next
+        items += makeItem('Next', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false, 'pageNextTransactions');
+        // Last
+        items += makeItem('Last', totalPages, currentPage === totalPages, false, 'pageLastTransactions');
+
+        container.innerHTML = items;
+    }
+
+    // Render simple pagination (unknown total) for transactions
+    function renderTransactionsPaginationUnknown(currentPage, hasMore) {
+        const container = document.getElementById('transactionsPagination');
+        if (!container) return;
+        const prevDisabled = currentPage === 1;
+        const nextDisabled = !hasMore;
+        const items = `
+            <li class="page-item ${prevDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${Math.max(1, currentPage - 1)}">Previous</a></li>
+            <li class="page-item active"><span class="page-link">${currentPage}</span></li>
+            <li class="page-item ${nextDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${currentPage + 1}">Next</a></li>
+        `;
+        container.innerHTML = items;
+    }
 
     function showTransactionModal(transaction) {
         const modalTitle = document.getElementById('viewEmployeeTitle');
