@@ -225,8 +225,8 @@ if ($resp) {
     </div>
 
     <!-- View Employee -->
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
                 <h5 class="modal-title fw-bold" id="viewEmployeeTitle">View Employee: <span id="viewUsernameDisplay"></span></h5>
@@ -238,11 +238,6 @@ if ($resp) {
                                 <h4 class="text-center my-1 fw-bold">Employee Details</h4>
                             </div>
                         </div>
-                        <!-- <div class="row-12">
-                            <div class="col d-flex justify-content-center" style="max-width:300px;max-height:300px;">
-                                <img class="w-100 h-100" src="./../asset/images/user_icon.png" alt="">
-                            </div>
-                        </div> -->
                         <div class="row">
                             <div class="col">
                                 ID
@@ -285,187 +280,198 @@ if ($resp) {
                         </div>
                     </div>
                 </div>
-                    <div class="modal-footer" id="viewEmployeeFooter">
+                    <div class="modal-footer col" id="viewEmployeeFooter">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add Employee -->
-    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <form method="POST" id="frmAddEmployee">
-                <div class="modal-content">
-                    <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="addEmployeeTitle">Add Employee</h5>
-                    </div>
-                    <div class="modal-body py-4 px-6" id="addEmployeeBody">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="addEmployeeAlert">
-                                <span id="addEmployeeAlertMsg"></span>
-                            </div>
+    <!-- Add Employee (redesigned) -->
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
+            <div class="modal-content">
+                <form method="POST" id="frmAddEmployee">
+                    <div class="modal-header bg-orange-custom d-flex justify-content-between text-white">
+                        <div>
+                            <h5 class="modal-title fw-bold" id="addEmployeeTitle">Add Employee</h5>
+                            <div class="small text-white-50">Create a new employee account and assign role</div>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
-                                <label for="add_username">Username</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
-                                <label for="add_password">Password</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
-                                <label for="add_confirm_password">Confirm password</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
-                                <label for="add_email">Email</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-4">
-                            <div class="input-group-text"><i class="bi bi-person-up"></i></div>
-                            <div class="form-floating">
-                                <select class="form-select" name="add_role_type" id="add_role_type" required>
-                                    <option value="">Select Role</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="employee">Employee</option>
-                                </select>
-                                <label for="add_role_type" class="form-label">Role</label>
-                            </div>
-                        </div>
-                        <div class="mb-4 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="add_status" id="add_status" value="1">
-                            <label class="form-check-label">Activate Employee</label>
-                        </div>
-                        <div class="modal-footer" id="addEmployeeFooter">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success" id="btnAddEmployee">Add</button>
+                        <div class="text-end">
+                            <div class="h5 mb-0"><strong id="addEmployeeDisplay"></strong></div>
                         </div>
                     </div>
-                </div>
-            </form>
+                    <div class="modal-body py-3 px-4" id="addEmployeeBody">
+                        <div class="alert alert-danger w-100 d-none" id="addEmployeeAlert">
+                            <span id="addEmployeeAlertMsg"></span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
+                                    <label for="add_username">Username</label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
+                                    <label for="add_email">Email</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
+                                    <label for="add_password">Password</label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
+                                    <label for="add_confirm_password">Confirm password</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" name="add_role_type" id="add_role_type" required>
+                                        <option value="">Select Role</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="employee">Employee</option>
+                                    </select>
+                                    <label for="add_role_type" class="form-label">Role</label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 d-flex align-items-center">
+                                <div class="form-check form-switch ms-md-3">
+                                    <input class="form-check-input" type="checkbox" name="add_status" id="add_status" value="1">
+                                    <label class="form-check-label">Activate Employee</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="d-flex justify-content-end w-100">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success" id="btnAddEmployee">Add Employee</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Update Employee -->
-    <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <form id="frmUpdateEmployee" method="POST">
-                <div class="modal-content">
-                    <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="updateEmployeeTitle">Update Employee: <span id="updateUsernameDisplay"></span></h5>
-                    </div>
-                    <div class="modal-body py-4 px-6" id="updateEmployeeBody">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="updateEmployeeAlert">
-                                <span id="updateEmployeeAlertMsg"></span>
-                            </div>
+    <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
+            <div class="modal-content">
+                <form id="frmUpdateEmployee" method="POST">
+                    <div class="modal-header bg-orange-custom d-flex justify-content-between text-white">
+                        <div>
+                            <h5 class="modal-title fw-bold" id="updateEmployeeTitle">Update Employee: <span id="updateUsernameDisplay"></span></h5>
+                            <div class="small text-white-50">Edit employee details and role</div>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
-                                <label for="update_username">Username</label>
-                            </div>
-                        </div>
-                        <!-- <div class="mb-4"> -->
-                            <input type="hidden" name="update_id" id="update_id">
-                        <!-- </div> -->
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
-                                <label for="update_password">Password</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
-                                <label for="update_confirm_password">Confirm Password</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
-                                <label for="update_email">Email</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-4">
-                            <div class="input-group-text"><i class="bi bi-person-up"></i></div>
-                            <div class="form-floating">
-                                <select class="form-select" name="update_role_type" id="update_role_type">
-                                    <option value="">Role</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="employee">Employee</option>
-                                </select>
-                                <label for="update_role_type" class="form-label">Role</label>
-                            </div>
-                        </div>
-                        <div class="mb-4 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="update_active" id="update_active" value="1">
-                            <label class="form-check-label">Activate Employee</label>
+                        <div class="text-end">
+                            <span class="h6 mb-0 text-white-75">Edit</span>
                         </div>
                     </div>
-                    <div class="modal-footer" id="updateEmployeeFooter">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="btnUpdateEmployee">Update</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+                    <div class="modal-body py-3 px-4" id="updateEmployeeBody">
+                        <div class="alert alert-danger w-100 d-none" id="updateEmployeeAlert">
+                            <span id="updateEmployeeAlertMsg"></span>
+                        </div>
 
-    <!-- Delete Employee -->
-    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <form method="POST" id="frmDeleteEmployee">
-                <div class="modal-content">
-                    <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="deleteEmployeeTitle">
-                            Delete Employee: <span id="deleteUsernameDisplay"></span>
-                        </h5>
-                    </div>
-                    <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
-                        <div class="mb-4">
-                            <div class="mb-2">
-                                <div class="alert alert-danger w-100 d-none" id="deleteEmployeeAlert">
-                                    <span id="deleteEmployeeAlertMsg"></span>
+                        <input type="hidden" name="update_id" id="update_id">
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
+                                    <label for="update_username">Username</label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
+                                    <label for="update_email">Email</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
+                                    <label for="update_password">New Password</label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
+                                    <label for="update_confirm_password">Confirm Password</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" name="update_role_type" id="update_role_type">
+                                        <option value="">Role</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="employee">Employee</option>
+                                    </select>
+                                    <label for="update_role_type" class="form-label">Role</label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 d-flex align-items-center">
+                                <div class="form-check form-switch ms-md-3">
+                                    <input class="form-check-input" type="checkbox" name="update_active" id="update_active" value="1">
+                                    <label class="form-check-label">Activate Employee</label>
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-center mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16" style="color:red">
-                                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
-                                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
-                                </svg>
-                            </div>
-                            <input type="hidden" name="delete_id" id="delete_id">
-                            <label class="form-label">
-                                Do you want to delete this employee <strong><span id="delete_username"></span></strong>?
-                            </label>
-                        </div>
-                        <div class="modal-footer" id="deleteEmployeeFooter">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Delete</button>
+                    </div>
+                    <div class="modal-footer" id="updateEmployeeFooter">
+                        <div class="d-flex justify-content-end w-100">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="btnUpdateEmployee">Update Employee</button>
                         </div>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Employee (redesigned) -->
+    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger d-flex justify-content-between text-white">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="deleteEmployeeTitle">Delete Employee</h5>
+                        <div class="small text-white-50">This action cannot be undone</div>
+                    </div>
+                    <div class="text-end">
+                        <span class="h5 mb-0"><strong id="deleteUsernameDisplay">&mdash;</strong></span>
+                    </div>
                 </div>
-            </form>
+                <form method="POST" id="frmDeleteEmployee">
+                    <div class="modal-body py-4 px-4" id="deleteEmployeeBody">
+                        <div class="mb-3">
+                            <div class="alert alert-danger w-100 d-none" id="deleteEmployeeAlert">
+                                <span id="deleteEmployeeAlertMsg"></span>
+                            </div>
+                        </div>
+                        <input type="hidden" name="delete_id" id="delete_id">
+                        <div class="text-center mb-3">
+                            <div class="display-4 text-danger mb-2"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                            <h5 class="fw-bold">Confirm deletion</h5>
+                            <p class="mb-0">Are you sure you want to remove <strong><span id="delete_username"></span></strong> from the system?</p>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Delete Employee</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
