@@ -848,7 +848,7 @@ if ($resp) {
                     let viewEmployeeRoleType = document.getElementById('viewEmployeeRoleType');
                     viewEmployeeRoleType.innerText = role_type;
                     let viewEmployeeStatus = document.getElementById('viewEmployeeStatus');
-                    if (active === 1) {
+                    if (active == 1) {
                         viewEmployeeStatus.innerHTML = textBadge('Active', 'success');
                     } else {
                         viewEmployeeStatus.innerHTML = textBadge('Inactive', 'danger');
@@ -971,7 +971,7 @@ if ($resp) {
                     frmUpdateEmployee.elements['update_username'].value = username;
                     frmUpdateEmployee.elements['update_email'].value = email;
                     frmUpdateEmployee.elements['update_role_type'].value = role_type;  
-                    frmUpdateEmployee.elements['update_active'].checked = active === 1; 
+                    frmUpdateEmployee.elements['update_active'].checked = (active == 1); 
                 }
             });
         });
