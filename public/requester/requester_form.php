@@ -141,7 +141,7 @@ if ($schedule) {
             <div class="w-100 py-3">
                 <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
             </div>
-            <?php if ($time_now > $time_start && $time_now < $time_end && $schedule_present) :?>
+            <?php if ($schedule_present) :?>
             <h4 class="text-center fw-bold">QR FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
             <form method="post" id="frmUserForm">
