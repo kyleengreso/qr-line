@@ -22,6 +22,31 @@ $email = $token->email;
     <title>Transaction History | <?php echo $project_name?></title>
     <?php head_css()?>
     <?php before_js()?>
+    <style>
+        /* Transaction table: compact, sticky header, subtle separators */
+        .transactions-table thead th {
+            position: sticky;
+            top: 0;
+            background: var(--bs-white, #fff);
+            z-index: 2;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .transactions-table tbody tr {
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+        .transactions-table tbody tr:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+        .transactions-table .token-col { width: 120px; white-space: nowrap; }
+        .transactions-table .time-col { width: 160px; white-space: nowrap; }
+        .transactions-table .txn-col { width: 110px; }
+        .transactions-table .actions-col { width: 110px; white-space: nowrap; }
+        .transactions-table .badge { font-size: .75rem; padding: .35em .5em; }
+        @media (max-width: 768px) {
+            .transactions-table thead th { font-size: .85rem; }
+            .transactions-table td, .transactions-table th { font-size: .85rem; }
+        }
+    </style>
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
@@ -135,18 +160,18 @@ $email = $token->email;
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle" id="table-transactions-history">
+                        <table class="table table-hover table-sm align-middle transactions-table" id="table-transactions-history">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Token</th>
-                                    <th>Time</th>
-                                    <th>Txn #</th>
+                                    <th class="token-col">Token</th>
+                                    <th class="time-col">Time</th>
+                                    <th class="txn-col">Txn #</th>
                                     <th class="d-none d-md-table-cell">Name</th>
                                     <th class="d-none d-md-table-cell">Email</th>
                                     <th>Payment</th>
                                     <th>Status</th>
                                     <th class="d-none d-sm-table-cell">Counter</th>
-                                    <th class="text-end">Actions</th>
+                                    <th class="text-end actions-col">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -160,16 +185,27 @@ $email = $token->email;
     </div>
 
     <!-- VIEW TRANSACTION -->
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Modal title</h5>
+                <div class="modal-header bg-orange-custom d-flex justify-content-between text-white">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Transaction</h5>
+                        <div class="small text-white-75" id="viewEmployeeSubtitle">Details</div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-light text-dark me-2" id="btnCopyTransaction">Copy</button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                 </div>
-                <div class="modal-body py-4 px-6" id="viewEmployeeBody">
-                
+                <div class="modal-body py-3 px-4" id="viewEmployeeBody">
+                    <!-- Filled dynamically: left column summary + right column metadata -->
+                    <div class="row g-3">
+                        <div class="col-md-8" id="viewTransactionSummary"></div>
+                        <div class="col-md-4" id="viewTransactionMeta"></div>
+                    </div>
                 </div>
-                <div class="modal-footer col" id="viewEmployeeFooter">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -270,7 +306,7 @@ $email = $token->email;
                     // update showing count (best-effort)
                     document.getElementById('showingCount').innerText = `1-${Math.min(paginate, transactions.length)}`;
 
-                    // render rows
+                        // render rows (compact markup, improved ARIA)
                     transactions.forEach((transaction) => {
                         const tr = document.createElement('tr');
 
@@ -293,17 +329,15 @@ $email = $token->email;
                         }
 
                         tr.innerHTML = `
-                            <td><strong>${transaction.token_number || '—'}</strong></td>
-                            <td><small class="text-muted">${transaction.transaction_time}</small></td>
-                            <td>#${transaction.idtransaction}</td>
+                            <td class="token-col"><strong>${transaction.token_number || '—'}</strong></td>
+                            <td class="time-col"><small class="text-muted">${transaction.transaction_time}</small></td>
+                            <td class="txn-col">#${transaction.idtransaction}</td>
                             <td class="d-none d-md-table-cell">${transaction.name || '—'}</td>
                             <td class="d-none d-md-table-cell"><a href="mailto:${transaction.email}">${transaction.email || '—'}</a></td>
                             <td>${paymentBadge(transaction.payment)}</td>
                             <td>${statusBadge(transaction.status)}</td>
                             <td class="d-none d-sm-table-cell">${transaction.counterNumber ? transaction.counterNumber : '—'}</td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary btn-view">View</button>
-                            </td>
+                            <td class="text-end actions-col"><button class="btn btn-sm btn-outline-primary btn-view" aria-label="View transaction ${transaction.idtransaction}">View</button></td>
                         `;
 
                         // attach event
@@ -385,29 +419,80 @@ $email = $token->email;
 
     function showTransactionModal(transaction) {
         const modalTitle = document.getElementById('viewEmployeeTitle');
+        const modalSubtitle = document.getElementById('viewEmployeeSubtitle');
         const modalBody = document.getElementById('viewEmployeeBody');
-        modalTitle.innerText = `Transaction #${transaction.idtransaction}`;
+        const summary = document.getElementById('viewTransactionSummary');
+        const meta = document.getElementById('viewTransactionMeta');
 
-        const html = `
-            <div class="row">
-                <div class="col-12 mb-2"><strong>Token:</strong> ${transaction.token_number || '—'}</div>
-                <div class="col-6"><strong>Time:</strong> ${transaction.transaction_time}</div>
-                <div class="col-6"><strong>Counter:</strong> ${transaction.counterNumber || '—'}</div>
-                <div class="col-12 mt-2"><strong>Name:</strong> ${transaction.name || '—'}</div>
-                <div class="col-12"><strong>Email:</strong> <a href="mailto:${transaction.email}">${transaction.email || '—'}</a></div>
-                <div class="col-6 mt-2"><strong>Payment:</strong> ${transaction.payment || '—'}</div>
-                <div class="col-6 mt-2"><strong>Status:</strong> ${transaction.status || '—'}</div>
+        modalTitle.innerText = `Transaction #${transaction.idtransaction}`;
+        modalSubtitle.innerText = transaction.transaction_time || '';
+
+        // summary (left): token, name, email, payment, status
+        const statusHtml = (s => {
+            switch ((s||'').toLowerCase()) {
+                case 'completed': return '<span class="badge bg-success">Completed</span>';
+                case 'pending': return '<span class="badge bg-warning text-dark">Pending</span>';
+                case 'serve': return '<span class="badge bg-danger">Failed</span>';
+                case 'cancelled': return '<span class="badge bg-secondary">Cancelled</span>';
+                default: return `<span class="badge bg-light text-dark">${s || 'Unknown'}</span>`;
+            }
+        })(transaction.status);
+
+        const paymentHtml = (p => {
+            switch ((p||'').toLowerCase()) {
+                case 'registrar': return '<span class="badge bg-primary">Registrar</span>';
+                case 'assessment': return '<span class="badge bg-info text-dark">Assessment</span>';
+                default: return `<span class="badge bg-light text-dark">${p || 'N/A'}</span>`;
+            }
+        })(transaction.payment);
+
+        summary.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3"><strong>Token</strong><div class="fs-5">${transaction.token_number || '&mdash;'}</div></div>
+                    <div class="mb-2"><strong>Name</strong><div>${transaction.name || '&mdash;'}</div></div>
+                    <div class="mb-2"><strong>Email</strong><div><a href="mailto:${transaction.email}">${transaction.email || '&mdash;'}</a></div></div>
+                    <div class="d-flex gap-2 mt-3">${paymentHtml}${statusHtml}</div>
+                </div>
             </div>
         `;
 
-        modalBody.innerHTML = html;
-        // use Bootstrap 5 Modal API (no jQuery dependency)
+        // meta (right): counter, txn id, additional metadata
+        meta.innerHTML = `
+            <div class="card">
+                <div class="card-body small text-muted">
+                    <div class="mb-2"><strong>Txn #</strong><div>#${transaction.idtransaction}</div></div>
+                    <div class="mb-2"><strong>Counter</strong><div>${transaction.counterNumber || '&mdash;'}</div></div>
+                    <div class="mb-2"><strong>Time</strong><div>${transaction.transaction_time || '&mdash;'}</div></div>
+                    ${transaction.notes ? `<div class="mb-2"><strong>Notes</strong><div>${transaction.notes}</div></div>` : ''}
+                </div>
+            </div>
+        `;
+
+        // attach copy button behavior
+        const copyBtn = document.getElementById('btnCopyTransaction');
+        if (copyBtn) {
+            copyBtn.onclick = function () {
+                const payload = `Txn #${transaction.idtransaction}\nToken: ${transaction.token_number || ''}\nName: ${transaction.name || ''}\nEmail: ${transaction.email || ''}\nPayment: ${transaction.payment || ''}\nStatus: ${transaction.status || ''}\nTime: ${transaction.transaction_time || ''}`;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(payload).then(()=>{
+                        copyBtn.innerText = 'Copied';
+                        setTimeout(()=>{ copyBtn.innerText = 'Copy'; }, 1200);
+                    }).catch(()=>{ alert('Copy failed'); });
+                } else {
+                    // fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = payload; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); copyBtn.innerText = 'Copied'; setTimeout(()=>{ copyBtn.innerText = 'Copy'; }, 1200); } catch(e){ alert('Copy failed'); } ta.remove();
+                }
+            };
+        }
+
+        // show modal (Bootstrap 5 friendly)
         const modalEl = document.getElementById('viewEmployeeModal');
         if (typeof bootstrap !== 'undefined') {
             const bsModal = new bootstrap.Modal(modalEl);
             bsModal.show();
         } else if (window.$ && typeof window.$ === 'function') {
-            // fallback to jQuery if bootstrap not available globally
             $('#viewEmployeeModal').modal('show');
         } else {
             console.warn('Bootstrap modal not available to show modal');
