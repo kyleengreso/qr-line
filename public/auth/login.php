@@ -108,6 +108,32 @@ restrictCheckLoggedIn();
                             auth_error(response.message);
                         }
                     },
+                    error: function(xhr, textStatus, errorThrown) {
+                        // Try to parse JSON response for a message, fallback to plain text or status
+                        var msg = 'An unexpected error occurred';
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                try {
+                                    var parsed = JSON.parse(xhr.responseText);
+                                    if (parsed && parsed.message) {
+                                        msg = parsed.message;
+                                    } else {
+                                        msg = xhr.responseText;
+                                    }
+                                } catch (e) {
+                                    // not JSON
+                                    msg = xhr.responseText;
+                                }
+                            } else if (xhr.statusText) {
+                                msg = xhr.statusText + ' (' + xhr.status + ')';
+                            }
+                        } catch (e) {
+                            msg = 'Request failed';
+                        }
+                        auth_error(msg);
+                    },
                 });
             }
 
