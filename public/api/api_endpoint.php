@@ -1908,56 +1908,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
 } else if ($_SERVER["REQUEST_METHOD"] === "GET") {
-    if (isset($_GET['dashboard_stats'])) {
-
-        // Version 1
-        // $sql_cmd = "SELECT
-
-        //                 -- TRANSACTIONS FOR TODAY
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE()) as transaction_total_today,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'pending')  as transaction_total_pending,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'completed') as transaction_total_completed,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'cancelled')  as transaction_total_cancelled,
-
-        //                 -- TRANSACTION HISTORY STATS
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() - INTERVAL 1 DAY)  as transaction_yesterday,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE WEEK(transaction_time) = WEEK(CURDATE()) AND YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_week,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE MONTH(transaction_time) = MONTH(CURDATE()) AND YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_month,   
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_year,
-        //                 (SELECT COUNT(*) FROM transactions) as transaction_total_all  
-        //             ";
-
-        // Version 2
-        $sql_cmd = "SELECT setup_key, setup_value_int
-                    FROM setup_system
-                    WHERE setup_key LIKE 'transactions%';
-        ";
-    $stmt = $conn->pdo->prepare($sql_cmd);
-    $stmt->execute();
-    $stats = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Dashboard stats successfully retrieved",
-            "data" => $stats
-        ));
-        
-        
-
-    // GENERATE REPORT
-    } else if (isset($_GET['generate-report'])) {
+    
+    // Generate PDF Report
+    if (isset($_GET['generate-report'])) {
         include_once __DIR__ . '/../includes/fpdf186/fpdf.php';
         if (!isset($_GET['year']) || !isset($_GET['month'])) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Please provide the tentative year and month."
             ));
-            
-            
-            }
+            return;
+        }
 
-        
-            
-            // parse start and end datetime
+        // parse start and end datetime
         $date = new DateTime();
 
         $year = $_GET['year'];
@@ -2385,8 +2348,88 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             
             
         }
-        
-        
+
+
+    // TRANSACTIONS COUNTER
+    } else if (isset($_GET['transactions_counter'])) {
+        /*
+            To count the transaction for the following:
+            - Total transactions today
+            - Total pending transactions today
+            - Total completed transactions today
+            - Total cancelled transactions today
+            - Total student transactions today
+            - Total transactions overall
+            - Total transactions yesterday
+            - Total transactions this week
+            - Total transactions this month
+            - Total transactions this year
+        */
+    
+        $sql_cmd = "
+                    SELECT
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                        ) as transaction_today_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.`status` = 'pending'
+                        ) as transaction_today_pending,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.`status` = 'completed'
+                        ) as transaction_today_completed,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.`status` = 'cancelled'
+                        ) as transaction_today_cancelled,
+                        (
+                            SELECT COUNT(r.id)
+                            FROM requesters r
+                            WHERE r.is_student = 1
+                        ) as transaction_today_student,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                        ) as transaction_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE() - INTERVAL 1 DAY   
+                        ) as transction_yesterday_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE YEARWEEK(t.transaction_time) = YEARWEEK(CURDATE(), 1)
+                        ) as transaction_week_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE YEAR(t.transaction_time) = YEAR(CURDATE())
+                            AND MONTH(t.transaction_time) = MONTH(CURDATE())
+                        ) as transaction_month_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE YEAR(t.transaction_time) = YEAR(CURDATE())
+                        ) as transaction_year_total
+                    ";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute();
+        $transaction_counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Transaction counters retrieved successfully",
+            "data" => $transaction_counters[0]
+        ));
 
 
     // TRANSACTIONS HISTORY
@@ -2507,14 +2550,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if ($limit < 1) $limit = 10;
             if ($page < 1) $page = 1;
             $offset = ($page - 1) * $limit;
-            // append integer literals (PDO does not accept placeholders for LIMIT/OFFSET in MySQL)
+            
             $sql_cmd .= " LIMIT " . $limit . " OFFSET " . $offset;
         }
-
-        // echo json_encode(array(
-        //     "sql_cmd" => $sql_cmd
-        // ));
-        // 
         
         $stmt = $conn->pdo->prepare($sql_cmd);
         if (!empty($params)) {
@@ -2551,6 +2589,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // CASHIER
     } else if (isset($_GET['cashier'])) {
+        
         // This part will get the free queue transaction
         // after you transaction session
         if (isset($_GET['employee_id'])) {
@@ -3122,26 +3161,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             
         }
     
-    // Transaction Stats
+    // Transaction Stats (Chart Data)
     } else if (isset($_GET['transactionStats'])) {
-        // too lazy to sort :>
-        if (!isset($_GET['data_range'])) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Please provide the data range."
-            ));
-            
-            
-        }
-        $data_range = $_GET['data_range'];
+
+        $data_range = $_GET['data_range'] ?? "day";
+        
         // CURRENT DAY
         if ($data_range === "day") {
             // Get the current day and group by hour
-            $sql_cmd = "SELECT HOUR(transaction_time) as `hour` , COUNT(idtransaction) as total_transactions
+            $sql_cmd = "SELECT
+                            HOUR(transaction_time)+8 as `hour`,
+                            COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE DATE(transaction_time) = CURDATE()
                         GROUP BY hour
-                        -- ORDER BY `hour` ASC; -- On working
+                        ORDER BY `hour` ASC -- On working
                         ";
             $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();

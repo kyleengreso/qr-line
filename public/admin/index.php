@@ -314,28 +314,6 @@ $counterNumber = $token->counterNumber;
 
     <?php after_js()?>
     <script>
-        let transactions_student_today = document.getElementById('transactions-student-today');
-        function fetchStudentTransaction() {
-            let params = new URLSearchParams({
-                transactions: true,
-                date_range: "today",
-                students: true,
-                desc: true
-            });
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    let transactions = response.transactions;
-                    let transactionsCount = transactions.length;
-                    transactions_student_today.textContent = transactionsCount;
-                },
-                error: function(response) {
-                    // console.log(response);
-                }
-            });
-        }
-
         var page_counter = 1;
         var page_transaction = 1;
         var page_employee = 1;
@@ -486,41 +464,33 @@ $counterNumber = $token->counterNumber;
 
         });
 
-        // Monitor
+        // Monitor transaction
         function rtTransaction() {
             $.ajax({
-                url: './../api/api_endpoint.php?dashboard_stats',
+                url: '/public/api/api_endpoint.php?transactions_counter',
                 type: 'GET',
                 success: function(response) {
                     let stat = response.data;
-                    console.log(stat);
+                    // console.log(stat);
+                    // console.log("HERE!");
                     if (response.status === 'success') {
 
-                        // For transaction for today
-                        let transactionsToday = stat.find(item => item.setup_key === 'transactions_today');
-                        let transactionsPending = stat.find(item => item.setup_key === 'transactions_today_pending');
-                        let transactionsCompleted = stat.find(item => item.setup_key === 'transactions_today_completed');
-                        let transactionsCancelled = stat.find(item => item.setup_key === 'transactions_today_cancelled');
+                        $('#transactions-today').text(stat.transaction_today_total ? stat.transaction_today_total : 0);
+                        $('#transactions-pending').text(stat.transaction_today_pending ? stat.transaction_today_pending : 0);
+                        $('#transactions-completed').text(stat.transaction_today_completed ? stat.transaction_today_completed : 0);
+                        $('#transactions-cancelled').text(stat.transaction_today_cancelled ? stat.transaction_today_cancelled : 0);
 
-                        $('#transactions-today').text(transactionsToday ? transactionsToday.setup_value_int : 'N/A');
-                        $('#transactions-pending').text(transactionsPending ? transactionsPending.setup_value_int : 'N/A');
-                        $('#transactions-completed').text(transactionsCompleted ? transactionsCompleted.setup_value_int : 'N/A');
-                        $('#transactions-cancelled').text(transactionsCancelled ? transactionsCancelled.setup_value_int : 'N/A');
+                        // Student Transactions Today
+                        $('#transactions-student-today').text(stat.transaction_student_today_total ? stat.transaction_student_today_total : 0);
 
                         // Transaction Total
-                        let transactionsTotal = stat.find(item => item.setup_key === 'transactions_total');
-                        $('#transactions-total').text(transactionsTotal ? transactionsTotal.setup_value_int : 'N/A');
-
-                        // Transaction History for pasts
-                        let transactionsYesterday = stat.find(item => item.setup_key === 'transactions_yesterday');
-                        let transactionsThisWeek = stat.find(item => item.setup_key === 'transactions_this_week');
-                        let transactionsThisMonth = stat.find(item => item.setup_key === 'transactions_this_month');
-                        let transactionsThisYear = stat.find(item => item.setup_key === 'transactions_this_year');
-
-                        $('#transactions-yesterday').text(transactionsYesterday ? transactionsYesterday.setup_value_int : 'N/A');
-                        $('#transactions-week').text(transactionsThisWeek ? transactionsThisWeek.setup_value_int : 'N/A');
-                        $('#transactions-month').text(transactionsThisMonth ? transactionsThisMonth.setup_value_int : 'N/A');
-                        $('#transactions-year').text(transactionsThisYear ? transactionsThisYear.setup_value_int : 'N/A');
+                        $('#transactions-total').text(stat.transaction_total ? stat.transaction_total : 'N/A');
+                        
+                        // Transactions for yesterday ... year
+                        $('#transactions-yesterday').text(stat.transaction_yesterday_total ? stat.transaction_yesterday_total : 0);
+                        $('#transactions-week').text(stat.transaction_week_total ? stat.transaction_week_total : 0);
+                        $('#transactions-month').text(stat.transaction_month_total ? stat.transaction_month_total : 0);
+                        $('#transactions-year').text(stat.transaction_year_total ? stat.transaction_year_total : 0);
                     } else {
                         // Reserved
                     }
@@ -718,7 +688,6 @@ $counterNumber = $token->counterNumber;
 
         setInterval(function() {
             if (operational) {
-                fetchStudentTransaction();
                 updateTransactionChart(getTransactionChart());
                 rtTransaction();
             }
