@@ -105,46 +105,48 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             </div>
                         </div>
                     </div>
-                    <table class="table table-striped table-members" id="table-counters-registered">
-                        <thead>
-                            <th>#</th>
-                            <!-- <th>Queue Count</th> -->
-                            <th>Employee</th>
-                            <th>Action</th>
-                        </thead>
-                        <tbody>
-                            <?php if (!empty($counters)): ?>
-                                <?php foreach ($counters as $counter): ?>
-                                    <tr>
-                                        <td style="min-width:20px;max-width:35px"><?php echo htmlspecialchars($counter['counterNumber'] ?? ''); ?></td>
-                                        <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                                            <?php echo phpUserStatusIcon($counter['username'] ?? '', $counter['role_type'] ?? '', $counter['active'] ?? 0); ?>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <button type="button" class="btn btn-outline-primary text-primary btn-update-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Update"><i class="bi bi-pencil-square"></i></button>
-                                                <button type="button" class="btn btn-outline-danger btn-delete-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Delete"><i class="bi bi-trash-fill"></i></button>
+                    <div id="cards-counters-registered" class="row g-3">
+                        <?php if (!empty($counters)): ?>
+                            <?php foreach ($counters as $counter): ?>
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-body d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:1.25rem;font-weight:700;">
+                                                        <?php echo htmlspecialchars($counter['counterNumber'] ?? ''); ?>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold"><?php echo htmlspecialchars($counter['username'] ?? ''); ?></div>
+                                                    <div class="small text-muted"><?php echo htmlspecialchars($counter['role_type'] ?? ''); ?></div>
+                                                </div>
                                             </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="3" class="fw-bold text-center">No counters assigned</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                                            <div>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-outline-primary text-primary btn-update-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Update"><i class="bi bi-pencil-square"></i></button>
+                                                    <button type="button" class="btn btn-outline-danger btn-delete-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Delete"><i class="bi bi-trash-fill"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="col-12 d-flex justify-content-center">
+                                <div class="card text-center" style="max-width:420px;">
+                                    <div class="card-body">
+                                        <div class="display-6 text-muted mb-2"><i class="bi bi-collection"></i></div>
+                                        <h5 class="card-title">No counters assigned</h5>
+                                        <p class="card-text text-muted mb-3">Assign employees to counters so they can start serving customers.</p>
+                                        <button type="button" class="btn btn-success" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                     <nav aria-label="">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item">
-                                <a class="page-link disabled" id="pagePrevCounterRegistered">Previous</a>
-                            </li>
-                            <!-- Page number reserved -->
-                            <li class="page-item">
-                                <a class="page-link" id="pageNextCounterRegistered">Next</a>
-                            </li>
-                        </ul>
+                        <ul class="pagination justify-content-center" id="countersPagination"></ul>
                     </nav>
                 </div>
             </div>
@@ -374,7 +376,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
     <?php after_js()?>
     <script>
         var counter_search = '';
-        var counter_page = 1;
+    var counter_page = 1;
         var paginate = 10;
 
         // small helper to escape HTML inserted via JS
@@ -392,8 +394,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
         var update_selected_employee = null;
 
         function loadCounters() {
-            let table_counters_registered = document.getElementById('table-counters-registered');
-            if (table_counters_registered) {
+            let container = document.getElementById('cards-counters-registered');
+                if (container) {
                 const params = new URLSearchParams({
                     counters: true,
                     page: counter_page,
@@ -403,43 +405,159 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 $.ajax({
                     url: realHost + '/public/api/api_endpoint.php?' + params,
                     type: 'GET',
-                    success: function(response) {
-                        while (table_counters_registered.rows.length > 1) {
-                            table_counters_registered.deleteRow(-1);
-                        }
-                        if (response.status === 'success') {
-                            const counters = response.counters;
-                            if (counters.length < paginate) {
-                                pageNextCounterRegistered.classList.add('disabled');
-                            } else {
-                                pageNextCounterRegistered.classList.remove('disabled');
-                            }
-                            counters.forEach(counter => {
-                                let row = table_counters_registered.insertRow(-1);
-                                row.innerHTML = `
-                                        <td style="min-width:20px;max-width:35px">${counter.counterNumber}</td>
-                                        <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                                            <span>${userStatusIcon(counter.username, counter.role_type, counter.active)}</span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <button type="button" class="btn btn-outline-primary text-primary btn-update-counter" data-id="${counter.idcounter}" title="Update"><i class="bi bi-pencil-square"></i></button>
-                                                <button type="button" class="btn btn-outline-danger btn-delete-counter" data-id="${counter.idcounter}" title="Delete"><i class="bi bi-trash-fill"></i></button>
+                        success: function(response) {
+                            // render as cards
+                            try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
+                            if (response.status === 'success') {
+                                const counters = response.counters || [];
+                                // Render pagination: prefer total if provided, otherwise show simple prev/current/next
+                                if (typeof response.total !== 'undefined') {
+                                    const total = parseInt(response.total, 10);
+                                    const totalPages = Math.max(1, Math.ceil(total / paginate));
+                                    renderPagination(totalPages, counter_page);
+                                } else {
+                                    const hasMore = counters.length === paginate;
+                                    renderPaginationUnknown(counter_page, hasMore);
+                                }
+
+                                if (counters.length === 0) {
+                                    container.innerHTML = `
+                                        <div class="col-12 d-flex justify-content-center">
+                                            <div class="card text-center" style="max-width:420px;">
+                                                <div class="card-body">
+                                                    <div class="display-6 text-muted mb-2"><i class="bi bi-collection"></i></div>
+                                                    <h5 class="card-title">No counters assigned</h5>
+                                                    <p class="card-text text-muted mb-3">Assign employees to counters so they can start serving customers.</p>
+                                                    <button type="button" class="btn btn-success" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button>
+                                                </div>
                                             </div>
-                                        </td>
+                                        </div>
+                                    `;
+                                    return;
+                                }
+                                counters.forEach(counter => {
+                                    const col = document.createElement('div');
+                                    col.className = 'col-12';
+                                    col.innerHTML = `
+                                        <div class="card">
+                                            <div class="card-body d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:1.25rem;font-weight:700;">${escapeHtml(String(counter.counterNumber || ''))}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold">${escapeHtml(counter.username || '')}</div>
+                                                            <div class="small text-muted">${escapeHtml(counter.role_type || '')}</div>
+                                                        </div>
+                                                </div>
+                                                <div>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-outline-primary text-primary btn-update-counter" data-id="${counter.idcounter}" title="Update"><i class="bi bi-pencil-square"></i></button>
+                                                        <button type="button" class="btn btn-outline-danger btn-delete-counter" data-id="${counter.idcounter}" title="Delete"><i class="bi bi-trash-fill"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                    container.appendChild(col);
+                                });
+                            } else {
+                                container.innerHTML = `
+                                    <div class="col-12 d-flex justify-content-center">
+                                        <div class="card text-center" style="max-width:420px;">
+                                            <div class="card-body">
+                                                <div class="display-6 text-muted mb-2"><i class="bi bi-collection"></i></div>
+                                                <h5 class="card-title">No counters assigned</h5>
+                                                <p class="card-text text-muted mb-3">Assign employees to counters so they can start serving customers.</p>
+                                                <button type="button" class="btn btn-success" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 `;
-                            });
-                        } else {
-                            let row = table_counters_registered.insertRow(-1);
-                            row.innerHTML = `
-                                <tr>
-                                    <td colspan="3" class="fw-bold text-center">No counters assigned</td>
-                                </tr>
-                            `;
+                            }
                         }
-                    }
                 })
             }
+        }
+
+        // Render numeric pagination when totalPages is known
+        function renderPagination(totalPages, currentPage) {
+            const container = document.getElementById('countersPagination');
+            if (!container) return;
+            let items = '';
+
+            const makeItem = (label, page, disabled, active, id) => {
+                return `<li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}"><a href="#" class="page-link" ${id ? `id="${id}"` : ''} data-page="${page}">${label}</a></li>`;
+            };
+
+            // First
+            items += makeItem('First', 1, currentPage === 1, false, 'pageFirstCounters');
+            // Prev
+            items += makeItem('Previous', Math.max(1, currentPage - 1), currentPage === 1, false, 'pagePrevCounters');
+
+            // Page numbers with collapsing
+            const CAP = 5;
+            let start = Math.max(2, currentPage - 2);
+            let end = Math.min(totalPages - 1, currentPage + 2);
+            if (currentPage <= 3) { start = 2; end = Math.min(totalPages - 1, CAP); }
+            if (currentPage > totalPages - 3) { start = Math.max(2, totalPages - CAP); end = totalPages - 1; }
+
+            // first page
+            items += `<li class="page-item ${currentPage === 1 ? 'active' : ''}"><a href="#" class="page-link" data-page="1">1</a></li>`;
+            if (start > 2) {
+                items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
+            }
+
+            for (let p = start; p <= end; p++) {
+                items += `<li class="page-item ${p === currentPage ? 'active' : ''}"><a href="#" class="page-link" data-page="${p}">${p}</a></li>`;
+            }
+
+            if (end < totalPages - 1) {
+                items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
+            }
+
+            if (totalPages > 1) {
+                items += `<li class="page-item ${currentPage === totalPages ? 'active' : ''}"><a href="#" class="page-link" data-page="${totalPages}">${totalPages}</a></li>`;
+            }
+
+            // Next
+            items += makeItem('Next', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false, 'pageNextCounters');
+            // Last
+            items += makeItem('Last', totalPages, currentPage === totalPages, false, 'pageLastCounters');
+
+            container.innerHTML = items;
+        }
+
+        // Render simple pagination (unknown total) for counters
+        function renderPaginationUnknown(currentPage, hasMore) {
+            const container = document.getElementById('countersPagination');
+            if (!container) return;
+            const prevDisabled = currentPage === 1;
+            const nextDisabled = !hasMore;
+            const items = `
+                <li class="page-item ${prevDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${Math.max(1, currentPage - 1)}">Previous</a></li>
+                <li class="page-item active"><span class="page-link">${currentPage}</span></li>
+                <li class="page-item ${nextDisabled ? 'disabled' : ''}"><a href="#" class="page-link" data-page="${currentPage + 1}">Next</a></li>
+            `;
+            container.innerHTML = items;
+        }
+
+        // Delegated pagination handler for counters list
+        const countersPagination = document.getElementById('countersPagination');
+        if (countersPagination) {
+            countersPagination.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = e.target.closest('a.page-link');
+                if (!target) return;
+                const pageAttr = target.getAttribute('data-page');
+                if (pageAttr) {
+                    const p = parseInt(pageAttr, 10);
+                    if (!isNaN(p) && p > 0) {
+                        counter_page = p;
+                        loadCounters();
+                    }
+                }
+            });
         }
 
         loadCounters();
@@ -1131,32 +1249,10 @@ function phpUserStatusIcon($username, $role_type, $active) {
             });
         });
 
-    let pagePrevCounterRegistered = document.getElementById('pagePrevCounterRegistered');
-    if (pagePrevCounterRegistered) pagePrevCounterRegistered.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log(counter_search);
-            if (counter_page > 1) {
-                counter_page--;
-                if (counter_page === 1) {
-                    pagePrevCounterRegistered.classList.add('disabled');
-                }
-                loadCounters();
-            }
-        });
-
-    let pageNextCounterRegistered = document.getElementById('pageNextCounterRegistered');
-    if (pageNextCounterRegistered) pageNextCounterRegistered.addEventListener('click', function(e) {
-            pagePrevCounterRegistered.classList.remove('disabled');
-            e.preventDefault();
-            counter_page++;
-            loadCounters();
-        });
-
     let searchCounterRegistered = document.getElementById('searchCounterRegistered');
     if (searchCounterRegistered) searchCounterRegistered.addEventListener('keyup', function(e) {
             console.log(this.value);
             counter_page = 1;
-            pagePrevCounterRegistered.classList.add('disabled');
             e.preventDefault();
             counter_search = this.value;
             loadCounters();
