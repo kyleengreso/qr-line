@@ -103,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($method == "logout") {
         // Check token from cookie
         if (isset($_COOKIE['token'])) {
-            $token = $_COOKIE['token'];
+            $token = json_encode($_COOKIE['token'], true);
             $decToken = decryptToken($token, $master_key);
             $web = false;
             if ($decToken) {
@@ -2657,323 +2657,472 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // CASHIER
     } else if (isset($_GET['cashier'])) {
         
-        // This part will get the free queue transaction
-        // after you transaction session
-        if (isset($_GET['employee_id'])) {
-            // Checking if that employee is exists
-            $sql_cmd = "SELECT *
-                        FROM employees e
-                        WHERE e.id = ? AND e.role_type = 'employee'";
-            $stmt = $conn->pdo->prepare($sql_cmd);
-            $stmt->execute([$_GET['employee_id']]);
-            $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (count($employee) == 0) {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "Employee not found"
-                ));
-                
-                
-            }
-
-            // Checking if the counter was already assigned
-            $sql_cmd = "SELECT *
-                        FROM counters c
-                        LEFT JOIN employees e ON c.idemployee = e.id
-                        WHERE e.id = ? AND e.role_type = 'employee'";
-            $stmt = $conn->pdo->prepare($sql_cmd);
-            $stmt->execute([$_GET['employee_id']]);
-            $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (count($counters) == 0) {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "Counter not found"
-                ));
-                
-                
-            }
-
-            // Counting if theres transaction today was recorded in current day
-            // $queue_count = 0;
-            $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
-                        FROM transactions t
-                        WHERE DATE(t.transaction_time) = CURDATE()";
-            $stmt = $conn->pdo->prepare($sql_cmd);
-            $stmt->execute();
-            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (count($transactions) > 0) {
-                $queue_count = $transactions[0]['total_transactions'];
-            }
-
-            // Checking if the transaction was already assigned
-            $sql_cmd = "SELECT *
-                        FROM
-                            transactions t
-                        LEFT JOIN requesters r ON t.idrequester = r.id
-                        WHERE
-                            t.idcounter = ? AND
-                            t.idemployee = ? AND
-                            DATE(t.transaction_time) = DATE(CURDATE()) AND
-                            t.status = 'serve' AND
-                            (
-                                r.priority = 'none'  
-                            ) 
-                            ";
-            if (isset($this_priority) && $this_priority == "Y") {
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            LEFT JOIN requesters r ON t.idrequester = r.id
-                            WHERE 
-                                t.idcounter = ? AND
-                                idemployee = ? AND
-                                status = 'serve' AND
-                                DATE(t.transaction_time) = DATE(CURDATE()) AND
-                                (
-                                    r.priority = 'pregnant' OR
-                                    r.priority = 'elderly' OR
-                                    r.priority = 'disability'  
-                                ) 
-                            ";
-            }
-            $stmt = $conn->pdo->prepare($sql_cmd);
-            $stmt->execute([$counters[0]['idcounter'], $_GET['employee_id']]);
-            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (count($transactions) == 1) {
-                echo json_encode(array(
-                    "status" => "success",
-                    "message" => "Transaction already assigned",
-                    "data" => $transactions[0]
-                ));
-                
-                
-            }
-            $sql_cmd  = "SELECT *
-                        FROM transactions t
-                        LEFT JOIN requesters r ON t.idrequester = r.id
-                        WHERE
-                            t.status = 'pending' AND
-                            t.idcounter IS NULL AND
-                            t.idemployee IS NULL AND
-                            DATE(t.transaction_time) = DATE(CURDATE()) AND
-                            (
-                                r.priority = 'none'  
-                            )
-                        ORDER BY t.transaction_time ASC
-                        LIMIT 1";
-            if (isset($this_priority) && $this_priority == "Y") {
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            LEFT JOIN requesters r ON t.idrequester = r.id
-                            WHERE
-                                t.status = 'pending' AND
-                                t.idcounter IS NULL AND
-                                t.idemployee IS NULL AND
-                                DATE(t.transaction_time) = DATE(CURDATE()) AND
-                                (
-                                    r.priority = 'pregnant' OR
-                                    r.priority = 'elderly' OR
-                                    r.priority = 'disability'    
-                                )
-                            ORDER BY t.transaction_time ASC
-                            LIMIT 1";
-            }
-
-            $stmt = $conn->pdo->prepare($sql_cmd);
-            $stmt->execute();
-            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (count($transactions) == 0) {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "No transaction available for today"
-                ));
-                
-                
-            }
-            // Or get the transaction where can still available for today
-            $sql_cmd = "SELECT *
-                        FROM transactions t
-                        LEFT JOIN requesters r ON t.idrequester = r.id
-                        WHERE 
-                            t.status = 'pending' AND
-                            t.idcounter IS NULL AND
-                            t.idemployee IS NULL AND
-                            DATE(t.transaction_time) = DATE(CURDATE()) AND
-                            (
-                                r.priority = 'none'  
-                            )
-                        ORDER BY t.transaction_time ASC
-                        LIMIT 1";
-            if (isset($this_priority) && $this_priority == "Y") {
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            LEFT JOIN requesters r ON t.idrequester = r.id
-                            WHERE
-                                t.status = 'pending' AND
-                                t.idcounter IS NULL AND
-                                t.idemployee IS NULL AND
-                                DATE(t.transaction_time) = DATE(CURDATE()) AND
-                                (
-                                    r.priority = 'pregnant' OR
-                                    r.priority = 'elderly' OR
-                                    r.priority = 'disability'    
-                                )
-                            ORDER BY t.transaction_time ASC
-                            LIMIT 1";
-            }
-            $stmt = $conn->pdo->prepare($sql_cmd);
-            $stmt->execute();
-            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if (count($transactions) > 0) {
-
-                $sql_cmd = "UPDATE transactions
-                            SET idcounter = ?, idemployee = ?,  status = 'serve'
-                            WHERE idtransaction = ?";
-                $stmt = $conn->pdo->prepare($sql_cmd);
-                $stmt->execute([$counters[0]['idcounter'], $_GET['employee_id'], $transactions[0]['idtransaction']]);
-
-                // This feature is optional for sending email
-                echo json_encode(array(
-                    "status" => "success",
-                    "message" => "Transaction found!",
-                    "data" => $transactions[0]
-                ));
-
-                // Reminder before next 5
-
-                $sql_cmd = "SELECT *
-                        FROM transactions t
-                        WHERE
-                            t.transaction_time > ? AND
-                            DATE(t.transaction_time) = DATE(CURDATE())
-                        ORDER BY t.transaction_time ASC
-                        LIMIT 4, 1";
-                $stmt = $conn->pdo->prepare($sql_cmd);
-                $stmt->execute([$transactions[0]['transaction_time']]);
-                $transaction_f = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                // echo json_encode(array(
-                //     "status" => "success",
-                //     "message" => "Transaction found",
-                //     "data" => $transaction_f
-                // ));
-                // 
-                // if ($result->num_rows == 0) {
-                //     
-                // }
-
-                // Get information from using idrequester
-        $sql_cmd = "SELECT * 
-            FROM requesters r
-            WHERE r.id = ?";
-        $stmt = $conn->pdo->prepare($sql_cmd);
-        $stmt->execute([$transaction_f[0]['idrequester']]);
-        $requester = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                
-                include "./email_content.php";
-
-                if ($result->num_rows > 0) {
-                    // echo json_encode(array(
-                    //     "status" => "success",
-                    //     "message" => "Requester found",
-                    //     "data" => $requester
-                    // ));
-                    // 
-                    $requester = $requester[0];
-                    $requester_name = $requester['name'];
-                    $requester_email = $requester['email'];
-                    $requester_payment = $requester['payment'];
-                    $requester_token = $transaction_f[0]['token_number'];
-                    $request_data = array(
-                        "name" => $requester_name,
-                        "email" => $requester_email,
-                        "payment" => $requester_payment,
-                        "transaction_id" => $transaction_f[0]['idtransaction'],
-                        "queue_count_int" => $transaction_f[0]['queue_number'],
-                        "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
-                    );
-                    // echo json_encode($request_data);
-                    send_email_notify_before_5($request_data);
-                    
-                }
-
-
-
-                //////////////////////////////////////////////
-                // Cancel the past 3
-
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            WHERE t.transaction_time < ? AND
-                            DATE(t.transaction_time) = CURDATE() AND
-                            t.status = 'missed'
-                            ORDER BY t.transaction_time DESC
-                            LIMIT 2, 1";
-                $stmt = $conn->pdo->prepare($sql_cmd);
-                $stmt->execute([$transactions[0]['transaction_time']]);
-                $transaction_p = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (count($transaction_p) > 0) {
-                    // Didnt optimize yet..
-            
-                    // Then update it 'missed' to 'cancelled'
-                    $sql_cmd = "UPDATE transactions
-                                SET status = 'cancelled'
-                                WHERE idtransaction = ?";
-                    $stmt = $conn->pdo->prepare($sql_cmd);
-                    $stmt->execute([$transaction_p[0]['idtransaction']]);
-    
-                    // echo json_encode(array(
-                    //     "status" => "success",
-                    //     "message" => "Transaction found",
-                    //     "data" => $transaction_f
-                    // ));
-                    // 
-                    // if ($result->num_rows == 0) {
-                    //     
-                    // }
-    
-                    // Get information from using idrequester
-            $sql_cmd = "SELECT * 
-                FROM requesters r
-                WHERE r.id = ?";
-            $stmt = $conn->pdo->prepare($sql_cmd);
-            $stmt->execute([$transaction_p[0]['idrequester']]);
-            $requester = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    // if ($result->num_rows > 0) {
-                    //     echo json_encode(array(
-                    //         "status" => "success",
-                    //         "message" => "Requester found",
-                    //         "data" => $requester
-                    //     ));
-                    //     
-                    // }
-    
-    
-                    $requester = $requester[0];
-                    $requester_name = $requester['name'];
-                    $requester_email = $requester['email'];
-                    $requester_payment = $requester['payment'];
-                    $requester_token = $transaction_p[0]['token_number'];
-                    $request_data = array(
-                        "name" => $requester_name,
-                        "email" => $requester_email,
-                        "payment" => $requester_payment,
-                        "transaction_id" => $transaction_p[0]['idtransaction'],
-                        "queue_count_int" => $transaction_p[0]['queue_number'],
-                        "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
-                    );
-                    echo json_encode($request_data);
-                    send_email_notify_after_3($request_data);
-
-                }
-            } else {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "No transactions available for today"
-                ));
-                
-                
-            }
+        /*
+            As you login as a cashier use this API
+        */
+        
+        // Decrypt token when logged in
+        if (!isset($_COOKIE['token'])) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Unauthorized access. Please login."
+            ));
+            return;
         }
+
+        $token = json_decode(
+            json_encode(decryptToken($_COOKIE['token'], $master_key)
+        ), true);
+
+        // fetch json_encode to queryable array
+        $user_id = $token['id'];
+        $username = $token['username'];
+        $role_type = $token['role_type'];
+        $email = $token['email'];
+        $counterNumber = $token['counterNumber'];
+        $priority = $token['priority'];
+        
+        // Checking if that employee is exists
+        $sql_cmd = "SELECT e.id, e.username, e.role_type
+                    FROM employees e
+                    WHERE e.id = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$user_id]);
+        $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($employee) == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee not found"
+            ));
+            return;
+        }
+
+        if ($employee[0]['role_type'] != 'employee') {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Only employees are allowed."
+            ));
+            return;
+        }
+
+        // Checking if the employee was assigned as a cashier
+        $sql_cmd = "SELECT e.id, c.counterNumber, c.counter_priority
+                    FROM employees e
+                    INNER JOIN counters c ON c.idemployee = e.id
+                    WHERE e.id = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$user_id]);
+        $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($counters) == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Cashier not assigned to any counter"
+            ));
+            return;
+        } else {
+            // DEBUG PURPOSE
+            // echo json_encode([
+            //     "status" => "success",
+            //     "message" => "Cashier found",
+            //     "data" => $counters[0]
+            // ]);
+            // exit;
+        }
+
+        ///////// START COUNTER //////////
+        
+        $priority_flag = $counters[0]['counter_priority'];
+        
+
+
+        // Checking if this counter is not assigned to the counters
+        if ($priority_flag === 'N') {
+            $sql_cmd = "
+                        SELECT 
+                            *
+                            FROM transactions t
+                            INNER JOIN requesters r ON t.idtransaction = r.id
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.idcounter IS NULL
+                            AND r.priority = 'none'
+                            ORDER BY t.idtransaction DESC
+                            LIMIT 1
+                        ";
+        } else {
+            $sql_cmd = "
+                        SELECT 
+                            *
+                            FROM transactions t
+                            INNER JOIN requesters r ON t.idtransaction = r.id
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.idcounter IS NULL
+                            AND
+                            (
+                                r.priority = 'pregnant' OR
+                                r.priority = 'elderly' OR
+                                r.priority = 'disability'
+                            )
+                            ORDER BY t.idtransaction DESC
+                            LIMIT 1
+                        ";  
+        }
+
+    
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute();
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($transactions) > 0) {
+            $idtransaction = $transactions[0]['idtransaction'];
+
+            // DEBUG
+            // echo json_encode([
+            //     "status" => "success",
+            //     "message" => "Transaction assigned to counter",
+            //     "data" => $transactions[0]['idtransaction']
+            // ]);
+            // exit;
+            
+            // However you need a idcounter using counterNumber
+            $sql_cmd = "
+                        SELECT idcounter
+                        FROM counters
+                        WHERE counterNumber = ?
+                        LIMIT 1
+                    ";
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$counters[0]['counterNumber']]);
+            $idcounter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // DEBUG
+            // echo json_encode([
+            //     "status" => "success",
+            //     "message" => "Counter found",
+            //     "data" => $idcounter[0]                
+            // ]);
+            // exit;
+
+            $sql_cmd = "
+                        UPDATE transactions
+                        SET idcounter = ?
+                        WHERE idtransaction = ?
+                    ";
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([
+                $idcounter[0]['idcounter'],
+                $transactions[0]['idtransaction']
+            ]); 
+
+        }
+
+        // Query again
+
+
+
+
+
+
+        ///////// END COUNTER ///////////
+
+        // // Checking if the counter was already assigned
+        //     $sql_cmd = "SELECT *
+        //                 FROM counters c
+        //                 LEFT JOIN employees e ON c.idemployee = e.id
+        //                 WHERE e.id = ? AND e.role_type = 'employee'";
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute([$_GET['employee_id']]);
+        //     $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($counters) == 0) {
+        //         echo json_encode(array(
+        //             "status" => "error",
+        //             "message" => "Counter not found"
+        //         ));
+                
+                
+        //     }
+
+        //     // Counting if theres transaction today was recorded in current day
+        //     // $queue_count = 0;
+        //     $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
+        //                 FROM transactions t
+        //                 WHERE DATE(t.transaction_time) = CURDATE()";
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute();
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($transactions) > 0) {
+        //         $queue_count = $transactions[0]['total_transactions'];
+        //     }
+
+        //     // Checking if the transaction was already assigned
+        //     $sql_cmd = "SELECT *
+        //                 FROM
+        //                     transactions t
+        //                 LEFT JOIN requesters r ON t.idrequester = r.id
+        //                 WHERE
+        //                     t.idcounter = ? AND
+        //                     t.idemployee = ? AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                     t.status = 'serve' AND
+        //                     (
+        //                         r.priority = 'none'  
+        //                     ) 
+        //                     ";
+        //     if (isset($this_priority) && $this_priority == "Y") {
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     LEFT JOIN requesters r ON t.idrequester = r.id
+        //                     WHERE 
+        //                         t.idcounter = ? AND
+        //                         idemployee = ? AND
+        //                         status = 'serve' AND
+        //                         DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                         (
+        //                             r.priority = 'pregnant' OR
+        //                             r.priority = 'elderly' OR
+        //                             r.priority = 'disability'  
+        //                         ) 
+        //                     ";
+        //     }
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute([$counters[0]['idcounter'], $_GET['employee_id']]);
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($transactions) == 1) {
+        //         echo json_encode(array(
+        //             "status" => "success",
+        //             "message" => "Transaction already assigned",
+        //             "data" => $transactions[0]
+        //         ));
+                
+                
+        //     }
+        //     $sql_cmd  = "SELECT *
+        //                 FROM transactions t
+        //                 LEFT JOIN requesters r ON t.idrequester = r.id
+        //                 WHERE
+        //                     t.status = 'pending' AND
+        //                     t.idcounter IS NULL AND
+        //                     t.idemployee IS NULL AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                     (
+        //                         r.priority = 'none'  
+        //                     )
+        //                 ORDER BY t.transaction_time ASC
+        //                 LIMIT 1";
+        //     if (isset($this_priority) && $this_priority == "Y") {
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     LEFT JOIN requesters r ON t.idrequester = r.id
+        //                     WHERE
+        //                         t.status = 'pending' AND
+        //                         t.idcounter IS NULL AND
+        //                         t.idemployee IS NULL AND
+        //                         DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                         (
+        //                             r.priority = 'pregnant' OR
+        //                             r.priority = 'elderly' OR
+        //                             r.priority = 'disability'    
+        //                         )
+        //                     ORDER BY t.transaction_time ASC
+        //                     LIMIT 1";
+        //     }
+
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute();
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($transactions) == 0) {
+        //         echo json_encode(array(
+        //             "status" => "error",
+        //             "message" => "No transaction available for today"
+        //         ));
+                
+                
+        //     }
+        //     // Or get the transaction where can still available for today
+        //     $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 LEFT JOIN requesters r ON t.idrequester = r.id
+        //                 WHERE 
+        //                     t.status = 'pending' AND
+        //                     t.idcounter IS NULL AND
+        //                     t.idemployee IS NULL AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                     (
+        //                         r.priority = 'none'  
+        //                     )
+        //                 ORDER BY t.transaction_time ASC
+        //                 LIMIT 1";
+        //     if (isset($this_priority) && $this_priority == "Y") {
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     LEFT JOIN requesters r ON t.idrequester = r.id
+        //                     WHERE
+        //                         t.status = 'pending' AND
+        //                         t.idcounter IS NULL AND
+        //                         t.idemployee IS NULL AND
+        //                         DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                         (
+        //                             r.priority = 'pregnant' OR
+        //                             r.priority = 'elderly' OR
+        //                             r.priority = 'disability'    
+        //                         )
+        //                     ORDER BY t.transaction_time ASC
+        //                     LIMIT 1";
+        //     }
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute();
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        //     if (count($transactions) > 0) {
+
+        //         $sql_cmd = "UPDATE transactions
+        //                     SET idcounter = ?, idemployee = ?,  status = 'serve'
+        //                     WHERE idtransaction = ?";
+        //         $stmt = $conn->pdo->prepare($sql_cmd);
+        //         $stmt->execute([$counters[0]['idcounter'], $_GET['employee_id'], $transactions[0]['idtransaction']]);
+
+        //         // This feature is optional for sending email
+        //         echo json_encode(array(
+        //             "status" => "success",
+        //             "message" => "Transaction found!",
+        //             "data" => $transactions[0]
+        //         ));
+
+        //         // Reminder before next 5
+
+        //         $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 WHERE
+        //                     t.transaction_time > ? AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE())
+        //                 ORDER BY t.transaction_time ASC
+        //                 LIMIT 4, 1";
+        //         $stmt = $conn->pdo->prepare($sql_cmd);
+        //         $stmt->execute([$transactions[0]['transaction_time']]);
+        //         $transaction_f = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //         // echo json_encode(array(
+        //         //     "status" => "success",
+        //         //     "message" => "Transaction found",
+        //         //     "data" => $transaction_f
+        //         // ));
+        //         // 
+        //         // if ($result->num_rows == 0) {
+        //         //     
+        //         // }
+
+        //         // Get information from using idrequester
+        // $sql_cmd = "SELECT * 
+        //     FROM requesters r
+        //     WHERE r.id = ?";
+        // $stmt = $conn->pdo->prepare($sql_cmd);
+        // $stmt->execute([$transaction_f[0]['idrequester']]);
+        // $requester = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+        //         include "./email_content.php";
+
+        //         if ($result->num_rows > 0) {
+        //             // echo json_encode(array(
+        //             //     "status" => "success",
+        //             //     "message" => "Requester found",
+        //             //     "data" => $requester
+        //             // ));
+        //             // 
+        //             $requester = $requester[0];
+        //             $requester_name = $requester['name'];
+        //             $requester_email = $requester['email'];
+        //             $requester_payment = $requester['payment'];
+        //             $requester_token = $transaction_f[0]['token_number'];
+        //             $request_data = array(
+        //                 "name" => $requester_name,
+        //                 "email" => $requester_email,
+        //                 "payment" => $requester_payment,
+        //                 "transaction_id" => $transaction_f[0]['idtransaction'],
+        //                 "queue_count_int" => $transaction_f[0]['queue_number'],
+        //                 "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
+        //             );
+        //             // echo json_encode($request_data);
+        //             send_email_notify_before_5($request_data);
+                    
+        //         }
+
+
+
+        //         //////////////////////////////////////////////
+        //         // Cancel the past 3
+
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     WHERE t.transaction_time < ? AND
+        //                     DATE(t.transaction_time) = CURDATE() AND
+        //                     t.status = 'missed'
+        //                     ORDER BY t.transaction_time DESC
+        //                     LIMIT 2, 1";
+        //         $stmt = $conn->pdo->prepare($sql_cmd);
+        //         $stmt->execute([$transactions[0]['transaction_time']]);
+        //         $transaction_p = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //         if (count($transaction_p) > 0) {
+        //             // Didnt optimize yet..
+            
+        //             // Then update it 'missed' to 'cancelled'
+        //             $sql_cmd = "UPDATE transactions
+        //                         SET status = 'cancelled'
+        //                         WHERE idtransaction = ?";
+        //             $stmt = $conn->pdo->prepare($sql_cmd);
+        //             $stmt->execute([$transaction_p[0]['idtransaction']]);
+    
+        //             // echo json_encode(array(
+        //             //     "status" => "success",
+        //             //     "message" => "Transaction found",
+        //             //     "data" => $transaction_f
+        //             // ));
+        //             // 
+        //             // if ($result->num_rows == 0) {
+        //             //     
+        //             // }
+    
+        //             // Get information from using idrequester
+        //     $sql_cmd = "SELECT * 
+        //         FROM requesters r
+        //         WHERE r.id = ?";
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute([$transaction_p[0]['idrequester']]);
+        //     $requester = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //             // if ($result->num_rows > 0) {
+        //             //     echo json_encode(array(
+        //             //         "status" => "success",
+        //             //         "message" => "Requester found",
+        //             //         "data" => $requester
+        //             //     ));
+        //             //     
+        //             // }
+    
+    
+        //             $requester = $requester[0];
+        //             $requester_name = $requester['name'];
+        //             $requester_email = $requester['email'];
+        //             $requester_payment = $requester['payment'];
+        //             $requester_token = $transaction_p[0]['token_number'];
+        //             $request_data = array(
+        //                 "name" => $requester_name,
+        //                 "email" => $requester_email,
+        //                 "payment" => $requester_payment,
+        //                 "transaction_id" => $transaction_p[0]['idtransaction'],
+        //                 "queue_count_int" => $transaction_p[0]['queue_number'],
+        //                 "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
+        //             );
+        //             echo json_encode($request_data);
+        //             send_email_notify_after_3($request_data);
+
+        //         }
+        //     } else {
+        //         echo json_encode(array(
+        //             "status" => "error",
+        //             "message" => "No transactions available for today"
+        //         ));
+                
+                
+        //     }
+        // }
         
         
 
