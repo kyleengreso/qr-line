@@ -183,6 +183,9 @@ include_once __DIR__ . '/../base.php';
                         }
                     },
                     error: function(xhr, textStatus, errorThrown) {
+                        // Log full error to console for debugging
+                        console.error('Login request failed', {xhr: xhr, textStatus: textStatus, errorThrown: errorThrown});
+
                         // Try to parse JSON response for a message, fallback to plain text or status
                         var msg = 'An unexpected error occurred';
                         try {
@@ -206,6 +209,24 @@ include_once __DIR__ . '/../base.php';
                         } catch (e) {
                             msg = 'Request failed';
                         }
+
+                        // Hide raw server-side internal messages from users and show friendly guidance.
+                        // If the server returned something that looks like a missing .env/config error,
+                        // show a non-sensitive message and keep full details in the console.
+                        try {
+                            if (typeof msg === 'string' && msg.toLowerCase().indexOf('.env') !== -1) {
+                                console.warn('Server configuration error (masked to user):', msg);
+                                msg = 'Server configuration error. Please contact the administrator.';
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+
+                        // Append status code for clarity when available
+                        if (xhr && xhr.status) {
+                            msg = msg + ' (' + xhr.status + ')';
+                        }
+
                         auth_error(msg);
                     },
                 });
