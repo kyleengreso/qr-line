@@ -1,18 +1,5 @@
 <?php
 include_once __DIR__ . "/../base.php";
-
-restrictAdminMode();
-
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
-
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
 ?>
 
 <!DOCTYPE html>

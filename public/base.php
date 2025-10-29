@@ -5,7 +5,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/./includes/db_conn.php';
-require_once __DIR__ . '/./includes/system_auth.php';
+// require_once __DIR__ . '/./includes/system_auth.php';
 
 // Project Information
 $project_name = "QR-Line";
@@ -16,19 +16,6 @@ $project_release = false;
 $project_version = "1.0.0";
 
 // Network Feature
-/*
-    NOTE: This feature only use for email notification
-
-    $serverName: IP Address or Domain name of your server
-        Default: 
-            $serverName = getHostByName(getHostName()) . ":80" ..... Result will be 127.0.0.1:80
-        Other options:
-        $serverName = "qrline.psu.edu.ph:80"; // Domain name version
-
-        [!] If your host is other than port 80, please change the port number at :80
-*/
-// $serverName = getHostByName(getHostName()) . ":80"; // IP Address version
-// $serverName = "qrline.psu.edu.ph:80"; // Domain name version
 $serverName = "192.168.1.137:80"; // IP Address version
 
 // Project Support
@@ -95,86 +82,10 @@ $social_facebook_link = null;
 $social_twitter_link = null;
 $social_direct_link = null;
 
-// Authers
-function restrictAdminMode() {
-    global $auth_path, $admin_path, $employee_path, $master_key;
-    if (isset($_COOKIE['token'])) {
-        $encryptToken = $_COOKIE['token'];
-        $decryptToken = decryptToken($encryptToken, $master_key);
-
-        // Ensure $decryptToken is a JSON string
-        if (is_array($decryptToken)) {
-            $decryptToken = json_encode($decryptToken);
-        }
-
-        $token = json_decode($decryptToken);
-        if ($token->role_type != "admin") {
-            header("Location: /public/employee");
-            exit();
-        }
-    } else {
-        header("Location: /public/auth/login.php");
-        exit();
-    }
-}
-
-function restrictEmployeeMode() {
-    global $auth_path, $admin_path, $employee_path, $master_key;
-    if (isset($_COOKIE['token'])) {
-        $encryptToken = $_COOKIE['token'];
-        $decryptToken = decryptToken($encryptToken, $master_key);
-
-        // Ensure $decryptToken is a JSON string
-        if (is_array($decryptToken)) {
-            $decryptToken = json_encode($decryptToken);
-        }
-
-        $token = json_decode($decryptToken);
-        if ($token->role_type != "employee") {
-            header("Location: /public/admin");
-            exit();
-        }
-    } else {
-        header("Location: /public/auth/login.php");
-        exit();
-    }
-}
-
-function restrictCheckLoggedIn() {
-    global $auth_path, $admin_path, $employee_path, $master_key;
-    if (isset($_COOKIE['token'])) {
-        $encryptToken = $_COOKIE['token'];
-        $decryptToken = decryptToken($encryptToken, $master_key);
-
-        // Ensure $decryptToken is a JSON string
-        if (is_array($decryptToken)) {
-            $decryptToken = json_encode($decryptToken);
-        }
-
-        $token = json_decode($decryptToken);
-        if ($token->role_type == "admin") {
-            header("Location: /public/admin");
-            exit();
-        } elseif ($token->role_type == "employee") {
-            header("Location: /public/employee");
-            exit();
-        }
-    }
-}
 
 // Transaction System
 $transaction_cancelled_yesterday = true;
 
-// if (isset($_COOKIE['token'])) {
-//     $page_admin = array(
-
-//     );
-//     $data = decryptToken($_COOKIE['token'], $master_key);
-//     if (empty($data)) {
-//         header("Location: " . __DIR__ . "/auth/login.php");
-//         exit();
-//     }
-// }
 
 function head_icon() {
     echo '<link rel="icon" href="./../asset/images/favicon.png">';

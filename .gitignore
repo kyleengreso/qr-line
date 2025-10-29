@@ -5,3 +5,4 @@ generator
 venv
 system
 node_modules/
+.git

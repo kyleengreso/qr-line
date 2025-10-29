@@ -1,12 +1,5 @@
 <?php
-// Checking if token was present and decode safely
-if (isset($_COOKIE['token'])) {
-    $token_raw = $_COOKIE['token'];
-    $token_dec = decryptToken($token_raw, $master_key);
-    $token = json_decode(json_encode($token_dec));
-} else {
-    $token = null;
-}
+
 ?>
 
 <nav class="navbar navbar-expand-md fixed-top" style="background-color: rgb(255, 110, 55);">

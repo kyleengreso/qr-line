@@ -49,6 +49,20 @@ function determine_http_status_code(array $data): int {
     return 400;
 }
 
+function getCounterId($counterNumber) {
+    global $conn;
+    $sql_cmd = "SELECT c.idcounter
+                FROM counters c
+                WHERE c.counterNumber = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$counterNumber]);
+    $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($counter) == 0) {
+        return null;
+    }
+    return $counter[0]['idcounter'];
+}
+
 register_shutdown_function(function() {
     if (!ob_get_level()) return;
     $buffer = ob_get_contents();
@@ -2735,7 +2749,50 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         
         $priority_flag = $counters[0]['counter_priority'];
         
+        function getTransaction() {
+            global $conn, $priority_flag, $counters;
 
+            $sql_cmd = "
+                        SELECT 
+                            *
+                            FROM transactions t
+                            INNER JOIN requesters r ON t.idtransaction = r.id
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.idcounter = ?
+                            AND t.status = 'serve'
+                        ";
+            
+            if ($priority_flag == 'N') {
+                $sql_cmd .= "AND r.priority = 'none' ";
+            } else {
+                $sql_cmd .= "AND
+                            (
+                                r.priority = 'pregnant' OR
+                                r.priority = 'elderly' OR
+                                r.priority = 'disability'
+                            ) ";
+            }
+            $sql_cmd .= "
+                            ORDER BY t.idtransaction ASC
+                            LIMIT 1
+                        ";
+            
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$counters[0]['idcounter']]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (count($transactions) > 0) {
+                echo json_encode([
+                    "status" => "success",
+                    "message" => "Transaction found for this counter",
+                    "data" => $transactions
+                ]);
+            } else {
+                return null;
+            }
+
+        }
+
+        getTransaction();
 
         // Checking if this counter is not assigned to the counters
         if ($priority_flag === 'N') {
@@ -2747,7 +2804,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             WHERE DATE(t.transaction_time) = CURDATE()
                             AND t.idcounter IS NULL
                             AND r.priority = 'none'
-                            ORDER BY t.idtransaction DESC
+                            ORDER BY t.idtransaction ASC
                             LIMIT 1
                         ";
         } else {
@@ -2764,7 +2821,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 r.priority = 'elderly' OR
                                 r.priority = 'disability'
                             )
-                            ORDER BY t.idtransaction DESC
+                            ORDER BY t.idtransaction ASC
                             LIMIT 1
                         ";  
         }
@@ -2805,12 +2862,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $sql_cmd = "
                         UPDATE transactions
-                        SET idcounter = ?
+                        SET idcounter = ?,
+                            idemployee = ?,
+                            status = 'serve'
                         WHERE idtransaction = ?
                     ";
             $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute([
                 $idcounter[0]['idcounter'],
+                $user_id,
                 $transactions[0]['idtransaction']
             ]); 
 

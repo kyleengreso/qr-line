@@ -1,7 +1,6 @@
 <?php
 include_once __DIR__ . '/../base.php';
 
-restrictCheckLoggedIn();
 ?>
 
 <!DOCTYPE html>
@@ -84,26 +83,101 @@ restrictCheckLoggedIn();
                 var data = {
                     username: username,
                     password: password,
-                    method: 'login',
                     device_name: navigator.userAgent
                 };
 
+                // helper to decode JWT payload without verification (for routing)
+                function parseJwt (token) {
+                    try {
+                        var parts = token.split('.');
+                        if (parts.length !== 3) return null;
+                        var payload = parts[1];
+                        // Add padding if needed
+                        while (payload.length % 4 !== 0) payload += '=';
+                        var decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+                        return JSON.parse(decoded);
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
                 $.ajax({
-                    url: './../api/api_endpoint.php',
+                    url: 'http://127.0.0.1:5000/api/login',
                     type: 'POST',
                     data: JSON.stringify(data),
                     contentType: 'application/json',
                     dataType: 'json',
+                    xhrFields: { withCredentials: true }, // allow cookie from API server
                     success: function(response) {
                         if (response.status === 'success') {
                             auth_success(response.message);
-                            setTimeout(function() {
-                                if (response.data.role_type === 'admin') {
-                                    window.location.href = "/public/admin";
-                                } else if (response.data.role_type === 'employee') {
-                                    window.location.href = "/public/employee";
+                            var token = response.data && response.data.token;
+                            // Prefer the server-provided role if available (API returns data.role)
+                            var role = (response.data && response.data.role) ? response.data.role : null;
+                            if (token) {
+                                var p = parseJwt(token);
+                                if (p && !role) {
+                                    role = p.role_type || p.user_role || p.role || null;
                                 }
-                            }, 1000);
+
+                                // Post token to local PHP endpoint that will set the cookie on this origin
+                                $.ajax({
+                                    url: './set_token.php',
+                                    type: 'POST',
+                                    data: JSON.stringify({ token: token }),
+                                    contentType: 'application/json',
+                                    success: function() {
+                                        // The cookie is HttpOnly and not visible to JS. Verify server-side
+                                        // visibility by calling check_token.php. Retry a few times in case
+                                        // the cookie isn't attached to requests immediately.
+                                        var attempts = 0;
+                                        function pollServerForCookie() {
+                                            attempts++;
+                                            $.ajax({
+                                                url: './check_token.php',
+                                                type: 'GET',
+                                                dataType: 'json',
+                                                success: function(resp) {
+                                                    if (resp && resp.status === 'success') {
+                                                        // Server sees cookie — perform role-based redirect
+                                                        if (role === 'admin') {
+                                                            window.location.href = "/public/admin/index.php";
+                                                        } else if (role === 'employee') {
+                                                            window.location.href = "/public/employee/index.php";
+                                                        } else {
+                                                            window.location.reload();
+                                                        }
+                                                        return;
+                                                    } else {
+                                                        // treat as error and retry below
+                                                        retryOrFail();
+                                                    }
+                                                },
+                                                error: function() {
+                                                    retryOrFail();
+                                                }
+                                            });
+                                        }
+
+                                        function retryOrFail() {
+                                            if (attempts < 6) {
+                                                setTimeout(pollServerForCookie, 150);
+                                            } else {
+                                                auth_error('Login succeeded but token cookie was not visible to the server after multiple attempts. Check browser devtools (Network -> set_token.php/check_token.php) and ensure host/port, SameSite and Secure settings.');
+                                            }
+                                        }
+
+                                        // Start polling
+                                        pollServerForCookie();
+                                    },
+                                    error: function() {
+                                        // If local set-cookie fails, fallback to reload
+                                        window.location.reload();
+                                    }
+                                });
+                            } else {
+                                setTimeout(function() { window.location.reload(); }, 1000);
+                            }
                         } else {
                             auth_error(response.message);
                         }
