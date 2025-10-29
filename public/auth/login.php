@@ -132,10 +132,25 @@ restrictCheckLoggedIn();
                                 $.ajax({
                                     url: '/public/includes/system_auth.php?action=set_token',
                                     type: 'POST',
-                                    data: JSON.stringify({ token: token }),
+                                    data: JSON.stringify({ token: token, role: role }),
                                     contentType: 'application/json',
                                     dataType: 'json',
                                     success: function() {
+                                        // Ensure any server-set "auth_notice" is not shown
+                                        // (it may have been rendered when the page loaded). Remove
+                                        // any existing alerts from the form before redirecting.
+                                        $form.find('.alert').remove();
+
+                                        // Also set the cookie client-side so the next navigation
+                                        // immediately contains the token for server-side checks.
+                                        try {
+                                            // max-age = 30 days
+                                            var maxAge = 86400 * 30;
+                                            document.cookie = 'token=' + encodeURIComponent(token) + '; path=/; max-age=' + maxAge + ';';
+                                        } catch (e) {
+                                            // ignore
+                                        }
+
                                         if (role === 'admin') {
                                             window.location.href = "/public/admin/index.php";
                                         } else if (role === 'employee') {

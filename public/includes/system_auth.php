@@ -88,18 +88,22 @@ function restrictCheckLoggedIn() {
     $payload = getDecodedTokenPayload();
     if (!$payload) return;
     $role = $payload['role_type'] ?? ($payload['role'] ?? null);
-    if ($role === 'admin') {
+    // If token payload doesn't include a role, fall back to role_type cookie
+    if (!$role && isset($_COOKIE['role_type'])) {
+        $role = $_COOKIE['role_type'];
+    }
+    // Normalize role to lowercase for comparison to avoid case-sensitivity issues
+    $norm = is_string($role) ? strtolower($role) : null;
+    if ($norm === 'admin' || $norm === 'administrator' || $norm === 'superadmin') {
         header('Location: /public/admin/index.php');
         exit();
     }
-    if ($role === 'employee') {
+    if ($norm === 'employee' || $norm === 'cashier' || $norm === 'attendant') {
         header('Location: /public/employee/index.php');
         exit();
     }
-    // If authenticated but role unknown, redirect to admin dashboard by default
-    // (redirecting to /public/index.php causes a loop because index.php redirects to login)
-    header('Location: /public/admin');
-    exit();
+    // If authenticated but role unknown, do not redirect — let pages decide.
+    return;
 }
 
 /**
@@ -114,9 +118,25 @@ function requireRole(string $role) {
         $_SESSION['auth_notice'] = 'You need to login first';
         header('Location: /public/auth/login.php');
         exit();
-    }
+    }   
     $current = $payload['role_type'] ?? ($payload['role'] ?? null);
-    if ($current !== $role) {
+    if (!$current && isset($_COOKIE['role_type'])) {
+        $current = $_COOKIE['role_type'];
+    }
+    $norm_current = is_string($current) ? strtolower($current) : null;
+    $norm_required = strtolower($role);
+
+    // Accept a few common aliases for roles to avoid mismatches between systems
+    $admin_aliases = ['admin', 'administrator', 'superadmin'];
+
+    $allowed = false;
+    if ($norm_required === 'admin') {
+        $allowed = in_array($norm_current, $admin_aliases, true);
+    } else {
+        $allowed = ($norm_current === $norm_required);
+    }
+
+    if (!$allowed) {
         // Not authorized
         if (session_status() == PHP_SESSION_NONE) session_start();
         $_SESSION['auth_notice'] = 'You need to login first';
@@ -158,13 +178,47 @@ if (php_sapi_name() !== 'cli' && realpath(__FILE__) === realpath($_SERVER['SCRIP
             exit;
         }
         set_token_cookie_from_value($token);
+        // If the login flow had previously redirected here with an auth notice
+        // (for example: user was redirected to login.php with "You need to login first"),
+        // clear that notice now that we have a token stored so the user doesn't see
+        // a stale message after a successful login.
+        if (session_status() == PHP_SESSION_NONE) session_start();
+        if (isset($_SESSION['auth_notice'])) unset($_SESSION['auth_notice']);
+        // Optionally accept a role value alongside the token so PHP-side checks
+        // (which often use the token payload) can rely on a simple cookie when
+        // the token itself doesn't include role claims.
+        $roleValue = null;
+        if (is_array($data) && isset($data['role'])) {
+            $roleValue = $data['role'];
+        } elseif (isset($_POST['role'])) {
+            $roleValue = $_POST['role'];
+        }
+        if ($roleValue) {
+            $expires = time() + (86400 * 30);
+            // store a small role cookie to help PHP redirects/guards when token lacks role
+            setcookie('role_type', $roleValue, $expires, '/');
+        }
         echo json_encode(['status' => 'success', 'message' => 'Token stored']);
         exit;
     }
 
     if ($action === 'clear_token') {
         setcookie('token', '', time() - 3600, '/');
+        setcookie('role_type', '', time() - 3600, '/');
         echo json_encode(['status' => 'success', 'message' => 'Local token cleared']);
+        exit;
+    }
+
+    if ($action === 'status') {
+        // Diagnostic: return whether the server sees a token and the decoded payload.
+        $payload = getDecodedTokenPayload();
+        $has_cookie = isset($_COOKIE['token']);
+        echo json_encode([
+            'status' => 'success',
+            'has_cookie' => $has_cookie,
+            'decoded' => $payload,
+            'raw_cookie' => $has_cookie ? $_COOKIE['token'] : null
+        ]);
         exit;
     }
 
