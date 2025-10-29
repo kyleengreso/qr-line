@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/../base.php';
+restrictCheckLoggedIn();
 
 ?>
 
@@ -121,54 +122,21 @@ include_once __DIR__ . '/../base.php';
                                 }
 
                                 // Post token to local PHP endpoint that will set the cookie on this origin
+                                // Then immediately redirect based on role returned by the API.
                                 $.ajax({
                                     url: './set_token.php',
                                     type: 'POST',
                                     data: JSON.stringify({ token: token }),
                                     contentType: 'application/json',
+                                    dataType: 'json',
                                     success: function() {
-                                        // The cookie is HttpOnly and not visible to JS. Verify server-side
-                                        // visibility by calling check_token.php. Retry a few times in case
-                                        // the cookie isn't attached to requests immediately.
-                                        var attempts = 0;
-                                        function pollServerForCookie() {
-                                            attempts++;
-                                            $.ajax({
-                                                url: './check_token.php',
-                                                type: 'GET',
-                                                dataType: 'json',
-                                                success: function(resp) {
-                                                    if (resp && resp.status === 'success') {
-                                                        // Server sees cookie — perform role-based redirect
-                                                        if (role === 'admin') {
-                                                            window.location.href = "/public/admin/index.php";
-                                                        } else if (role === 'employee') {
-                                                            window.location.href = "/public/employee/index.php";
-                                                        } else {
-                                                            window.location.reload();
-                                                        }
-                                                        return;
-                                                    } else {
-                                                        // treat as error and retry below
-                                                        retryOrFail();
-                                                    }
-                                                },
-                                                error: function() {
-                                                    retryOrFail();
-                                                }
-                                            });
+                                        if (role === 'admin') {
+                                            window.location.href = "/public/admin/index.php";
+                                        } else if (role === 'employee') {
+                                            window.location.href = "/public/employee/index.php";
+                                        } else {
+                                            window.location.reload();
                                         }
-
-                                        function retryOrFail() {
-                                            if (attempts < 6) {
-                                                setTimeout(pollServerForCookie, 150);
-                                            } else {
-                                                auth_error('Login succeeded but token cookie was not visible to the server after multiple attempts. Check browser devtools (Network -> set_token.php/check_token.php) and ensure host/port, SameSite and Secure settings.');
-                                            }
-                                        }
-
-                                        // Start polling
-                                        pollServerForCookie();
                                     },
                                     error: function() {
                                         // If local set-cookie fails, fallback to reload

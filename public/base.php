@@ -5,7 +5,6 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/./includes/db_conn.php';
-// require_once __DIR__ . '/./includes/system_auth.php';
 
 // Project Information
 $project_name = "QR-Line";
@@ -39,6 +38,9 @@ foreach (parse_ini_file($envPath) as $key => $value) {
 $enable_http = true;                // Enable HTTP connection. Default: true
 $enable_secure = true;              // Enable HTTPS connection. Default: true
 $master_key = "master";             // Master key for encryption and decryption. Default: "master"
+
+// Include auth helpers after master key is defined so they can access $master_key
+require_once __DIR__ . '/./includes/system_auth.php';
 
 // Email Feature setup
 $email_feature = FALSE;
