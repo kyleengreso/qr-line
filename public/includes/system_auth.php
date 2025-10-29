@@ -102,4 +102,48 @@ function restrictCheckLoggedIn() {
     exit();
 }
 
+
+// If this file is requested directly (not included), expose small HTTP actions
+// so we can set/clear the token cookie without separate wrapper files.
+if (php_sapi_name() !== 'cli' && realpath(__FILE__) === realpath($_SERVER['SCRIPT_FILENAME'])) {
+    header('Content-Type: application/json');
+
+    // Determine action via query param or JSON body { action: 'set_token' }
+    $action = $_GET['action'] ?? null;
+    if (!$action) {
+        $raw = file_get_contents('php://input');
+        $json = json_decode($raw, true);
+        if (is_array($json) && isset($json['action'])) $action = $json['action'];
+    }
+
+    if ($action === 'set_token') {
+        $raw = file_get_contents('php://input');
+        $data = json_decode($raw, true);
+        $token = null;
+        if (is_array($data) && isset($data['token'])) {
+            $token = $data['token'];
+        } else {
+            $token = $_POST['token'] ?? null;
+        }
+        if (!$token) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Missing token']);
+            exit;
+        }
+        set_token_cookie_from_value($token);
+        echo json_encode(['status' => 'success', 'message' => 'Token stored']);
+        exit;
+    }
+
+    if ($action === 'clear_token') {
+        setcookie('token', '', time() - 3600, '/');
+        echo json_encode(['status' => 'success', 'message' => 'Local token cleared']);
+        exit;
+    }
+
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
+    exit;
+}
+
 ?>

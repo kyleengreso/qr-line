@@ -124,7 +124,7 @@ restrictCheckLoggedIn();
                                 // Post token to local PHP endpoint that will set the cookie on this origin
                                 // Then immediately redirect based on role returned by the API.
                                 $.ajax({
-                                    url: './set_token.php',
+                                    url: '/public/includes/system_auth.php?action=set_token',
                                     type: 'POST',
                                     data: JSON.stringify({ token: token }),
                                     contentType: 'application/json',

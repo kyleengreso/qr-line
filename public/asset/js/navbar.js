@@ -22,7 +22,7 @@ function logOut() {
 
 function clearLocalTokenAndRedirect() {
     $.ajax({
-        url: './auth/clear_token.php',
+        url: '/public/includes/system_auth.php?action=clear_token',
         type: 'POST',
         dataType: 'json',
         success: function(resp) {
