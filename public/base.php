@@ -42,6 +42,21 @@ $master_key = "master";             // Master key for encryption and decryption.
 // Include auth helpers after master key is defined so they can access $master_key
 require_once __DIR__ . '/./includes/system_auth.php';
 
+// Normalize token for templates: decode cookie once and expose as $token (object)
+// so templates can safely use $token->username and $token->role_type.
+$token = null;
+if (isset($_COOKIE['token'])) {
+    $decoded = decryptToken($_COOKIE['token'], $master_key ?? '');
+    if (is_array($decoded)) {
+        // Convert to stdClass for object-style access in templates
+        $token = json_decode(json_encode($decoded));
+    } elseif (is_object($decoded)) {
+        $token = $decoded;
+    } else {
+        $token = null;
+    }
+}
+
 // Email Feature setup
 $email_feature = FALSE;
 

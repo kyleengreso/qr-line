@@ -18,20 +18,30 @@ document.addEventListener("DOMContentLoaded", function () {
     let btnLogout1 = document.getElementById("btn-logout-1");
     if (btnLogout1) {
         btnLogout1.addEventListener("click", function () {
-            logOutNotify.classList.remove('d-none');
-            setTimeout(() => {
+            if (logOutNotify) {
+                logOutNotify.classList.remove('d-none');
+                setTimeout(() => {
+                    logOut();
+                }, 2000);
+            } else {
+                // If the page doesn't include the logout notification element,
+                // just perform logout immediately.
                 logOut();
-            }, 2000);
+            }
         });
     };
     
     let btnLogout2 = document.getElementById("btn-logout-2");
     if (btnLogout2) {
         btnLogout2.addEventListener("click", function () {
-            logOutNotify.classList.remove('d-none');
-            setTimeout(() => {
+            if (logOutNotify) {
+                logOutNotify.classList.remove('d-none');
+                setTimeout(() => {
+                    logOut();
+                }, 2000);
+            } else {
                 logOut();
-            }, 2000);
+            }
         });
     }
 

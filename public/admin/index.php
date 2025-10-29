@@ -2,6 +2,15 @@
 include_once __DIR__ . "/../base.php";
 // Require admin access for this dashboard
 requireAdmin();
+// Ensure $token and $username are populated for templates (some pages rely on $username)
+$token = $_COOKIE['token'] ?? null;
+if ($token) {
+    $token = decryptToken($token, $master_key ?? '');
+    // normalize to object as other pages do
+    $token = json_encode($token);
+    $token = json_decode($token);
+}
+$username = isset($token->username) ? $token->username : null;
 ?>
 
 <!DOCTYPE html>

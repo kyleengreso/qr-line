@@ -1,12 +1,30 @@
 <?php
+// Safe helper to read a property from the token which may be an object or an array.
+function token_prop($token, $prop) {
+    if (is_object($token) && isset($token->{$prop})) return $token->{$prop};
+    if (is_array($token) && isset($token[$prop])) return $token[$prop];
+    return null;
+}
 
+?>
+<?php
+// Normalize common token values for template checks
+$token_role_raw = token_prop($token, 'role_type');
+// If token payload doesn't include a role, fall back to role_type cookie set at login
+if (!$token_role_raw && isset($_COOKIE['role_type'])) {
+    $token_role_raw = $_COOKIE['role_type'];
+}
+$token_role = is_string($token_role_raw) ? strtolower($token_role_raw) : null;
+$is_admin = in_array($token_role, ['admin','administrator','superadmin'], true);
+$is_employee = in_array($token_role, ['employee','cashier','attendant'], true);
+$token_username = token_prop($token, 'username');
 ?>
 
 <nav class="navbar navbar-expand-md fixed-top" style="background-color: rgb(255, 110, 55);">
     <div class="container-fluid d-flex justify-content-between align-items-center">
 
         <!-- Sidebar Toggle Button -->
-        <?php if (isset($token) && $token->role_type === 'admin') : ?>
+    <?php if ($is_admin) : ?>
         <button class="btn btn-link text-white me-3 p-0" style="border-radius: 5px; border: 1px solid rgba(255,255,255,0.12); background-color: transparent;" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle Sidebar">
             <i class="bi bi-list fs-4"></i>
         </button>
@@ -24,10 +42,10 @@
 
         <!-- Username and Clock -->
         <div class="d-flex align-items-center">
-            <?php if (isset($token) && $token) : ?>
-                <span class="text-white me-3 d-none d-md-block">
-                    <span class="fs-6 fw-semibold"><?php echo htmlentities($token->username); ?></span>
-                </span>
+            <?php if ($token_username) : ?>
+                    <span class="text-white me-3 d-none d-md-block">
+                        <span class="fs-6 fw-semibold"><?php echo htmlentities($token_username); ?></span>
+                    </span>
             <?php endif; ?>
             <span class="text-white me-3 d-none d-md-block" id="navbar-clock">
                 <span id="current-time"></span>
@@ -41,7 +59,7 @@
 </nav>
 
 <!-- Sidebar -->
-<?php if (isset($token) && $token->role_type === 'admin') : ?>
+<?php if ($is_admin) : ?>
 <div class="offcanvas offcanvas-start bg-primary text-white" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" style="width: 320px;">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title fs-3" id="sidebarLabel"><?php echo $project_name?></h5>
@@ -67,7 +85,7 @@
                 </div>
             <?php endif; ?>
             </li>
-            <?php if ($token->role_type == 'admin') : ?>
+            <?php if ($is_admin) : ?>
             <li>
                 <div class="py-3 px-2">
                     <a href="/public/admin" class="w-100 fs-5 text-white text-decoration-none">
