@@ -27,6 +27,12 @@ restrictCheckLoggedIn();
                 <p>Login to continue</p>
             </div>
             <form class="needs-validation" method="POST" id="frmLogIn" novalidate>
+                <?php if (session_status() == PHP_SESSION_NONE) session_start();
+                if (isset($_SESSION['auth_notice'])) {
+                    echo '<div class="alert alert-warning">' . htmlentities($_SESSION['auth_notice']) . '</div>';
+                    unset($_SESSION['auth_notice']);
+                }
+                ?>
                 <div class="input-group mb-2">
                     <div class="input-group-text" ><i class="bi bi-person-fill"></i></div>
                     <div class="form-floating">

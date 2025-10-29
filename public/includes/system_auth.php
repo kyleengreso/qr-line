@@ -109,12 +109,17 @@ function restrictCheckLoggedIn() {
 function requireRole(string $role) {
     $payload = getDecodedTokenPayload();
     if (!$payload) {
+        // Inform login page that user was redirected due to missing auth
+        if (session_status() == PHP_SESSION_NONE) session_start();
+        $_SESSION['auth_notice'] = 'You need to login first';
         header('Location: /public/auth/login.php');
         exit();
     }
     $current = $payload['role_type'] ?? ($payload['role'] ?? null);
     if ($current !== $role) {
         // Not authorized
+        if (session_status() == PHP_SESSION_NONE) session_start();
+        $_SESSION['auth_notice'] = 'You need to login first';
         header('Location: /public/auth/login.php');
         exit();
     }
