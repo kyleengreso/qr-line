@@ -149,6 +149,16 @@ function requireAdmin() {
     requireRole('admin');
 }
 
+/**
+ * Backwards-compatible helper used by some pages to restrict access to admin-only
+ * views. Older templates call restrictAdminMode() so provide it as an alias to
+ * requireAdmin().
+ */
+function restrictAdminMode() {
+    // reuse the existing requireAdmin logic (will redirect to login with notice)
+    requireAdmin();
+}
+
 
 // If this file is requested directly (not included), expose small HTTP actions
 // so we can set/clear the token cookie without separate wrapper files.

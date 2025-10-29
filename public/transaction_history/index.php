@@ -2,15 +2,18 @@
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
 
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
+// `base.php` normalizes the token into `$token` (stdClass) when a cookie exists.
+// Use that normalized token if available; read properties defensively to avoid
+// PHP notices when certain claims are missing.
+if (!isset($token) || !$token) {
+    $token = null;
+}
 
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
+$id = isset($token->id) ? $token->id : null;
+$username = isset($token->username) ? $token->username : null;
+// Prefer role from token, fallback to role_type cookie (set during set_token)
+$role_type = isset($token->role_type) ? $token->role_type : (isset($_COOKIE['role_type']) ? $_COOKIE['role_type'] : null);
+$email = isset($token->email) ? $token->email : null;
 ?>
 
 <!DOCTYPE html>
@@ -23,28 +26,48 @@ $email = $token->email;
     <?php head_css()?>
     <?php before_js()?>
     <style>
-        /* Transaction table: compact, sticky header, subtle separators */
+        /* Modern transaction table visual refresh */
+        .transactions-toolbar {
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .transactions-toolbar .flex-fill { min-width: 220px; }
+        .transactions-card { border-radius: 18px; }
         .transactions-table thead th {
             position: sticky;
             top: 0;
             background: var(--bs-white, #fff);
             z-index: 2;
             border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
         }
         .transactions-table tbody tr {
             border-bottom: 1px solid rgba(0,0,0,0.03);
+            transition: background-color .12s ease-in-out;
         }
-        .transactions-table tbody tr:hover {
-            background-color: rgba(0,0,0,0.02);
+        .transactions-table tbody tr:hover { background-color: rgba(0,0,0,0.03); }
+    /* compact row spacing */
+    .transactions-table td, .transactions-table th { vertical-align: middle; padding: .45rem .6rem; font-size: .92rem; }
+    .transactions-table tbody tr { height: auto; }
+    .token-col { width: 110px; white-space: nowrap; }
+    .time-col { width: 150px; white-space: nowrap; }
+    .txn-col { width: 100px; }
+    .actions-col { width: 120px; }
+    .actions-col .btn { padding: .25rem .5rem; font-size: .82rem; }
+    .dropdown-menu { min-width: 8rem; }
+    .transactions-toolbar .form-floating { min-width: 160px; }
+    .transactions-toolbar .form-floating.flex-fill { min-width: 120px; }
+        .td-truncate { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .small-muted { font-size: .85rem; color: #6c757d; }
+        .loader-overlay {
+            position: absolute; inset: 0; display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.7);z-index:5;border-radius:inherit;
         }
-        .transactions-table .token-col { width: 120px; white-space: nowrap; }
-        .transactions-table .time-col { width: 160px; white-space: nowrap; }
-        .transactions-table .txn-col { width: 110px; }
-        .transactions-table .actions-col { width: 110px; white-space: nowrap; }
-        .transactions-table .badge { font-size: .75rem; padding: .35em .5em; }
+        .badge-small { font-size:.72rem; padding:.25rem .45rem; }
         @media (max-width: 768px) {
-            .transactions-table thead th { font-size: .85rem; }
-            .transactions-table td, .transactions-table th { font-size: .85rem; }
+            .transactions-toolbar { gap:.5rem; }
+            .td-truncate { max-width: 120px; }
         }
     </style>
 </head>
@@ -64,100 +87,92 @@ $email = $token->email;
                     </ol>
                 </nav>
             </div>
-            <div class="card shadow">
-                <div class="card-header">
-                    <span>Transaction History</span>
+            <div class="card shadow transactions-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0">Transaction History</h5>
+                        <div class="small text-muted">Recent transactions and filters</div>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="small text-muted">Per page</div>
+                        <select id="transactionsPerPage" class="form-select form-select-sm" style="width:88px">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                            <option value="250">250</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col">
-                                <h3 class="text-start my-1 mx-2 fw-bold">Transaction History</h3>
-                            </div>
+                <div class="card-body position-relative">
+                    <div class="mb-3 transactions-toolbar">
+                        <div class="input-group flex-fill">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="searchEmail" id="searchEmail" class="form-control" placeholder="Search token, email, or name">
                         </div>
-                    </div>
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="input-group">
-                                <div class="form-floating">
-                                    <input type="text" name="searchEmail" id="searchEmail" class="form-control" placeholder="Search email">
-                                    <label for="searchEmail">Search email</label>
-                                </div>
-                                <a class="input-group-text px-4 fw-bold fs-3" id="btn-transaction-show-filters" data-bs-toggle="collapse" href="#transaction-show-filters" role="button" aria-expanded="false" aria-controls="transaction-show-filters">
-                                    <i class="bi bi-filter-left"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 mb-4">
-                        <div class="" id="transaction-show-filters">
-                            <div class="row">
-                                <div class="col-4">
-                                    <div class="form-floating">
-                                        <select class="form-select" name="transaction-filter-status" id="transaction-filter-status">
-                                            <option value="none">All</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="serve">Failed</option>
-                                            <option value="cancelled">Cancelled</option>
-                                        </select>
-                                        <label for="transaction-filter-status">Status</label>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="form-floating">
-                                        <select class="form-select" name="transaction-filter-daterange" id="transaction-filter-daterange">
-                                            <option value="none">--</option>
-                                            <option value="today">Today</option>
-                                            <option value="yesterday">Yesterday</option>
-                                            <option value="this_week">This Week</option>
-                                            <option value="last_week">Last Week</option>
-                                            <option value="this_month">This Month</option>
-                                            <option value="last_month">Last Month</option>
-                                            <option value="this_year">This Year</option>
-                                            <option value="last_year">Last Year</option>
-                                        </select>
-                                        <label for="getTransactionDesc">Date Range</label>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                <div class="form-floating">
-                                    <select class="form-select" name="getPaymentType" id="getPaymentType">
-                                        <option value="none">All</option>
-                                        <option value="assessment">Assessment</option>
-                                        <option value="registrar">Registrar</option>
-                                    </select>
-                                    <label for="getPaymentType">Payment</label>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        <div class="d-none" id="transaction-show-filters">
-                        
-                        </div>
-                    </div>
-                    <!-- pagination moved below the table to match counters page design -->
 
+                        <div class="d-flex gap-2 flex-wrap flex-fill w-100">
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" name="transaction-filter-status" id="transaction-filter-status">
+                                    <option value="none">All</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="serve">Failed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <label for="transaction-filter-status">Status</label>
+                            </div>
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" name="transaction-filter-daterange" id="transaction-filter-daterange">
+                                    <option value="none">All</option>
+                                    <option value="today">Today</option>
+                                    <option value="yesterday">Yesterday</option>
+                                    <option value="this_week">This Week</option>
+                                    <option value="last_week">Last Week</option>
+                                    <option value="this_month">This Month</option>
+                                    <option value="last_month">Last Month</option>
+                                    <option value="this_year">This Year</option>
+                                    <option value="last_year">Last Year</option>
+                                </select>
+                                <label for="transaction-filter-daterange">Date</label>
+                            </div>
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" name="getPaymentType" id="getPaymentType">
+                                    <option value="none">All</option>
+                                    <option value="assessment">Assessment</option>
+                                    <option value="registrar">Registrar</option>
+                                </select>
+                                <label for="getPaymentType">Payment</label>
+                            </div>
+                        </div>
+
+                        <div class="ms-auto d-flex gap-2">
+                            <button id="btnExportCsv" class="btn btn-outline-secondary btn-sm">Export CSV</button>
+                            <button id="btnRefreshTransactions" class="btn btn-primary btn-sm">Refresh</button>
+                        </div>
+                    </div>
+
+                    <!-- table -->
                     <div class="table-responsive">
                         <table class="table table-hover table-sm align-middle transactions-table" id="table-transactions-history">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="token-col">Token</th>
-                                    <th class="time-col">Time</th>
-                                    <th class="txn-col">Txn #</th>
+                                    <th>Token</th>
+                                    <th>Time</th>
+                                    <th>Txn #</th>
                                     <th class="d-none d-md-table-cell">Name</th>
                                     <th class="d-none d-md-table-cell">Email</th>
                                     <th>Payment</th>
                                     <th>Status</th>
                                     <th class="d-none d-sm-table-cell">Counter</th>
-                                    <th class="text-end actions-col">Actions</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Load -->
+                                <!-- load rows here -->
                             </tbody>
                         </table>
                     </div>
+                    <div id="transactionsOverlay" class="d-none loader-overlay"><div><div class="spinner-border text-primary" role="status" aria-hidden="true"></div><div class="small text-muted mt-2">Loading...</div></div></div>
                     <div class="d-flex justify-content-between align-items-center mt-3">
                         <div>
                             <small class="text-muted">Showing up to <strong id="showingCount">1-100</strong></small>
@@ -214,11 +229,18 @@ $email = $token->email;
     let pagePrevTransactions = document.getElementById("pagePrevTransactions");
     let pageNextTransactions = document.getElementById("pageNextTransactions");
     let transactionsLoader = document.getElementById('transactionsLoader');
+    let transactionsOverlay = document.getElementById('transactionsOverlay');
+    let perPageSelect = document.getElementById('transactionsPerPage');
+    let btnExportCsv = document.getElementById('btnExportCsv');
+    let btnRefreshTransactions = document.getElementById('btnRefreshTransactions');
     let pageInfo = document.getElementById('pageInfo');
     let transactionsPaginationContainer = document.getElementById('transactionsPagination');
 
     var page = 1;
-    var paginate = 100;
+    // paginate is driven by the per-page selector (default 100)
+    var paginate = (perPageSelect && perPageSelect.value) ? Number(perPageSelect.value) : 100;
+    // last fetched transactions for export
+    let lastTransactions = [];
     var search_transaction = '';
     var payment = 'none';
     var status_transactions = 'none';
@@ -237,9 +259,32 @@ $email = $token->email;
         console.log(status_transactions);
         getTransactionHistory();
     });
+    // per-page selector
+    if (perPageSelect) {
+        perPageSelect.addEventListener('change', function (e) {
+            paginate = Number(e.target.value) || 100;
+            page = 1;
+            getTransactionHistory();
+        });
+    }
+    if (btnRefreshTransactions) {
+        btnRefreshTransactions.addEventListener('click', function () { getTransactionHistory(); });
+    }
+    if (btnExportCsv) {
+        btnExportCsv.addEventListener('click', function () {
+            if (!lastTransactions || !lastTransactions.length) return alert('No transactions to export');
+            // build CSV
+            const cols = ['idtransaction','token_number','transaction_time','name','email','payment','status','counterNumber','notes'];
+            const csv = [cols.join(',')].concat(lastTransactions.map(row => cols.map(c => '"'+((row[c]||'').toString().replace(/"/g,'""'))+'"').join(','))).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `transactions_page_${page}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        });
+    }
     function getTransactionHistory() {
-        // show loader and disable pagination while loading
-        if (transactionsLoader) transactionsLoader.classList.remove('d-none');
+    // show loader overlay and disable pagination while loading
+    if (transactionsOverlay) transactionsOverlay.classList.remove('d-none');
+    else if (transactionsLoader) transactionsLoader.classList.remove('d-none');
         if (pageNextTransactions) pageNextTransactions.classList.add('disabled');
         if (pagePrevTransactions) pagePrevTransactions.classList.add('disabled');
         // show skeleton rows to indicate loading
@@ -257,9 +302,13 @@ $email = $token->email;
         });
         console.log(params.toString());
         $.ajax({
-            url: "/public/api/api_endpoint.php?" + params,
+            // Call the Python Flask transactions API (local dev). We request
+            // credentials so the cookie (if any) is sent for auth.
+            url: "http://127.0.0.1:5000/api/transactions?" + params,
             type: "GET",
             timeout: 10000,
+            xhrFields: { withCredentials: true },
+            crossDomain: true,
             success: function (response) {
                 // clear skeleton / rows
                 const tbody = table_transactions_history.querySelector('tbody');
@@ -267,6 +316,8 @@ $email = $token->email;
 
                 if (response.status === 'success') {
                     const transactions = response.transactions || [];
+                    // save for export
+                    lastTransactions = transactions;
 
                     // server-driven pagination: try common fields
                     let totalPages = null;
@@ -321,35 +372,96 @@ $email = $token->email;
                         }
 
                         tr.innerHTML = `
-                            <td class="token-col"><strong>${transaction.token_number || '—'}</strong></td>
+                            <td class="token-col td-truncate"><strong>${transaction.token_number || '—'}</strong></td>
                             <td class="time-col"><small class="text-muted">${transaction.transaction_time}</small></td>
-                            <td class="txn-col">#${transaction.idtransaction}</td>
-                            <td class="d-none d-md-table-cell">${transaction.name || '—'}</td>
-                            <td class="d-none d-md-table-cell"><a href="mailto:${transaction.email}">${transaction.email || '—'}</a></td>
+                            <td class="txn-col td-truncate">#${transaction.idtransaction}</td>
+                            <td class="d-none d-md-table-cell td-truncate">${transaction.name || '—'}</td>
+                            <td class="d-none d-md-table-cell td-truncate"><a href="mailto:${transaction.email}" class="td-truncate" data-bs-toggle="tooltip" title="${transaction.email || ''}">${transaction.email || '—'}</a></td>
                             <td>${paymentBadge(transaction.payment)}</td>
                             <td>${statusBadge(transaction.status)}</td>
                             <td class="d-none d-sm-table-cell">${transaction.counterNumber ? transaction.counterNumber : '—'}</td>
-                            <td class="text-end actions-col"><button class="btn btn-sm btn-outline-primary btn-view" aria-label="View transaction ${transaction.idtransaction}">View</button></td>
+                            <td class="text-end actions-col">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item btn-view" href="#" data-id="${transaction.idtransaction}">View</a></li>
+                                        <li><a class="dropdown-item btn-copy" href="#" data-id="${transaction.idtransaction}">Copy</a></li>
+                                        <li><a class="dropdown-item" href="mailto:${transaction.email}">Email</a></li>
+                                    </ul>
+                                </div>
+                            </td>
                         `;
 
-                        // attach event
-                        tr.querySelector('.btn-view').addEventListener('click', function () {
-                            showTransactionModal(transaction);
-                        });
+                        // attach event handlers for actions inside the row
+                        const viewEl = tr.querySelector('.btn-view');
+                        if (viewEl) {
+                            viewEl.addEventListener('click', function (e) { e.preventDefault(); showTransactionModal(transaction); });
+                        }
+                        const copyEl = tr.querySelector('.btn-copy');
+                        if (copyEl) {
+                            copyEl.addEventListener('click', function (e) {
+                                e.preventDefault();
+                                const payload = `Txn #${transaction.idtransaction}\nToken: ${transaction.token_number || ''}\nName: ${transaction.name || ''}\nEmail: ${transaction.email || ''}\nPayment: ${transaction.payment || ''}\nStatus: ${transaction.status || ''}\nTime: ${transaction.transaction_time || ''}`;
+                                const doNotify = (msg) => {
+                                    try {
+                                        // create one-off notification container if missing
+                                        let container = document.getElementById('copyNotifyContainer');
+                                        if (!container) {
+                                            container = document.createElement('div');
+                                            container.id = 'copyNotifyContainer';
+                                            container.style.position = 'fixed';
+                                            container.style.top = '1rem';
+                                            container.style.right = '1rem';
+                                            container.style.zIndex = 9999;
+                                            document.body.appendChild(container);
+                                        }
+                                        const n = document.createElement('div');
+                                        n.className = 'alert alert-success py-1 px-2 mb-2';
+                                        n.style.minWidth = '160px';
+                                        n.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                                        n.innerText = msg;
+                                        container.appendChild(n);
+                                        setTimeout(()=>{ n.classList.add('fade'); n.style.transition='opacity .3s'; n.style.opacity='0'; }, 900);
+                                        setTimeout(()=>{ n.remove(); if (!container.children.length) container.remove(); }, 1400);
+                                    } catch (e) { /* ignore */ }
+                                };
+
+                                try {
+                                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                                        navigator.clipboard.writeText(payload).then(()=> doNotify('Copied transaction'))
+                                        .catch(()=> doNotify('Copied'));
+                                    } else {
+                                        const ta = document.createElement('textarea'); ta.value = payload; document.body.appendChild(ta); ta.select();
+                                        try { document.execCommand('copy'); doNotify('Copied transaction'); } catch(e) { doNotify('Copy failed'); }
+                                        ta.remove();
+                                    }
+                                } catch (err) { console.warn('Copy failed', err); doNotify('Copy failed'); }
+                            });
+                        }
 
                         tbody.appendChild(tr);
+
+                        // initialize bootstrap tooltip for email if available
+                        try {
+                            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                                const tEls = tr.querySelectorAll('[data-bs-toggle="tooltip"]');
+                                tEls.forEach(function (el) { new bootstrap.Tooltip(el); });
+                            }
+                        } catch (e) { /* ignore tooltip init errors */ }
                     });
                 } else {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td colspan="9" class="text-center text-muted">No transactions found</td>`;
                     tbody.appendChild(tr);
                 }
-                // hide loader
-                if (transactionsLoader) transactionsLoader.classList.add('d-none');
+                // hide loader/overlay
+                if (transactionsOverlay) transactionsOverlay.classList.add('d-none');
+                else if (transactionsLoader) transactionsLoader.classList.add('d-none');
             },
             error: function (xhr, status, err) {
                 // hide loader and show error row
-                if (transactionsLoader) transactionsLoader.classList.add('d-none');
+                if (transactionsOverlay) transactionsOverlay.classList.add('d-none');
+                else if (transactionsLoader) transactionsLoader.classList.add('d-none');
                 const tbody = table_transactions_history.querySelector('tbody');
                 tbody.innerHTML = '';
                 const tr = document.createElement('tr');
