@@ -1,5 +1,7 @@
 <?php
 include_once __DIR__ . "/../base.php";
+// Require admin access for this dashboard
+requireAdmin();
 ?>
 
 <!DOCTYPE html>

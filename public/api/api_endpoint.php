@@ -84,15 +84,17 @@ register_shutdown_function(function() {
 if (isset($_COOKIE['token'])) {
     $token = $_COOKIE['token'];
     $decToken = decryptToken($token, $master_key);
-    if ($decToken) {
-        $this_username = $decToken['username'];
-        $this_role_type = $decToken['role_type'];
-        $this_email = $decToken['email'];
+    if ($decToken && is_array($decToken)) {
+        // Use defensive access to avoid PHP warnings when keys are missing.
+        $this_username = $decToken['username'] ?? ($decToken['user'] ?? null);
+        // Accept either role_type or role for compatibility
+        $this_role_type = $decToken['role_type'] ?? ($decToken['role'] ?? null);
+        $this_email = $decToken['email'] ?? null;
         $this_counterNumber = $decToken['counterNumber'] ?? null;
         $this_priority = $decToken['priority'] ?? null;
-        $this_user_id = $decToken['id'];
+        $this_user_id = $decToken['id'] ?? ($decToken['user_id'] ?? null);
     }
-} 
+}
 if (!$conn) {
     echo json_encode(array(
         "status" => "error",

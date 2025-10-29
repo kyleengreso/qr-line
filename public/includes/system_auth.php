@@ -102,6 +102,28 @@ function restrictCheckLoggedIn() {
     exit();
 }
 
+/**
+ * Require that the current request is authenticated and has the given role.
+ * If not, redirect to the login page.
+ */
+function requireRole(string $role) {
+    $payload = getDecodedTokenPayload();
+    if (!$payload) {
+        header('Location: /public/auth/login.php');
+        exit();
+    }
+    $current = $payload['role_type'] ?? ($payload['role'] ?? null);
+    if ($current !== $role) {
+        // Not authorized
+        header('Location: /public/auth/login.php');
+        exit();
+    }
+}
+
+function requireAdmin() {
+    requireRole('admin');
+}
+
 
 // If this file is requested directly (not included), expose small HTTP actions
 // so we can set/clear the token cookie without separate wrapper files.
