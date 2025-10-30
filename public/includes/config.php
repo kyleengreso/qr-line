@@ -6,6 +6,8 @@ $allowed_origins = [
     'https://qrline.miceff.com',
 ];
 
+$endpoint_server = "http://127.0.0.1:5000";
+
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if ($origin !== '') {
