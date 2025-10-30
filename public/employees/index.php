@@ -1,16 +1,24 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
 
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
+// Read token cookie defensively and normalize into an object (like other pages)
+$raw_token = isset($_COOKIE['token']) ? $_COOKIE['token'] : null;
+$token = null;
+if ($raw_token) {
+    $decoded = decryptToken($raw_token, $master_key);
+    if ($decoded) {
+        // Normalize to stdClass so downstream code can use ->property safely with isset checks
+        $token = json_decode(json_encode($decoded));
+    }
+}
+
+// Defensive accessors to avoid undefined property warnings when token claims are missing
+$id = isset($token->id) ? $token->id : null;
+$username = isset($token->username) ? $token->username : null;
+$role_type = isset($token->role_type) ? $token->role_type : (isset($_COOKIE['role_type']) ? $_COOKIE['role_type'] : null);
+$email = isset($token->email) ? $token->email : null;
+$counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
 // Server-side fetch employees to render the page initially (fallback to client-side AJAX)
 $employees = [];
 $total = 0;
@@ -51,173 +59,130 @@ if ($resp) {
     <title>Employees | <?php echo $project_name?></title>
     <?php head_css()?>
     <?php before_js()?>
+    <!-- moved local styles to /public/asset/css/theme.css -->
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;margin-top:100px;min-height:500px">
-    <div class="col-12 col-md-10 col-lg-8 mx-auto" style="max-width:900px">
+    <div class="container before-footer d-flex justify-content-center page-top-spacing">
+    <div class="col-12 col-md-10 col-lg-8 mx-auto max-w-900">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username?> has logged out successfully</span>
             </div>
-            <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
+            <div class="card shadow px-4 py-2 mb-2 card-rounded-30">
                 <nav aria-label="breadcrumb mx-4">
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="/public/admin" style="text-decoration:none;color:black">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/public/admin" class="text-a-black">Dashboard</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Employees</li>
                     </ol>
                 </nav>
             </div>
-            <div class="card shadow">
-                <div class="card-header">
-                    <span>Employees</span>
+            <div class="card shadow transactions-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0">Employees</h5>
+                        <div class="small text-muted">List of employees, roles and status</div>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="small text-muted">Per page</div>
+                        <select id="employeesPerPage" class="form-select form-select-sm per-page-select">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col">
-                                <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
-                            </div>
-                            <div class="col d-flex justify-content-end">
-                                <a class="btn btn-success text-white px-4" id="btn-add-employee" data-bs-toggle="modal" data-bs-target="#addEmployeeModal"><span class="fw-bold">+</span> Add New</a>
-                            </div>
+                <div class="card-body position-relative">
+                    <div class="mb-3 transactions-toolbar">
+                        <div class="input-group flex-fill">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="searchEmployee" id="searchEmployee" class="form-control" placeholder="Search username or email">
                         </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-12 m-0" style="min-height:auto">
-                            <div style="border-radius:12px">
-                                <div class="row g-2">
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="bg-white rounded shadow-sm border h-100 p-2">
-                                            <div class="row g-2 align-items-center h-100">
-                                                <div class="col-3 text-center py-2 px-2">
-                                                    <div class="fs-3 text-primary"><i class="bi bi-people-fill"></i></div>
-                                                </div>
-                                                <div class="col-9 py-1 ps-2">
-                                                    <div class="small text-muted mb-1">Total</div>
-                                                    <div class="h5 fw-bold mb-0" id="empTotalCount"><?php echo $total;?></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="bg-white rounded shadow-sm border h-100 p-2">
-                                            <div class="row g-2 align-items-center h-100">
-                                                <div class="col-3 text-center py-2 px-2">
-                                                    <div class="fs-3 text-success"><i class="bi bi-person-check-fill"></i></div>
-                                                </div>
-                                                <div class="col-9 py-1 ps-2">
-                                                    <div class="small text-muted mb-1">Active</div>
-                                                    <div class="h5 text-success fw-bold mb-0" id="empActiveCount"><?php echo $activeCount;?></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="bg-white rounded shadow-sm border h-100 p-2">
-                                            <div class="row g-2 align-items-center h-100">
-                                                <div class="col-3 text-center py-2 px-2">
-                                                    <div class="fs-3 text-danger"><i class="bi bi-person-x-fill"></i></div>
-                                                </div>
-                                                <div class="col-9 py-1 ps-2">
-                                                    <div class="small text-muted mb-1">Inactive</div>
-                                                    <div class="h5 text-danger fw-bold mb-0" id="empInactiveCount"><?php echo $inactiveCount;?></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 col-md-3 mb-2">
-                                        <div class="bg-white rounded shadow-sm border h-100 p-2">
-                                            <div class="row g-2 align-items-center h-100">
-                                                <div class="col-3 text-center py-2 px-2">
-                                                    <div class="fs-3" style="color: rgb(37, 99, 235);"><i class="bi bi-shield-lock-fill"></i></div>
-                                                </div>
-                                                <div class="col-9 py-1 ps-2">
-                                                    <div class="small text-muted mb-1">Admins</div>
-                                                    <div class="h5 fw-bold mb-0" id="empAdminsCount"><?php echo $adminsCount;?></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col-12 col-md-8">
-                                <div class="input-group mb-2">
-                                    <div class="input-group-text"><i class="bi bi-search"></i></div>
-                                    <div class="form-floating">
-                                        <input type="text" name="search" id="search" class="form-control" placeholder="Search username, email">
-                                        <label for="search">Search</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-4">
-                                <div class="form-floating mb-2">
-                                    <select class="form-control" name="getRoleType" id="getRoleType">
-                                        <option value="none">All</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="employee">Cashier</option>
-                                    </select>
-                                    <label for="getRoleType" class="form-label">Role</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="employeesList" class="row g-3">
-                        <?php if (!empty($employees)) {
-                            foreach ($employees as $employee) {
-                                $id = htmlspecialchars($employee['id']);
-                                $username = htmlspecialchars($employee['username']);
-                                $role = htmlspecialchars($employee['role_type'] ?? '');
-                                $emailAddr = htmlspecialchars($employee['email'] ?? '');
-                                $created = htmlspecialchars($employee['created_at'] ?? '');
-                                $lastLogin = htmlspecialchars($employee['employee_last_login'] ?? '');
-                                $active = isset($employee['active']) && $employee['active'] == 1;
-                                $statusBadge = $active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
-                                $iconHtml = '';
-                                $usernameHtml = '<strong>' . $username . '</strong>';
-                                if (isset($employee['role_type']) && $employee['role_type'] === 'admin') {
-                                    $iconHtml = '<i class="bi bi-person-fill-gear text-primary me-2"></i>';
-                                    $usernameHtml = '<strong class="text-primary">' . $username . '</strong>';
-                                } else {
-                                    $iconHtml = '<i class="bi bi-person-fill text-success me-2"></i>';
-                                    $usernameHtml = '<strong class="text-success">' . $username . '</strong>';
-                                }
-                                echo "<div class=\"col-12\">\n";
-                                echo "  <div class=\"card shadow-sm\">\n";
-                                // card body: first line -> icon + username + status; second line -> email
-                                echo "    <div class=\"card-body d-flex justify-content-between align-items-start\">\n";
-                                echo "      <div>\n";
-                                echo "        <div class=\"d-flex align-items-center\">\n";
-                                echo "          {$iconHtml}\n";
-                                echo "          <div>\n";
-                                echo "            <div class=\"d-flex align-items-center\">{$usernameHtml}<div class=\"ms-2\">{$statusBadge}</div></div>\n";
-                                echo "            <div class=\"small text-muted\">" . ($emailAddr ? $emailAddr : '&mdash;') . "</div>\n";
-                                echo "          </div>\n";
-                                echo "        </div>\n";
-                                echo "      </div>\n";
-                                echo "      <div class=\"ms-3\">\n";
-                                echo "        <div class=\"btn-group\">\n";
-                                echo "          <a class=\"btn btn-sm btn-outline-info text-info\" id=\"view-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#viewEmployeeModal\"><i class=\"bi bi-eye-fill\"></i></a>\n";
-                                echo "          <a class=\"btn btn-sm btn-outline-primary text-primary\" id=\"update-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#updateEmployeeModal\"><i class=\"bi bi-pencil-square\"></i></a>\n";
-                                echo "          <a class=\"btn btn-sm btn-outline-danger text-danger\" id=\"delete-employee-{$id}\" data-bs-toggle=\"modal\" data-bs-target=\"#deleteEmployeeModal\"><i class=\"bi bi-trash-fill\"></i></a>\n";
-                                echo "        </div>\n";
-                                echo "      </div>\n";
-                                echo "    </div>\n";
-                                echo "  </div>\n";
-                                echo "</div>\n";
-                            }
-                        } else {
-                            echo "<div class=\"col-12\">\n<div class=\"card\">\n<div class=\"card-body fw-bold text-center\">No employees assigned</div>\n</div>\n</div>";
-                        } ?>
-                    </div>
-                    <nav aria-label="Page navigation">
-                        <ul class="mt-4 pagination justify-content-center" id="employeesPagination">
 
-                        </ul>
+                        <div class="d-flex gap-2 flex-wrap flex-fill w-100">
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" id="filterRole">
+                                    <option value="none">All Roles</option>
+                                    <option value="employee">Employee</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <label for="filterRole">Role</label>
+                            </div>
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" id="filterStatus">
+                                    <option value="none">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                                <label for="filterStatus">Status</label>
+                            </div>
+                        </div>
+
+                        <div class="ms-auto d-flex gap-2">
+                            <a class="btn btn-success text-white px-3" id="btn-add-employee" data-bs-toggle="modal" data-bs-target="#addEmployeeModal"><span class="fw-bold">+</span> Add</a>
+                            <button id="btnExportEmployeesCsv" class="btn btn-outline-secondary btn-sm">Export CSV</button>
+                            <button id="btnRefreshEmployees" class="btn btn-primary btn-sm">Refresh</button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm align-middle transactions-table" id="table-employees">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Username</th>
+                                    <th class="d-none d-md-table-cell">Email</th>
+                                    <th class="d-none d-md-table-cell">Role</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($employees)) {
+                                    foreach ($employees as $employee) {
+                                        $id = htmlspecialchars($employee['id']);
+                                        $username = htmlspecialchars($employee['username']);
+                                        $role = htmlspecialchars($employee['role_type'] ?? '');
+                                        $emailAddr = htmlspecialchars($employee['email'] ?? '&mdash;');
+                                        $active = isset($employee['active']) && $employee['active'] == 1;
+                                        $statusBadge = $active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
+                                        $nameCell = (isset($employee['role_type']) && $employee['role_type'] === 'admin') ? '<strong class="text-primary">' . $username . '</strong>' : '<strong>' . $username . '</strong>';
+                                        echo "<tr>";
+                                        echo "<td>" . $nameCell . "</td>";
+                                        echo "<td class=\"d-none d-md-table-cell td-truncate\"><a href=\"mailto:" . $emailAddr . "\">" . $emailAddr . "</a></td>";
+                                        echo "<td class=\"d-none d-md-table-cell small text-muted\">" . ($role ?: '&mdash;') . "</td>";
+                                        echo "<td>" . $statusBadge . "</td>";
+                                        echo "<td class=\"text-end actions-col\">";
+                                        echo "<div class=\"dropdown\">";
+                                        echo "<button class=\"btn btn-sm btn-outline-secondary dropdown-toggle\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">Actions</button>";
+                                        echo "<ul class=\"dropdown-menu dropdown-menu-end\">";
+                                        echo "<li><a class=\"dropdown-item btn-view\" href=\"#\" data-id=\"" . $id . "\">View</a></li>";
+                                        echo "<li><a class=\"dropdown-item btn-edit\" href=\"#\" data-id=\"" . $id . "\">Edit</a></li>";
+                                        echo "<li><a class=\"dropdown-item btn-delete\" href=\"#\" data-id=\"" . $id . "\">Delete</a></li>";
+                                        echo "</ul></div></td>";
+                                        echo "</tr>";
+                                    }
+                                } else {
+                                    echo "<tr><td colspan=\"5\" class=\"text-center text-muted py-4\">No employees found — <button class=\"btn btn-sm btn-success\" onclick=\"document.getElementById('btn-add-employee').click();\">Add Employee</button></td></tr>";
+                                } ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="employeesOverlay" class="d-none loader-overlay"><div><div class="spinner-border text-primary" role="status" aria-hidden="true"></div><div class="small text-muted mt-2">Loading...</div></div></div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <small class="text-muted">Showing up to <strong id="empShowingCount"><?php echo ($total > 0) ? '1-' . $total : '0'; ?></strong></small>
+                        </div>
+                        <div id="employeesLoader" class="d-none">
+                            <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                            <small class="ms-2">Loading...</small>
+                        </div>
+                    </div>
+
+                    <nav aria-label="">
+                        <ul class="pagination justify-content-center mt-3 mb-0" id="employeesPagination"></ul>
                     </nav>
                 </div>
             </div>
@@ -228,60 +193,59 @@ if ($resp) {
     <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">View Employee: <span id="viewUsernameDisplay"></span></h5>
+                <div class="modal-header bg-orange-custom d-flex justify-content-between text-white">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="viewEmployeeTitle">View Employee: <span id="viewUsernameDisplay"></span></h5>
+                        <div class="small text-white-50" id="viewEmployeeSubtitle">Employee details</div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </div>
-                <div class="modal-body py-4 px-6" id="viewEmployeeBody">
-                    <div class="col">
-                        <div class="row-12">
-                            <div class="col text-center">
-                                <h4 class="text-center my-1 fw-bold">Employee Details</h4>
+                <div class="modal-body py-3 px-4" id="viewEmployeeBody">
+                    <div class="container-fluid">
+                        <div class="row g-3 align-items-start">
+                            <div class="col-12 col-md-4 text-center">
+                                <div class="mb-3">
+                                    <div class="display-4 text-muted"><i class="bi bi-person-circle"></i></div>
+                                </div>
+                                <h5 class="fw-bold" id="viewEmployeeUsername">N/A</h5>
+                                <div class="small text-muted" id="viewEmployeeRoleType">&mdash;</div>
+                                <div class="mt-2" id="viewEmployeeStatus">&mdash;</div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                ID
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeId">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Username
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeUsername">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Email
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeEmail">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Role
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeRoleType">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Status
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeStatus">N/A</span>
+                            <div class="col-12 col-md-8">
+                                <div class="row mb-2">
+                                    <div class="col-4 text-muted small">ID</div>
+                                    <div class="col-8"><span id="viewEmployeeId">N/A</span></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4 text-muted small">Email</div>
+                                    <div class="col-8"><a href="#" id="viewEmployeeEmail">N/A</a></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4 text-muted small">Role</div>
+                                    <div class="col-8"><span id="viewEmployeeRoleType">&mdash;</span></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4 text-muted small">Status</div>
+                                    <div class="col-8"><span id="viewEmployeeStatus">&mdash;</span></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4 text-muted small">Created</div>
+                                    <div class="col-8"><span id="viewEmployeeCreated">&mdash;</span></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4 text-muted small">Last login</div>
+                                    <div class="col-8"><span id="viewEmployeeLastLogin">&mdash;</span></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                    <div class="modal-footer col" id="viewEmployeeFooter">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer" id="viewEmployeeFooter">
+                    <div class="d-flex justify-content-end w-100">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -377,8 +341,8 @@ if ($resp) {
                         </div>
                     </div>
                     <div class="modal-body py-3 px-4" id="updateEmployeeBody">
-                        <div class="alert alert-danger w-100 d-none" id="updateEmployeeAlert">
-                            <span id="updateEmployeeAlertMsg"></span>
+                        <div class="alert alert-danger w-100 d-none" id="updateEmployeeAlert" role="alert" aria-live="polite">
+                            <span id="updateEmployeeAlertMsg">No changes made</span>
                         </div>
 
                         <input type="hidden" name="update_id" id="update_id">
@@ -479,13 +443,17 @@ if ($resp) {
     <?php include_once "./../includes/footer.php";?>
     <script src="./../asset/js/message.js"></script>
     <script>       
-        var employee_search = '';
-        var page_employees = 1;
-        var paginate = 10;
-        var role_type_employee = 'none';
+    var employee_search = '';
+    var page_employees = 1;
+    // read default per-page from select if present
+    var paginate = (document.getElementById('employeesPerPage') && document.getElementById('employeesPerPage').value) ? Number(document.getElementById('employeesPerPage').value) : 25;
+    var role_type_employee = 'none';
+    var status_employee = 'none';
 
-        const search = document.getElementById('search');
-        const getRoleType = document.getElementById('getRoleType');
+    const search = document.getElementById('searchEmployee');
+    const filterRole = document.getElementById('filterRole');
+    const filterStatus = document.getElementById('filterStatus');
+    const perPageSelect = document.getElementById('employeesPerPage');
 
         // Initialize from URL query params if present (search, role_type, page, paginate)
         (function initFromUrl() {
@@ -497,7 +465,11 @@ if ($resp) {
                 }
                 if (urlParams.has('role_type')) {
                     role_type_employee = urlParams.get('role_type') || 'none';
-                    if (getRoleType) getRoleType.value = role_type_employee;
+                    if (filterRole) filterRole.value = role_type_employee;
+                }
+                if (urlParams.has('status')) {
+                    status_employee = urlParams.get('status') || 'none';
+                    if (filterStatus) filterStatus.value = status_employee;
                 }
                 if (urlParams.has('page')) {
                     const p = parseInt(urlParams.get('page'), 10);
@@ -506,6 +478,8 @@ if ($resp) {
                 if (urlParams.has('paginate')) {
                     const pg = parseInt(urlParams.get('paginate'), 10);
                     if (!isNaN(pg) && pg > 0) paginate = pg;
+                } else if (perPageSelect) {
+                    paginate = Number(perPageSelect.value) || paginate;
                 }
             } catch (e) {
                 // ignore URL parsing errors
@@ -521,6 +495,13 @@ if ($resp) {
         }
 
         function showEmployeesLoading() {
+            // Prefer injecting a loading row into the table body when present
+            const tbody = document.querySelector('#table-employees tbody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4" id="employeesLoading"><div class="spinner-border" role="status"></div></td></tr>`;
+                return;
+            }
+            // Fallback to list container for older layouts
             const employeesList = document.getElementById('employeesList');
             if (!employeesList) return;
             employeesList.innerHTML = `
@@ -541,21 +522,39 @@ if ($resp) {
             loadEmployees();
         }, 300);
 
-        search.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                page_employees = 1;
-                employee_search = e.target.value;
-                loadEmployees();
-                return;
-            }
-            debouncedSearch(e.target.value);
-        });
+        if (search) {
+            search.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    page_employees = 1;
+                    employee_search = e.target.value;
+                    loadEmployees();
+                    return;
+                }
+                debouncedSearch(e.target.value);
+            });
+        }
 
-        getRoleType.addEventListener('change', (e) => {
-            page_employees = 1;
-            role_type_employee = e.target.value;
-            loadEmployees();
-        });
+        if (filterRole) {
+            filterRole.addEventListener('change', (e) => {
+                page_employees = 1;
+                role_type_employee = e.target.value;
+                loadEmployees();
+            });
+        }
+        if (filterStatus) {
+            filterStatus.addEventListener('change', (e) => {
+                page_employees = 1;
+                status_employee = e.target.value;
+                loadEmployees();
+            });
+        }
+        if (perPageSelect) {
+            perPageSelect.addEventListener('change', (e) => {
+                paginate = Number(e.target.value) || paginate;
+                page_employees = 1;
+                loadEmployees();
+            });
+        }
 
         // Render pagination when totalPages is known
         function renderPagination(totalPages, currentPage) {
@@ -620,8 +619,10 @@ if ($resp) {
         }
 
         function loadEmployees() {
+            // Prefer rendering into the table body when present. Keep a reference
+            // to the legacy `employeesList` container (server-side rendered fallback)
+            // but do not abort if it's missing.
             const employeesList = document.getElementById('employeesList');
-            if (!employeesList) return;
 
             // show spinner
             showEmployeesLoading();
@@ -632,24 +633,32 @@ if ($resp) {
                 employeesPagination.querySelectorAll('a.page-link').forEach(a => a.classList.add('disabled'));
             }
 
-            const params = new URLSearchParams({
-                employees: true,
-                page: page_employees,
-                paginate: paginate,
-                search: employee_search,
-                role_type: role_type_employee
-            });
+            // Map page/paginate to Flask params (set_limit, set_offset) and username for search
+            const set_limit = paginate;
+            const set_offset = (page_employees - 1) * paginate;
+            const params = new URLSearchParams();
+            if (employee_search && employee_search.trim() !== '') params.set('username', employee_search.trim());
+            if (role_type_employee && role_type_employee !== 'none') params.set('role_type', role_type_employee);
+            if (status_employee && status_employee !== 'none') params.set('status', status_employee);
+            params.set('set_limit', set_limit);
+            params.set('set_offset', set_offset);
 
             $.ajax({
-                // use absolute path to the API endpoint to avoid relative-path resolution issues
-                url: '/public/api/api_endpoint.php?' + params,
+                // call the Flask users endpoint directly for live search/filter
+                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
                 type: 'GET',
+                timeout: 10000,
                 dataType: 'json',
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 success: function (response) {
-                    employeesList.innerHTML = '';
+                    // prefer rendering into the table body if present
+                    const tbody = document.querySelector('#table-employees tbody');
+                    if (tbody) tbody.innerHTML = '';
 
                     if (response.status === 'success') {
-                        const employees = response.employees;
+                        // Flask returns list under `data` for list responses
+                        const employees = response.data || response.employees || [];
 
                         // If API provides a total count, prefer it for overall totals/pagination
                         const total = (typeof response.total !== 'undefined') ? parseInt(response.total, 10) : employees.length;
@@ -686,43 +695,43 @@ if ($resp) {
                                 usernameHtml = `<strong class="text-success">${employee.username}</strong>`;
                             }
 
-                            const card = `
-                                <div class="col-12">
-                                    <div class="card shadow-sm">
-                                        <div class="card-body d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <div class="d-flex align-items-center">
-                                                    ${iconHtml}
-                                                    <div>
-                                                        <div class="d-flex align-items-center">${usernameHtml}<div class="ms-2">${employee.active == 1 ? textBadge('Active','success') : textBadge('Inactive','danger')}</div></div>
-                                                        <div class="small text-muted">${employee.email ? employee.email : '—'}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="ms-3">
-                                                <div class="btn-group">
-                                                    <a class="btn btn-sm btn-outline-info text-info" id="view-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#viewEmployeeModal"><i class="bi bi-eye-fill"></i></a>
-                                                    <a class="btn btn-sm btn-outline-primary text-primary" id="update-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#updateEmployeeModal"><i class="bi bi-pencil-square"></i></a>
-                                                    <a class="btn btn-sm btn-outline-danger text-danger" id="delete-employee-${employee.id}" data-bs-toggle="modal" data-bs-target="#deleteEmployeeModal"><i class="bi bi-trash-fill"></i></a>
-                                                </div>
-                                            </div>
+                            // render as a table row into the employees table body
+                            const emailCell = employee.email ? `<a href="mailto:${employee.email}">${employee.email}</a>` : '&mdash;';
+                            const roleCell = employee.role_type ? employee.role_type : '&mdash;';
+                            const statusCell = (employee.active == 1) ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
+                            const nameCell = (employee.role_type === 'admin') ? `<strong class="text-primary">${employee.username}</strong>` : `<strong>${employee.username}</strong>`;
+
+                            const row = `
+                                <tr>
+                                    <td>${nameCell}</td>
+                                    <td class="d-none d-md-table-cell td-truncate">${emailCell}</td>
+                                    <td class="d-none d-md-table-cell small text-muted">${roleCell}</td>
+                                    <td>${statusCell}</td>
+                                    <td class="text-end actions-col">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li><a class="dropdown-item btn-view" href="#" data-id="${employee.id}">View</a></li>
+                                                <li><a class="dropdown-item btn-edit" href="#" data-id="${employee.id}">Edit</a></li>
+                                                <li><a class="dropdown-item btn-delete" href="#" data-id="${employee.id}">Delete</a></li>
+                                            </ul>
                                         </div>
-                                    </div>
-                                </div>
+                                    </td>
+                                </tr>
                             `;
 
-                            employeesList.insertAdjacentHTML('beforeend', card);
+                            if (tbody) tbody.insertAdjacentHTML('beforeend', row);
+                            else if (employeesList) employeesList.insertAdjacentHTML('beforeend', row);
                         });
 
-                        syncAboutCardHeight();
+                        // update about card height if legacy list is used
+                        try { syncAboutCardHeight(); } catch (e) {}
                     } else {
-                        const noCard = `
-                            <div class="col-12">
-                              <div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div>
-                            </div>
-                        `;
-                        employeesList.insertAdjacentHTML('beforeend', noCard);
-                        syncAboutCardHeight();
+                        const noRow = `<tr><td colspan="5" class="text-center fw-bold py-4">No employees assigned</td></tr>`;
+                        const tbody = document.querySelector('#table-employees tbody');
+                        if (tbody) tbody.innerHTML = noRow;
+                        else if (employeesList) employeesList.insertAdjacentHTML('beforeend', `<div class="col-12"><div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div></div>`);
+                        try { syncAboutCardHeight(); } catch (e) {}
                     }
                 },
                 error: function (xhr, status, error) {
@@ -750,35 +759,35 @@ if ($resp) {
 
                     // If API returned a JSON message saying 'No employees found', treat as empty state
                     if (body && body.message && body.message.toLowerCase().includes('no employees')) {
-                        const noCard = `
-                            <div class="col-12">
-                              <div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div>
-                            </div>
-                        `;
-                        employeesList.innerHTML = noCard;
+                        const noRow = `<tr><td colspan="5" class="text-center fw-bold py-4">No employees assigned</td></tr>`;
+                        const tbody = document.querySelector('#table-employees tbody');
+                        if (tbody) tbody.innerHTML = noRow;
+                        else if (employeesList) employeesList.innerHTML = `<div class="col-12"><div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div></div>`;
                         handled = true;
                     }
 
                     // 404 explicitly -> empty state
                     if (!handled && xhr && xhr.status === 404) {
-                        const noCard = `
-                            <div class="col-12">
-                              <div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div>
-                            </div>
-                        `;
-                        employeesList.innerHTML = noCard;
+                        const noRow = `<tr><td colspan="5" class="text-center fw-bold py-4">No employees assigned</td></tr>`;
+                        const tbody = document.querySelector('#table-employees tbody');
+                        if (tbody) tbody.innerHTML = noRow;
+                        else employeesList.innerHTML = `<div class="col-12"><div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div></div>`;
                         handled = true;
                     }
 
                     // 400 with other message -> bad request
                     if (!handled && xhr && xhr.status === 400) {
-                        employeesList.innerHTML = `<div class="col-12"><div class="alert alert-warning">Bad request. Check filters and try again.</div></div>`;
+                        const tbody = document.querySelector('#table-employees tbody');
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="alert alert-warning">Bad request. Check filters and try again.</div></td></tr>`;
+                        else if (employeesList) employeesList.innerHTML = `<div class="col-12"><div class="alert alert-warning">Bad request. Check filters and try again.</div></div>`;
                         handled = true;
                     }
 
                     // fallback
                     if (!handled) {
-                        employeesList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Failed to load employees. Try again.</div></div>`;
+                        const tbody = document.querySelector('#table-employees tbody');
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="alert alert-danger">Failed to load employees. Try again.</div></td></tr>`;
+                        else if (employeesList) employeesList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Failed to load employees. Try again.</div></div>`;
                     }
 
                     // ensure About card height is updated
@@ -812,47 +821,106 @@ if ($resp) {
             _syncTimeout = setTimeout(syncAboutCardHeight, 120);
         });
 
-        // View Employee
-        $(document).on('click', '[id^="view-employee-"]', function (e) {
+        // View Employee (delegated for dynamic rows). Accepts both data-id buttons and legacy id-based links.
+        $(document).on('click', '.btn-view, [id^="view-employee-"]', function (e) {
             e.preventDefault();
 
-            const elementId = $(this).attr('id');
-            const employeeId = elementId.split('-').pop();
-            console.log(employeeId);
+            // Prefer data-id attribute (used by dynamically-rendered rows). Fall back to id-based parsing.
+            const $el = $(this);
+            const employeeId = $el.data('id') || (function () { const elementId = $el.attr('id'); return elementId ? elementId.split('-').pop() : null; })();
+            if (!employeeId) return;
 
-            const params = new URLSearchParams({
-                employees: true,
-                id: employeeId
-            });
+            // Call Flask users endpoint for single-user fetch
+            const params = new URLSearchParams({ user_id: employeeId });
 
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
                 type: 'GET',
+                timeout: 8000,
                 dataType: 'json',
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 success: function (response) {
                     console.log(response);
-                    const employee = response.employee;
-                    const username = employee.username;
-                    const email = employee.email;
-                    const role_type = employee.role_type;
+                    const employee = response.data || response.employee || {};
+                    const username = employee.username || 'N/A';
+                    const email = employee.email || null;
+                    const role_type = employee.role_type || '';
                     const active = employee.active;
 
                     let viewUsernameDisplay = document.getElementById('viewUsernameDisplay');
-                    viewUsernameDisplay.innerText = username;
+                    if (viewUsernameDisplay) viewUsernameDisplay.innerText = username;
                     let viewEmployeeId = document.getElementById('viewEmployeeId');
-                    viewEmployeeId.innerText = employeeId;
+                    if (viewEmployeeId) viewEmployeeId.innerText = employeeId;
                     let viewEmployeeUsername = document.getElementById('viewEmployeeUsername');
-                    viewEmployeeUsername.innerText = username;
+                    if (viewEmployeeUsername) viewEmployeeUsername.innerText = username;
                     let viewEmployeeEmail = document.getElementById('viewEmployeeEmail');
-                    viewEmployeeEmail.innerText = email ? email : 'Not present';
+                    if (viewEmployeeEmail) viewEmployeeEmail.innerText = email ? email : 'Not present';
                     let viewEmployeeRoleType = document.getElementById('viewEmployeeRoleType');
-                    viewEmployeeRoleType.innerText = role_type;
+                    if (viewEmployeeRoleType) viewEmployeeRoleType.innerText = role_type;
                     let viewEmployeeStatus = document.getElementById('viewEmployeeStatus');
-                    if (active == 1) {
-                        viewEmployeeStatus.innerHTML = textBadge('Active', 'success');
-                    } else {
-                        viewEmployeeStatus.innerHTML = textBadge('Inactive', 'danger');
+                    if (viewEmployeeStatus) {
+                        if (active == 1) {
+                            viewEmployeeStatus.innerHTML = textBadge('Active', 'success');
+                        } else {
+                            viewEmployeeStatus.innerHTML = textBadge('Inactive', 'danger');
+                        }
                     }
+
+                    // Optional fields: created_at and last_login (if provided by API)
+                    try {
+                        const fmtDate = (iso) => {
+                            if (!iso) return '—';
+                            try {
+                                const d = new Date(iso);
+                                if (isNaN(d.getTime())) return iso; // fallback to raw string
+                                return d.toLocaleString();
+                            } catch (e) {
+                                return iso;
+                            }
+                        };
+
+                        let viewEmployeeCreated = document.getElementById('viewEmployeeCreated');
+                        if (viewEmployeeCreated) viewEmployeeCreated.innerText = fmtDate(employee.created_at);
+                        let viewEmployeeLastLogin = document.getElementById('viewEmployeeLastLogin');
+                        // show 'Never' when last_login is empty/null
+                        if (viewEmployeeLastLogin) viewEmployeeLastLogin.innerText = employee.last_login ? fmtDate(employee.last_login) : 'Never';
+
+                        // For the email anchor, set href when email exists
+                        let viewEmployeeEmailAnchor = document.getElementById('viewEmployeeEmail');
+                        if (viewEmployeeEmailAnchor) {
+                            if (email) {
+                                viewEmployeeEmailAnchor.innerText = email;
+                                try { viewEmployeeEmailAnchor.setAttribute('href', 'mailto:' + email); } catch (e) {}
+                            } else {
+                                viewEmployeeEmailAnchor.innerText = '—';
+                                try { viewEmployeeEmailAnchor.removeAttribute('href'); } catch (e) {}
+                            }
+                        }
+
+                        // Ensure role/status show friendly fallbacks
+                        try {
+                            if (!role_type) {
+                                const el = document.getElementById('viewEmployeeRoleType');
+                                if (el) el.innerText = '—';
+                            }
+                            if (typeof active === 'undefined' || active === null) {
+                                const el = document.getElementById('viewEmployeeStatus');
+                                if (el) el.innerHTML = '<span class="text-muted">—</span>';
+                            }
+                        } catch (e) {}
+
+                    } catch (e) {
+                        // ignore missing fields
+                    }
+
+                    // Show the view modal (rows are rendered dynamically so we must open programmatically)
+                    try {
+                        const viewModalEl = document.getElementById('viewEmployeeModal');
+                        if (viewModalEl && typeof bootstrap !== 'undefined') {
+                            new bootstrap.Modal(viewModalEl).show();
+                        }
+                    } catch (e) { console.warn('Could not show view modal', e); }
                 }
 
             });
@@ -935,43 +1003,65 @@ if ($resp) {
             });
         });
 
-        // Edit Employee
-        $(document).on('click', '[id^="update-employee-"]', function (e) {
+        // Edit Employee (delegated). Works for dynamic rows (data-id) and legacy id-based links.
+        $(document).on('click', '.btn-edit, [id^="update-employee-"]', function (e) {
             e.preventDefault();
+            const $el = $(this);
+            const employeeId = $el.data('id') || (function () { const elementId = $el.attr('id'); return elementId ? elementId.split('-').pop() : null; })();
+            if (!employeeId) return;
 
-            // Get the ID of the clicked element
-            const elementId = $(this).attr('id');
-            const employeeId = elementId.split('-').pop(); 
-
-            console.log(employeeId);
-            const params = new URLSearchParams({
-                employees: true,
-                id: employeeId
-            });
+            // Fetch single user from Flask users endpoint
+            const params = new URLSearchParams({ user_id: employeeId });
 
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
                 type: 'GET',
+                timeout: 8000,
                 dataType: 'json',
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 success: function (response) {
                     console.log(response);
 
-                    const employee = response.employee;
-                    const username = employee.username;
-                    const email = employee.email;
-                    const role_type = employee.role_type;
+                    const employee = response.data || response.employee || {};
+                    const username = employee.username || '';
+                    const email = employee.email || '';
+                    const role_type = employee.role_type || '';
                     const active = employee.active;
 
                     let updateUsernameDisplay = document.getElementById('updateUsernameDisplay');
-                    updateUsernameDisplay.innerText = username;
+                    if (updateUsernameDisplay) updateUsernameDisplay.innerText = username;
 
                     let frmUpdateEmployee = document.getElementById('frmUpdateEmployee');
+                    if (!frmUpdateEmployee) return;
                     frmUpdateEmployee.reset();
                     frmUpdateEmployee.elements['update_id'].value = employeeId;
                     frmUpdateEmployee.elements['update_username'].value = username;
                     frmUpdateEmployee.elements['update_email'].value = email;
                     frmUpdateEmployee.elements['update_role_type'].value = role_type;  
                     frmUpdateEmployee.elements['update_active'].checked = (active == 1); 
+
+                    // Store the original values on the form so we can detect no-op updates
+                    try {
+                        const original = {
+                            username: (username || '').toString().trim(),
+                            email: (email || '').toString().trim(),
+                            role_type: (role_type || '').toString(),
+                            active: (active == 1 ? 1 : 0)
+                        };
+                        frmUpdateEmployee.dataset.original = JSON.stringify(original);
+                    } catch (e) {
+                        // ignore dataset failures
+                        console.warn('Could not save original update form state', e);
+                    }
+
+                    // Show the update modal programmatically (dynamic rows won't have data-bs attrs)
+                    try {
+                        const updModalEl = document.getElementById('updateEmployeeModal');
+                        if (updModalEl && typeof bootstrap !== 'undefined') {
+                            new bootstrap.Modal(updModalEl).show();
+                        }
+                    } catch (e) { console.warn('Could not show update modal', e); }
                 }
             });
         });
@@ -1010,40 +1100,52 @@ if ($resp) {
                 return;
             }
 
+            // Let the server be authoritative about whether there were changes.
+            // This avoids client/server drift and ensures the response.message
+            // returned by the Flask API is displayed to the user.
+
+            // Use Flask API for update (PATCH) so we get consistent behavior with the
+            // new frontend list/view endpoints. Only include password when non-empty.
+            const payload = { id: employeeId };
+            if (username !== null && username !== undefined) payload.username = username;
+            if (email !== null && email !== undefined) payload.email = email;
+            if (role_type !== null && role_type !== undefined) payload.role_type = role_type;
+            if (typeof active !== 'undefined') payload.active = active;
+            if (password && password.trim() !== '') payload.password = password;
+
             $.ajax({
-                url: '/public/api/api_endpoint.php',
-                type: 'POST',
+                url: 'http://127.0.0.1:5000/api/users',
+                type: 'PATCH',
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
-                data: JSON.stringify({
-                    id: employeeId,
-                    username : username,
-                    password : password,
-                    email : email,
-                    role_type : role_type,
-                    method : "employees-update",
-                    active: active
-                }),
+                data: JSON.stringify(payload),
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 success: function (response) {
                     console.log(response);
                     if (response.status === 'success') {
-                        formAlertMsg.innerText = response.message;
+                        formAlertMsg.innerText = response.message || 'Employee updated';
                         formAlert.classList.remove('d-none', 'alert-danger');
                         formAlert.classList.add('alert-success');
                         setTimeout(function() {
                             location.reload();
                         }, 1000);
                     } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none',);
+                        formAlertMsg.innerText = response.message || 'No changes made';
+                        formAlert.classList.remove('d-none');
                         setTimeout(() => {
                             formAlert.classList.add('d-none');
                         }, 5000);
                     }
                 },
-                error: function(x, s, e) {
-                    console.error('Update employee error', s, e, x && x.responseText);
-                    formAlertMsg.innerText = 'Error: ' + (x.responseText || s);
+                error: function(xhr, status, err) {
+                    console.error('Update employee error', status, err, xhr && xhr.responseText);
+                    let msg = 'Error: ' + (xhr && xhr.responseText ? xhr.responseText : status);
+                    try {
+                        const b = xhr && xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                        if (b && b.message) msg = b.message;
+                    } catch (e) {}
+                    formAlertMsg.innerText = msg;
                     formAlert.classList.remove('d-none');
                     setTimeout(() => {
                         formAlert.classList.add('d-none');
@@ -1052,37 +1154,45 @@ if ($resp) {
             });
         });
 
-        // Delete Employee
-        $(document).on('click', '[id^="delete-employee-"]', function (e) {
+        // Delete Employee (delegated). Works for dynamic rows (data-id) and legacy id-based links.
+        $(document).on('click', '.btn-delete, [id^="delete-employee-"]', function (e) {
             e.preventDefault();
+            const $el = $(this);
+            const employeeId = $el.data('id') || (function () { const elementId = $el.attr('id'); return elementId ? elementId.split('-').pop() : null; })();
+            if (!employeeId) return;
 
-            const elementId = $(this).attr('id');
-            const employeeId = elementId.split('-').pop(); 
-
-            console.log(employeeId);
-            const params = new URLSearchParams({
-                employees: true,
-                id: employeeId
-            });
+            const params = new URLSearchParams({ user_id: employeeId });
 
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
                 type: 'GET',
+                timeout: 8000,
                 dataType: 'json',
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 success: function (response) {
                     console.log(response);
                     let frmDeleteEmployee = document.getElementById('frmDeleteEmployee');
+                    if (!frmDeleteEmployee) return;
                     frmDeleteEmployee.reset();
-                    const employee = response.employee;
-                    const username = employee.username;
+                    const employee = response.data || response.employee || {};
+                    const username = employee.username || '';
 
                     let updateUsernameDisplay = document.getElementById('deleteUsernameDisplay');
-                    updateUsernameDisplay.innerText = username;
+                    if (updateUsernameDisplay) updateUsernameDisplay.innerText = username;
 
                     frmDeleteEmployee.elements['delete_id'].value = employeeId;
 
                     let del_username = document.getElementById('delete_username');
-                    del_username.innerText = username;
+                    if (del_username) del_username.innerText = username;
+
+                    // Show delete confirmation modal programmatically
+                    try {
+                        const delModalEl = document.getElementById('deleteEmployeeModal');
+                        if (delModalEl && typeof bootstrap !== 'undefined') {
+                            new bootstrap.Modal(delModalEl).show();
+                        }
+                    } catch (e) { console.warn('Could not show delete modal', e); }
                 }
             });
         });
