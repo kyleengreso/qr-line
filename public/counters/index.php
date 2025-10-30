@@ -60,12 +60,55 @@ function phpUserStatusIcon($username, $role_type, $active) {
     <title>Counters | <?php echo $project_name?></title>
     <?php head_css()?>
     <?php before_js()?>
+    <style>
+        /* Reuse transactions card/table styles for counters to match sizing and spacing */
+        .transactions-toolbar {
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .transactions-toolbar .flex-fill { min-width: 220px; }
+        .transactions-card { border-radius: 18px; }
+        .transactions-table thead th {
+            position: sticky;
+            top: 0;
+            background: var(--bs-white, #fff);
+            z-index: 2;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+        .transactions-table tbody tr {
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+            transition: background-color .12s ease-in-out;
+        }
+        .transactions-table tbody tr:hover { background-color: rgba(0,0,0,0.03); }
+        .transactions-table td, .transactions-table th { vertical-align: middle; padding: .45rem .6rem; font-size: .92rem; }
+        .token-col { width: 110px; white-space: nowrap; }
+        .time-col { width: 150px; white-space: nowrap; }
+        .txn-col { width: 100px; }
+        .actions-col { width: 120px; }
+        .actions-col .btn { padding: .25rem .5rem; font-size: .82rem; }
+        .dropdown-menu { min-width: 8rem; }
+        .transactions-toolbar .form-floating { min-width: 160px; }
+        .transactions-toolbar .form-floating.flex-fill { min-width: 120px; }
+        .td-truncate { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .small-muted { font-size: .85rem; color: #6c757d; }
+        .loader-overlay {
+            position: absolute; inset: 0; display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.7);z-index:5;border-radius:inherit;
+        }
+        .badge-small { font-size:.72rem; padding:.25rem .45rem; }
+        @media (max-width: 768px) {
+            .transactions-toolbar { gap:.5rem; }
+            .td-truncate { max-width: 120px; }
+        }
+    </style>
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
 
-    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:500px">
-    <div class="col-md-6 mx-auto" style="min-width:400px;max-width:900px;">
+    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:900px">
+        <div class="col-md-10" style="min-width:400px;">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
                 <span><?php echo $username?> has logged out successfully</span>
             </div>
@@ -77,73 +120,106 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     </ol>
                 </nav>
             </div>
-            <div class="card shadow">
-                <div class="card-header">
-                    <span>Counters</span>
+            <div class="card shadow transactions-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0">Counters</h5>
+                        <div class="small text-muted">Assigned counters and staff</div>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="small text-muted">Per page</div>
+                        <select id="countersPerPage" class="form-select form-select-sm" style="width:88px">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col">
-                                <h3 class="text-start my-1 mx-2 fw-bold">Counters</h3>
+                <div class="card-body position-relative">
+                    <div class="mb-3 transactions-toolbar">
+                        <div class="input-group flex-fill">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap flex-fill w-100">
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" id="counter-filter-role">
+                                    <option value="none">All Roles</option>
+                                    <option value="employee">Employee</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <label for="counter-filter-role">Role</label>
                             </div>
-                            <div class="col d-flex justify-content-end">
-                                <a href="#" class="btn btn-success text-white px-4" id="btn-add-counter"><span class="fw-bold">+</span> Add New</a>
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" id="counter-filter-availability">
+                                    <option value="none">Any Availability</option>
+                                    <option value="Available">Available</option>
+                                    <option value="Assigned">Assigned</option>
+                                    <option value="Offline">Offline</option>
+                                </select>
+                                <label for="counter-filter-availability">Availability</label>
+                            </div>
+                            <div class="form-floating flex-fill">
+                                <select class="form-select" id="counter-filter-priority">
+                                    <option value="none">All Priority</option>
+                                    <option value="Y">Priority</option>
+                                    <option value="N">Normal</option>
+                                </select>
+                                <label for="counter-filter-priority">Priority</label>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="input-group mb-2">
-                                    <div class="input-group-text"><i class="bi bi-search"></i></div>
-                                    <div class="form-floating">
-                                        <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
-                                        <label for="searchAdd">Search Username</label>
-                                    </div>
-                                </div>
-                            </div>
+
+                        <div class="ms-auto d-flex gap-2">
+                            <a href="#" class="btn btn-success text-white px-3" id="btn-add-counter"><span class="fw-bold">+</span> Add</a>
+                            <button id="btnExportCountersCsv" class="btn btn-outline-secondary btn-sm">Export CSV</button>
+                            <button id="btnRefreshCounters" class="btn btn-primary btn-sm">Refresh</button>
                         </div>
                     </div>
-                    <div id="cards-counters-registered" class="row g-3">
-                        <?php if (!empty($counters)): ?>
-                            <?php foreach ($counters as $counter): ?>
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-body d-flex align-items-center justify-content-between">
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3">
-                                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:1.25rem;font-weight:700;">
-                                                        <?php echo htmlspecialchars($counter['counterNumber'] ?? ''); ?>
+                    <div id="cards-counters-registered" class="w-100">
+                        <!-- Modern table layout for counters (client-side JS will populate tbody) -->
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm align-middle" id="table-counters">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Counter</th>
+                                        <th class="d-none d-md-table-cell">Username</th>
+                                        <th class="d-none d-md-table-cell">Role</th>
+                                        <th class="d-none d-sm-table-cell">Queue</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="counters-tbody">
+                                    <?php if (!empty($counters)): ?>
+                                        <?php foreach ($counters as $counter): ?>
+                                            <tr>
+                                                <td><strong><?php echo htmlspecialchars($counter['counterNumber'] ?? '&mdash;'); ?></strong></td>
+                                                <td class="d-none d-md-table-cell"><?php echo htmlspecialchars($counter['username'] ?? '&mdash;'); ?></td>
+                                                <td class="d-none d-md-table-cell small text-muted"><?php echo htmlspecialchars($counter['role_type'] ?? '&mdash;'); ?></td>
+                                                <td class="d-none d-sm-table-cell"><?php echo htmlspecialchars($counter['queue_count'] ?? '&mdash;'); ?></td>
+                                                <td class="text-end">
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-outline-primary text-primary btn-update-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Update"><i class="bi bi-pencil-square"></i></button>
+                                                        <button type="button" class="btn btn-outline-danger btn-delete-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Delete"><i class="bi bi-trash-fill"></i></button>
                                                     </div>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-bold"><?php echo htmlspecialchars($counter['username'] ?? ''); ?></div>
-                                                    <div class="small text-muted"><?php echo htmlspecialchars($counter['role_type'] ?? ''); ?></div>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-outline-primary text-primary btn-update-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Update"><i class="bi bi-pencil-square"></i></button>
-                                                    <button type="button" class="btn btn-outline-danger btn-delete-counter" data-id="<?php echo htmlspecialchars($counter['idcounter']); ?>" title="Delete"><i class="bi bi-trash-fill"></i></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="col-12 d-flex justify-content-center">
-                                <div class="card text-center" style="max-width:420px;">
-                                    <div class="card-body">
-                                        <div class="display-6 text-muted mb-2"><i class="bi bi-collection"></i></div>
-                                        <h5 class="card-title">No counters assigned</h5>
-                                        <p class="card-text text-muted mb-3">Assign employees to counters so they can start serving customers.</p>
-                                        <button type="button" class="btn btn-success" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                <div class="mb-2"><i class="bi bi-collection display-6 text-muted"></i></div>
+                                                <div class="fw-bold">No counters assigned</div>
+                                                <div class="small text-muted mb-2">Assign employees to counters so they can start serving customers.</div>
+                                                <button type="button" class="btn btn-success btn-sm" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="countersOverlay" class="d-none loader-overlay"><div><div class="spinner-border text-primary" role="status" aria-hidden="true"></div><div class="small text-muted mt-2">Loading...</div></div></div>
                     </div>
                     <nav aria-label="">
                         <ul class="pagination justify-content-center" id="countersPagination"></ul>
@@ -377,7 +453,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
     <script>
         var counter_search = '';
     var counter_page = 1;
-        var paginate = 10;
+    var paginate = 25;
 
         // small helper to escape HTML inserted via JS
         function escapeHtml(unsafe) {
@@ -390,26 +466,48 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 .replace(/'/g, '&#039;');
         }
 
-        var counter_page_modal = 1;
-        var update_selected_employee = null;
+    var counter_page_modal = 1;
+    var update_selected_employee = null;
+    // last fetched counters (used for CSV export)
+    var lastCounters = [];
+    // filter state
+    var counter_filter_role = 'none';
+    var counter_filter_availability = 'none';
+    var counter_filter_priority = 'none';
 
         function loadCounters() {
             let container = document.getElementById('cards-counters-registered');
                 if (container) {
-                const params = new URLSearchParams({
+                const paramsObj = {
                     counters: true,
                     page: counter_page,
                     paginate: paginate,
                     search: counter_search,
+                    role: counter_filter_role,
+                    availability: counter_filter_availability,
+                    priority: counter_filter_priority
+                };
+                // remove unspecified filters to keep query clean
+                Object.keys(paramsObj).forEach(k => {
+                    if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) {
+                        delete paramsObj[k];
+                    }
                 });
+                const params = new URLSearchParams(paramsObj);
                 $.ajax({
-                    url: realHost + '/public/api/api_endpoint.php?' + params,
+                    // Call the Flask counters API (compat layer). Include credentials so cookies are sent when available.
+                    url: "http://127.0.0.1:5000/api/counters?" + params,
                     type: 'GET',
+                    timeout: 10000,
+                    xhrFields: { withCredentials: true },
+                    crossDomain: true,
                         success: function(response) {
                             // render as cards
                             try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
                             if (response.status === 'success') {
                                 const counters = response.counters || [];
+                                // keep last result for client-side export/inspection
+                                try { lastCounters = counters.slice(); } catch (ex) { lastCounters = counters; }
                                 // Render pagination: prefer total if provided, otherwise show simple prev/current/next
                                 if (typeof response.total !== 'undefined') {
                                     const total = parseInt(response.total, 10);
@@ -475,6 +573,30 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                     </div>
                                 `;
                             }
+                        },
+                        error: function(xhr, status, err) {
+                            try {
+                                // treat 404 as empty result (no counters found)
+                                if (xhr && xhr.status === 404) {
+                                    container.innerHTML = `
+                                        <div class="col-12 d-flex justify-content-center">
+                                            <div class="card text-center" style="max-width:420px;">
+                                                <div class="card-body">
+                                                    <div class="display-6 text-muted mb-2"><i class="bi bi-collection"></i></div>
+                                                    <h5 class="card-title">No counters assigned</h5>
+                                                    <p class="card-text text-muted mb-3">Assign employees to counters so they can start serving customers.</p>
+                                                    <button type="button" class="btn btn-success" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                    const pg = document.getElementById('countersPagination'); if (pg) pg.innerHTML = '';
+                                    return;
+                                }
+                            } catch (ex) { console.error(ex); }
+                            // generic error UI
+                            try { container.innerHTML = `<div class="col-12 d-flex justify-content-center"><div class="text-danger">Error loading counters — <button class="btn btn-sm btn-secondary" onclick="loadCounters();">Retry</button></div></div>`; } catch (ex) { console.error(ex); }
+                            console.error('Load counters failed', status, err, xhr && xhr.responseText);
                         }
                 })
             }
@@ -583,17 +705,30 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const container = document.getElementById('cards-add-counter-available');
             if (!container) return;
 
-            const params = new URLSearchParams({
+            const paramsObj = {
                 counters: true,
                 available: true,
                 search: counter_search,
                 page: counter_page_modal,
                 paginate: paginate,
+                role: counter_filter_role,
+                availability: counter_filter_availability,
+                priority: counter_filter_priority
+            };
+            // remove unspecified filters
+            Object.keys(paramsObj).forEach(k => {
+                if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) {
+                    delete paramsObj[k];
+                }
             });
+            const params = new URLSearchParams(paramsObj);
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
+                url: "http://127.0.0.1:5000/api/counters?" + params,
                 type: 'GET',
+                timeout: 10000,
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 success: function (response) {
                     container.innerHTML = '';
                     if (response.status === 'success') {
@@ -639,9 +774,35 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     }
                 },
                 error: function (xhr, status, error) {
-                    console.error('Error loading employees for add modal:', error);
+                    try {
+                        // treat 404 as empty available employees
+                        if (xhr && xhr.status === 404) {
+                            container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                            renderAddPaginationUnknown(counter_page_modal, false);
+                            return;
+                        }
+                    } catch (ex) { console.error(ex); }
+                    console.error('Error loading employees for add modal:', error, xhr && xhr.responseText);
                 }
             });
+        }
+
+        // Helper: show skeleton rows in counters table while loading
+        function showSkeletonRowsCounters(count) {
+            const tbody = document.getElementById('counters-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="placeholder col-4 placeholder-wave"></span></td>
+                    <td class="d-none d-md-table-cell"><span class="placeholder col-6 placeholder-wave"></span></td>
+                    <td class="d-none d-md-table-cell"><span class="placeholder col-4 placeholder-wave"></span></td>
+                    <td class="d-none d-sm-table-cell"><span class="placeholder col-2 placeholder-wave"></span></td>
+                    <td class="text-end"><span class="placeholder col-3 placeholder-wave"></span></td>
+                `;
+                tbody.appendChild(tr);
+            }
         }
 
     // Delegated pagination handler for add modal
@@ -701,15 +862,16 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const priority = formData.get('transaction-filter-priority-add') || 'N';
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
+                url: 'http://127.0.0.1:5000/api/counters',
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 data: JSON.stringify({
-                    method: "counter-add",
-                    idemployee: employee_id,
                     counterNumber: counter_number,
-                    counter_priority: priority
+                    counter_priority: priority,
+                    user_id: employee_id
                 }),
                 success: function(response) {
                     console.log(response);
@@ -758,8 +920,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
             let frmUpdateCounter = document.getElementById('frmUpdateCounter');
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
+                url: "http://127.0.0.1:5000/api/counters?" + params,
                 type: 'GET',
+                timeout: 10000,
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 // server sometimes emits multiple JSON objects concatenated which breaks jQuery's parser
                 // request as text and parse the first JSON object manually to be robust
                 dataType: 'text',
@@ -870,107 +1035,104 @@ function phpUserStatusIcon($username, $role_type, $active) {
         });
 
         function loadUpdateEmployees() {
-            const container = document.getElementById('cards-update-counter-available');
-            if (!container) return;
+            // Use the new table body for rendering counters
+            let container = document.getElementById('counters-tbody');
+            if (container) {
+                const paramsObj = {
+                    counters: true,
+                    page: counter_page,
+                    paginate: paginate,
+                    search: counter_search,
+                    role: counter_filter_role,
+                    availability: counter_filter_availability,
+                    priority: counter_filter_priority
+                };
+                Object.keys(paramsObj).forEach(k => {
+                    if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) {
+                        delete paramsObj[k];
+                    }
+                });
+                const params = new URLSearchParams(paramsObj);
 
-            const params = new URLSearchParams({
-                counters: true,
-                available: true,
-                search: counter_search,
-                page: counter_page_modal,
-                paginate: paginate,
-            });
+                // show overlay
+                const overlay = document.getElementById('countersOverlay');
+                if (overlay) overlay.classList.remove('d-none');
 
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function (response) {
-                    // clear previous cards
-                    container.innerHTML = '';
+                // show skeleton rows
+                showSkeletonRowsCounters(6);
 
-                        if (response.status === 'success') {
-                        const employees = response.counters;
-                        if (!employees || employees.length === 0) {
-                            container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
-                                // update pagination UI
-                                renderUpdatePaginationUnknown(counter_page_modal, false);
-                            return;
-                        }
+                $.ajax({
+                    url: "http://127.0.0.1:5000/api/counters?" + params,
+                    type: 'GET',
+                    timeout: 10000,
+                    xhrFields: { withCredentials: true },
+                    crossDomain: true,
+                    success: function(response) {
+                        try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
 
-                        const renderEmployees = (list) => {
-                            list.forEach(employee => {
-                                const checked = (update_selected_employee && update_selected_employee == employee.id) ? 'checked' : '';
-                                const card = document.createElement('div');
-                                card.className = 'col-12 mb-2';
-                                card.innerHTML = `
-                                    <div class="card">
-                                        <div class="card-body d-flex align-items-center justify-content-between">
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3">
-                                                    <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}" ${checked}>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-bold">${escapeHtml(employee.username)}</div>
-                                                    <div class="small text-muted">${escapeHtml(employee.role_type || '')}</div>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
-                                            </div>
+                        if (response.status === 'success' && (response.counters && response.counters.length >= 0)) {
+                            const counters = response.counters || [];
+                            // cache for export/inspection
+                            try { lastCounters = counters.slice(); } catch (ex) { lastCounters = counters; }
+
+                            // pagination
+                            if (typeof response.total !== 'undefined') {
+                                const total = parseInt(response.total, 10);
+                                const totalPages = Math.max(1, Math.ceil(total / paginate));
+                                renderPagination(totalPages, counter_page);
+                            } else if (typeof response.total_counters !== 'undefined') {
+                                const total = parseInt(response.total_counters, 10);
+                                const totalPages = Math.max(1, Math.ceil(total / paginate));
+                                renderPagination(totalPages, counter_page);
+                            } else {
+                                const hasMore = counters.length === paginate;
+                                renderPaginationUnknown(counter_page, hasMore);
+                            }
+
+                            if (counters.length === 0) {
+                                container.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No counters assigned — <button class=\"btn btn-sm btn-success\" onclick=\"document.getElementById('btn-add-counter').click();\">Add Counter</button></td></tr>`;
+                                if (overlay) overlay.classList.add('d-none');
+                                return;
+                            }
+
+                            counters.forEach(counter => {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td><strong>${escapeHtml(String(counter.counterNumber || '—'))}</strong></td>
+                                    <td class="d-none d-md-table-cell">${escapeHtml(counter.username || '—')}</td>
+                                    <td class="d-none d-md-table-cell small text-muted">${escapeHtml(counter.role_type || '—')}</td>
+                                    <td class="d-none d-sm-table-cell">${escapeHtml(String(counter.queue_count || '—'))}</td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-outline-primary text-primary btn-update-counter" data-id="${counter.idcounter}" title="Update"><i class="bi bi-pencil-square"></i></button>
+                                            <button type="button" class="btn btn-outline-danger btn-delete-counter" data-id="${counter.idcounter}" title="Delete"><i class="bi bi-trash-fill"></i></button>
                                         </div>
-                                    </div>
+                                    </td>
                                 `;
-                                container.appendChild(card);
+                                container.appendChild(tr);
                             });
 
-                            // clear after use so subsequent loads don't accidentally re-check
-                            update_selected_employee = null;
-
-                            // update pagination UI (unknown total - use hasMore)
-                            try {
-                                const hasMore = list.length === paginate;
-                                renderUpdatePaginationUnknown(counter_page_modal, hasMore);
-                            } catch (ex) { console.error(ex); }
-                        };
-
-                        // If the assigned employee isn't present in the available list, fetch and prepend it so it can be auto-selected
-                        if (update_selected_employee) {
-                            const found = employees.some(e => String(e.id) === String(update_selected_employee));
-                            if (!found) {
-                                const singleParams = new URLSearchParams({ employees: true, id: update_selected_employee });
-                                $.ajax({
-                                    url: realHost + '/public/api/api_endpoint.php?' + singleParams,
-                                    type: 'GET',
-                                    dataType: 'json',
-                                    success: function (singleResp) {
-                                        if (singleResp && singleResp.status === 'success' && singleResp.employee) {
-                                            // mark availability as Assigned to indicate current assignment
-                                            singleResp.employee.availability = singleResp.employee.availability || 'Assigned';
-                                            // prepend
-                                            employees.unshift(singleResp.employee);
-                                        }
-                                        renderEmployees(employees);
-                                    },
-                                    error: function () {
-                                        // if single fetch fails, just render the original list
-                                        renderEmployees(employees);
-                                    }
-                                });
-                            } else {
-                                renderEmployees(employees);
-                            }
                         } else {
-                            renderEmployees(employees);
+                            container.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No counters assigned — <button class=\"btn btn-sm btn-success\" onclick=\"document.getElementById('btn-add-counter').click();\">Add Counter</button></td></tr>`;
                         }
-                    } else {
-                        container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
-                        renderUpdatePaginationUnknown(counter_page_modal, false);
+
+                        if (overlay) overlay.classList.add('d-none');
+                    },
+                    error: function(xhr, status, err) {
+                        const overlay = document.getElementById('countersOverlay'); if (overlay) overlay.classList.add('d-none');
+                        try {
+                            // If server returned 404, show friendly 'no counters' row
+                            if (xhr && xhr.status === 404) {
+                                container.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No counters assigned — <button class="btn btn-sm btn-success" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button></td></tr>`;
+                                const pg = document.getElementById('countersPagination'); if (pg) pg.innerHTML = '';
+                                return;
+                            }
+                        } catch (ex) { console.error(ex); }
+                        try { container.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error loading counters — <button class="btn btn-sm btn-secondary" onclick="loadCounters();">Retry</button></td></tr>`; } catch(ex){}
+                        console.error('Load counters failed', status, err, xhr && xhr.responseText);
                     }
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error loading employees:', error);
-                }
-            });
+                });
+            }
         }
 
         // Render simple pagination (unknown total) for update modal
@@ -1110,13 +1272,14 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const priority = formData.get('transaction-filter-priority-update') || 'N';
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
-                method: 'POST',
+                url: 'http://127.0.0.1:5000/api/counters',
+                type: 'PUT',
                 contentType: 'application/json',
                 dataType: 'json',
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 data: JSON.stringify({
-                    method: "counters-update",
-                    id: idcounter,
+                    counter_id: idcounter,
                     counterNumber: counter_number,
                     idemployee: employee_id,
                     counter_priority: priority
@@ -1164,8 +1327,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
             });
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
+                url: "http://127.0.0.1:5000/api/counters?" + params,
                 type: 'GET',
+                timeout: 10000,
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 // request as text and parse robustly because server may emit concatenated JSON objects
                 dataType: 'text',
                 success: function (raw) {
@@ -1222,11 +1388,14 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const idcounter = formData.get('delete_id');
 
             $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
-                method: 'POST',
+                url: 'http://127.0.0.1:5000/api/counters',
+                type: 'DELETE',
+                contentType: 'application/json',
+                dataType: 'json',
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 data: JSON.stringify({
-                    method: "counters-delete",
-                    id: idcounter,
+                    counter_id: idcounter
                 }),
                 success: function(response) {
                     console.log(response);
@@ -1257,6 +1426,115 @@ function phpUserStatusIcon($username, $role_type, $active) {
             counter_search = this.value;
             loadCounters();
         });
+
+    // filter controls
+    const filterRole = document.getElementById('counter-filter-role');
+    if (filterRole) filterRole.addEventListener('change', function(e) {
+        counter_filter_role = this.value || 'none';
+        counter_page = 1;
+        loadCounters();
+    });
+
+    const filterAvailability = document.getElementById('counter-filter-availability');
+    if (filterAvailability) filterAvailability.addEventListener('change', function(e) {
+        counter_filter_availability = this.value || 'none';
+        counter_page = 1;
+        loadCounters();
+    });
+
+    const filterPriority = document.getElementById('counter-filter-priority');
+    if (filterPriority) filterPriority.addEventListener('change', function(e) {
+        counter_filter_priority = this.value || 'none';
+        counter_page = 1;
+        loadCounters();
+    });
+
+    // Per-page selector, export and refresh handlers
+    const countersPerPageSel = document.getElementById('countersPerPage');
+    if (countersPerPageSel) {
+        countersPerPageSel.addEventListener('change', function(e) {
+            const v = parseInt(this.value, 10) || 25;
+            paginate = v;
+            counter_page = 1;
+            loadCounters();
+        });
+        // initialize paginate to match select (in case server-side rendered default differs)
+        try { paginate = parseInt(countersPerPageSel.value, 10) || paginate; } catch(ex){}
+    }
+
+    const btnExportCountersCsv = document.getElementById('btnExportCountersCsv');
+    if (btnExportCountersCsv) btnExportCountersCsv.addEventListener('click', function(e) {
+        e.preventDefault();
+        // attempt to fetch all counters matching current filters for a complete export
+        const paramsObj = {
+            counters: true,
+            page: 1,
+            paginate: 10000,
+            search: counter_search,
+            role: counter_filter_role,
+            availability: counter_filter_availability,
+            priority: counter_filter_priority
+        };
+        Object.keys(paramsObj).forEach(k => {
+            if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) delete paramsObj[k];
+        });
+        const params = new URLSearchParams(paramsObj);
+
+        const doExport = function(dataArray) {
+            if (!dataArray || dataArray.length === 0) {
+                alert('No counters to export');
+                return;
+            }
+            const cols = ['counterNumber','username','role_type','queue_count','idcounter'];
+            const header = ['Counter','Username','Role','Queue','ID'];
+            const rows = [header.map(h => '"' + h.replace(/"/g,'""') + '"').join(',')];
+            dataArray.forEach(c => {
+                const row = cols.map(k => '"' + String((c[k] === null || c[k] === undefined) ? '' : String(c[k])).replace(/"/g,'""') + '"').join(',');
+                rows.push(row);
+            });
+            const csv = rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'counters_export.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // Fetch full dataset from API; fall back to cached lastCounters on failure
+        $.ajax({
+            url: 'http://127.0.0.1:5000/api/counters?' + params.toString(),
+            type: 'GET',
+            dataType: 'json',
+            xhrFields: { withCredentials: true },
+            crossDomain: true,
+            success: function(response) {
+                if (response && response.status === 'success' && Array.isArray(response.counters)) {
+                    doExport(response.counters);
+                } else if (lastCounters && lastCounters.length) {
+                    doExport(lastCounters);
+                } else {
+                    alert('No counters to export');
+                }
+            },
+            error: function() {
+                if (lastCounters && lastCounters.length) {
+                    doExport(lastCounters);
+                } else {
+                    alert('Failed to fetch counters for export');
+                }
+            }
+        });
+    });
+
+    const btnRefreshCounters = document.getElementById('btnRefreshCounters');
+    if (btnRefreshCounters) btnRefreshCounters.addEventListener('click', function(e) {
+        e.preventDefault();
+        loadCounters();
+    });
 
 
 
