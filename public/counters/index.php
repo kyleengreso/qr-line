@@ -7,11 +7,12 @@ $token = decryptToken($token, $master_key);
 $token = json_encode($token);
 $token = json_decode($token);
 
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
+// Safely extract token properties to avoid PHP notices when fields are missing
+$id = (is_object($token) && property_exists($token, 'id')) ? $token->id : null;
+$username = (is_object($token) && property_exists($token, 'username')) ? $token->username : null;
+$role_type = (is_object($token) && property_exists($token, 'role_type')) ? $token->role_type : null;
+$email = (is_object($token) && property_exists($token, 'email')) ? $token->email : null;
+$counterNumber = (is_object($token) && property_exists($token, 'counterNumber')) ? $token->counterNumber : null;
 // Server-side fetch counters to render the table initially (fallback to client-side AJAX)
 $counters = [];
 $totalCounters = 0;
@@ -144,14 +145,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         </div>
 
                         <div class="d-flex gap-2 flex-wrap flex-fill w-100">
-                            <div class="form-floating flex-fill">
-                                <select class="form-select" id="counter-filter-role">
-                                    <option value="none">All Roles</option>
-                                    <option value="employee">Employee</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                                <label for="counter-filter-role">Role</label>
-                            </div>
+                            <!-- Role filter removed: counters only show registered employees, so role filter unnecessary -->
                             <div class="form-floating flex-fill">
                                 <select class="form-select" id="counter-filter-availability">
                                     <option value="none">Any Availability</option>
@@ -437,10 +431,17 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             <h5 class="fw-bold">Confirm deletion</h5>
                             <p class="mb-0">Are you sure you want to remove <strong><span id="deleteCounterUsername">&mdash;</span></strong> from counter <strong><span id="deleteCounterNumber">&mdash;</span></strong>?</p>
                         </div>
-                        <div class="d-flex justify-content-between mt-4">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Delete Counter</button>
-                        </div>
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" value="1" id="delete_force" name="delete_force">
+                                <label class="form-check-label small text-danger" for="delete_force">
+                                    Force delete — permanently remove this counter entry (admin only)
+                                </label>
+                            </div>
+                            <div id="deleteModeDesc" class="small text-muted mt-2">By default, detaching will unassign the employee but will not reset today's counter counts. Past transactions remain intact.</div>
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-warning" id="btnDeleteCounterSubmit">Detach Counter</button>
+                            </div>
                     </div>
                 </form>
             </div>
@@ -471,9 +472,14 @@ function phpUserStatusIcon($username, $role_type, $active) {
     // last fetched counters (used for CSV export)
     var lastCounters = [];
     // filter state
-    var counter_filter_role = 'none';
     var counter_filter_availability = 'none';
     var counter_filter_priority = 'none';
+
+    // Ensure a placeholder exists so callers won't throw if the real implementation
+    // isn't defined yet (helps avoid ReferenceError during incremental loading).
+    window.loadUpdateAvailableEmployees = window.loadUpdateAvailableEmployees || function() {
+        console.warn('loadUpdateAvailableEmployees placeholder invoked');
+    };
 
         function loadCounters() {
             let container = document.getElementById('cards-counters-registered');
@@ -483,7 +489,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     page: counter_page,
                     paginate: paginate,
                     search: counter_search,
-                    role: counter_filter_role,
                     availability: counter_filter_availability,
                     priority: counter_filter_priority
                 };
@@ -711,7 +716,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 search: counter_search,
                 page: counter_page_modal,
                 paginate: paginate,
-                role: counter_filter_role,
                 availability: counter_filter_availability,
                 priority: counter_filter_priority
             };
@@ -783,6 +787,105 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         }
                     } catch (ex) { console.error(ex); }
                     console.error('Error loading employees for add modal:', error, xhr && xhr.responseText);
+                }
+            });
+        }
+
+        // Load available employees into the Update Counter modal (pre-checks current assignee)
+        // (Duplicated earlier to ensure the function is defined before it's called from the update flow.)
+        window.loadUpdateAvailableEmployees = function() {
+            console.log('loadUpdateAvailableEmployees() called; page modal:', counter_page_modal, 'selected:', update_selected_employee);
+            const container = document.getElementById('cards-update-counter-available');
+            if (!container) { console.warn('cards-update-counter-available container not found'); return; }
+
+            const paramsObj = {
+                counters: true,
+                available: true,
+                search: counter_search,
+                page: counter_page_modal,
+                paginate: paginate,
+                availability: counter_filter_availability,
+                priority: counter_filter_priority
+            };
+            Object.keys(paramsObj).forEach(k => {
+                if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) {
+                    delete paramsObj[k];
+                }
+            });
+            const params = new URLSearchParams(paramsObj);
+
+            $.ajax({
+                url: "http://127.0.0.1:5000/api/counters?" + params,
+                type: 'GET',
+                timeout: 10000,
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
+                success: function (response) {
+                    container.innerHTML = '';
+                    console.log('loadUpdateAvailableEmployees: response', response && response.status, response && response.counters && response.counters.length);
+                    if (response.status === 'success') {
+                        const employees = response.counters || [];
+                        if (employees.length === 0) {
+                            container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                            renderUpdatePaginationUnknown(counter_page_modal, false);
+                            return;
+                        }
+
+                        employees.forEach(employee => {
+                            const card = document.createElement('div');
+                            card.className = 'col-12 mb-2';
+                            card.innerHTML = `
+                                <div class="card">
+                                    <div class="card-body d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}">
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">${escapeHtml(employee.username)}</div>
+                                                <div class="small text-muted">${escapeHtml(employee.role_type || '')}</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            container.appendChild(card);
+                        });
+
+                        // If an employee was previously assigned, pre-check their radio
+                        try {
+                            if (update_selected_employee) {
+                                const r = container.querySelector(`#employee-counter-set-${update_selected_employee}`);
+                                if (r) {
+                                    r.checked = true;
+                                    const ev = new Event('change', { bubbles: true });
+                                    r.dispatchEvent(ev);
+                                }
+                            }
+                        } catch (ex) { console.error(ex); }
+
+                        // update pagination UI
+                        try {
+                            const hasMore = employees.length === paginate;
+                            renderUpdatePaginationUnknown(counter_page_modal, hasMore);
+                        } catch (ex) { console.error(ex); }
+                    } else {
+                        container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                        renderUpdatePaginationUnknown(counter_page_modal, false);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    try {
+                        if (xhr && xhr.status === 404) {
+                            container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                            renderUpdatePaginationUnknown(counter_page_modal, false);
+                            return;
+                        }
+                    } catch (ex) { console.error(ex); }
+                    console.error('Error loading employees for update modal:', error, xhr && xhr.responseText);
                 }
             });
         }
@@ -988,7 +1091,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         } catch (ex) { console.error(ex); }
 
                         // load available employees for update (keeps existing behavior)
-                        loadUpdateEmployees();
+                        if (typeof loadUpdateAvailableEmployees === 'function') {
+                            loadUpdateAvailableEmployees();
+                        } else {
+                            console.error('loadUpdateAvailableEmployees is not defined at callsite');
+                        }
 
                         // show the modal after fields are populated (loadUpdateEmployees will pre-check the radio)
                         const modalEl = document.getElementById('updateCounterModal');
@@ -1043,7 +1150,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     page: counter_page,
                     paginate: paginate,
                     search: counter_search,
-                    role: counter_filter_role,
                     availability: counter_filter_availability,
                     priority: counter_filter_priority
                 };
@@ -1133,6 +1239,104 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     }
                 });
             }
+
+    // Load available employees into the Update Counter modal (pre-checks current assignee)
+    window.loadUpdateAvailableEmployees = function() {
+        console.log('loadUpdateAvailableEmployees() called; page modal:', counter_page_modal, 'selected:', update_selected_employee);
+        const container = document.getElementById('cards-update-counter-available');
+        if (!container) { console.warn('cards-update-counter-available container not found'); return; }
+
+            const paramsObj = {
+                counters: true,
+                available: true,
+                search: counter_search,
+                page: counter_page_modal,
+                paginate: paginate,
+                availability: counter_filter_availability,
+                priority: counter_filter_priority
+            };
+            Object.keys(paramsObj).forEach(k => {
+                if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) {
+                    delete paramsObj[k];
+                }
+            });
+            const params = new URLSearchParams(paramsObj);
+
+            $.ajax({
+                url: "http://127.0.0.1:5000/api/counters?" + params,
+                type: 'GET',
+                timeout: 10000,
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
+                success: function (response) {
+                    container.innerHTML = '';
+                        console.log('loadUpdateAvailableEmployees: response', response && response.status, response && response.counters && response.counters.length);
+                        if (response.status === 'success') {
+                            const employees = response.counters || [];
+                        if (employees.length === 0) {
+                            container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                            renderUpdatePaginationUnknown(counter_page_modal, false);
+                            return;
+                        }
+
+                        employees.forEach(employee => {
+                            const card = document.createElement('div');
+                            card.className = 'col-12 mb-2';
+                            card.innerHTML = `
+                                <div class="card">
+                                    <div class="card-body d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}">
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">${escapeHtml(employee.username)}</div>
+                                                <div class="small text-muted">${escapeHtml(employee.role_type || '')}</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            container.appendChild(card);
+                        });
+
+                        // If an employee was previously assigned, pre-check their radio
+                        try {
+                            if (update_selected_employee) {
+                                const r = container.querySelector(`#employee-counter-set-${update_selected_employee}`);
+                                if (r) {
+                                    r.checked = true;
+                                    const ev = new Event('change', { bubbles: true });
+                                    r.dispatchEvent(ev);
+                                }
+                            }
+                        } catch (ex) { console.error(ex); }
+
+                        // update pagination UI
+                        try {
+                            const hasMore = employees.length === paginate;
+                            renderUpdatePaginationUnknown(counter_page_modal, hasMore);
+                        } catch (ex) { console.error(ex); }
+                    } else {
+                        container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                        renderUpdatePaginationUnknown(counter_page_modal, false);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    try {
+                        if (xhr && xhr.status === 404) {
+                            container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
+                            renderUpdatePaginationUnknown(counter_page_modal, false);
+                            return;
+                        }
+                    } catch (ex) { console.error(ex); }
+                    console.error('Error loading employees for update modal:', error, xhr && xhr.responseText);
+                }
+            });
+        }
         }
 
         // Render simple pagination (unknown total) for update modal
@@ -1378,7 +1582,33 @@ function phpUserStatusIcon($username, $role_type, $active) {
         });
 
     let frmDeleteCounter = document.getElementById('frmDeleteCounter');
-    if (frmDeleteCounter) frmDeleteCounter.addEventListener('submit', function(e) {
+    if (frmDeleteCounter) {
+        // Wire up UI toggles for the delete modal so the button text and styles
+        // reflect whether the user chose a soft detach or a hard force-delete.
+        const deleteForceCheckbox = document.getElementById('delete_force');
+        const btnDeleteCounterSubmit = document.getElementById('btnDeleteCounterSubmit');
+        const deleteModeDesc = document.getElementById('deleteModeDesc');
+
+        function updateDeleteModeUI() {
+            if (!btnDeleteCounterSubmit) return;
+            if (deleteForceCheckbox && deleteForceCheckbox.checked) {
+                btnDeleteCounterSubmit.classList.remove('btn-warning');
+                btnDeleteCounterSubmit.classList.add('btn-danger');
+                btnDeleteCounterSubmit.innerText = 'Delete Counter';
+                if (deleteModeDesc) deleteModeDesc.innerText = 'Force delete will permanently remove the counter row. Past transactions remain intact.';
+            } else {
+                btnDeleteCounterSubmit.classList.remove('btn-danger');
+                btnDeleteCounterSubmit.classList.add('btn-warning');
+                btnDeleteCounterSubmit.innerText = 'Detach Counter';
+                if (deleteModeDesc) deleteModeDesc.innerText = 'Detach will unassign the employee but will not reset today\'s counter counts. Past transactions remain intact.';
+            }
+        }
+
+        if (deleteForceCheckbox) deleteForceCheckbox.addEventListener('change', updateDeleteModeUI);
+        // initialize UI
+        updateDeleteModeUI();
+
+        frmDeleteCounter.addEventListener('submit', function(e) {
             e.preventDefault();
 
             let formAlert = document.getElementById('deleteCounterAlert');
@@ -1386,6 +1616,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
 
             const formData = new FormData(this);
             const idcounter = formData.get('delete_id');
+            const forceFlag = (formData.get('delete_force') === '1' || formData.get('delete_force') === 'on');
 
             $.ajax({
                 url: 'http://127.0.0.1:5000/api/counters',
@@ -1395,7 +1626,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
                 data: JSON.stringify({
-                    counter_id: idcounter
+                    counter_id: idcounter,
+                    force: !!forceFlag
                 }),
                 success: function(response) {
                     console.log(response);
@@ -1417,6 +1649,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 }
             });
         });
+    }
 
     let searchCounterRegistered = document.getElementById('searchCounterRegistered');
     if (searchCounterRegistered) searchCounterRegistered.addEventListener('keyup', function(e) {
@@ -1427,13 +1660,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             loadCounters();
         });
 
-    // filter controls
-    const filterRole = document.getElementById('counter-filter-role');
-    if (filterRole) filterRole.addEventListener('change', function(e) {
-        counter_filter_role = this.value || 'none';
-        counter_page = 1;
-        loadCounters();
-    });
+    // Role filter removed from UI; role-based filtering is unnecessary for counters.
 
     const filterAvailability = document.getElementById('counter-filter-availability');
     if (filterAvailability) filterAvailability.addEventListener('change', function(e) {
@@ -1471,7 +1698,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             page: 1,
             paginate: 10000,
             search: counter_search,
-            role: counter_filter_role,
             availability: counter_filter_availability,
             priority: counter_filter_priority
         };
