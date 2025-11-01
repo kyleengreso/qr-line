@@ -651,6 +651,9 @@ if ($resp) {
                 dataType: 'json',
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try { showEmployeesLoading(); } catch (e) {}
+                },
                 success: function (response) {
                     // prefer rendering into the table body if present
                     const tbody = document.querySelector('#table-employees tbody');
@@ -786,12 +789,26 @@ if ($resp) {
                     // fallback
                     if (!handled) {
                         const tbody = document.querySelector('#table-employees tbody');
-                        if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="alert alert-danger">Failed to load employees. Try again.</div></td></tr>`;
-                        else if (employeesList) employeesList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Failed to load employees. Try again.</div></div>`;
+                        const richError = `
+                            <div class="alert alert-danger d-flex align-items-start gap-2 mb-0" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                <div>
+                                    <div class="fw-semibold">We couldn’t load employees</div>
+                                    <div class="small opacity-75">Please check your connection or try again.</div>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-light js-retry-employees">Retry</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="5">${richError}</td></tr>`;
+                        else if (employeesList) employeesList.innerHTML = `<div class="col-12">${richError}</div>`;
                     }
 
                     // ensure About card height is updated
                     try { syncAboutCardHeight(); } catch (e) {}
+                },
+                complete: function() {
+                    // nothing needed; table/list rendering replaces the loader
                 }
             });
         }
@@ -821,6 +838,13 @@ if ($resp) {
             _syncTimeout = setTimeout(syncAboutCardHeight, 120);
         });
 
+        // retry handler for rich error alert
+        $(document).on('click', '.js-retry-employees', function (e) {
+            e.preventDefault();
+            try { showEmployeesLoading(); } catch (ex) {}
+            loadEmployees();
+        });
+
         // View Employee (delegated for dynamic rows). Accepts both data-id buttons and legacy id-based links.
         $(document).on('click', '.btn-view, [id^="view-employee-"]', function (e) {
             e.preventDefault();
@@ -840,6 +864,9 @@ if ($resp) {
                 dataType: 'json',
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try { document.body.style.cursor = 'progress'; } catch (e) {}
+                },
                 success: function (response) {
                     console.log(response);
                     const employee = response.data || response.employee || {};
@@ -921,6 +948,12 @@ if ($resp) {
                             new bootstrap.Modal(viewModalEl).show();
                         }
                     } catch (e) { console.warn('Could not show view modal', e); }
+                },
+                error: function(xhr, status, error) {
+                    // leave to existing UX; just ensure cursor resets in complete
+                },
+                complete: function() {
+                    try { document.body.style.cursor = ''; } catch (e) {}
                 }
 
             });
@@ -975,6 +1008,16 @@ if ($resp) {
                     method : "employees-add",
                     active: active
                 }),
+                beforeSend: function() {
+                    try {
+                        const btn = document.querySelector('#frmAddEmployee button[type="submit"]');
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.dataset.prevLabel = btn.innerHTML;
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+                        }
+                    } catch (e) {}
+                },
                 success: function (response) {
                     console.log(response);
                     if (response.status === 'success') {
@@ -999,6 +1042,16 @@ if ($resp) {
                     setTimeout(() => {
                         formAlert.classList.add('d-none');
                     }, 5000);
+                },
+                complete: function() {
+                    try {
+                        const btn = document.querySelector('#frmAddEmployee button[type="submit"]');
+                        if (btn) {
+                            btn.disabled = false;
+                            if (btn.dataset.prevLabel) btn.innerHTML = btn.dataset.prevLabel;
+                            delete btn.dataset.prevLabel;
+                        }
+                    } catch (e) {}
                 }
             });
         });
@@ -1020,6 +1073,9 @@ if ($resp) {
                 dataType: 'json',
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try { document.body.style.cursor = 'progress'; } catch (e) {}
+                },
                 success: function (response) {
                     console.log(response);
 
@@ -1062,6 +1118,12 @@ if ($resp) {
                             new bootstrap.Modal(updModalEl).show();
                         }
                     } catch (e) { console.warn('Could not show update modal', e); }
+                },
+                error: function(xhr, status, error) {
+                    // handled by existing following logic; ensure cursor resets
+                },
+                complete: function() {
+                    try { document.body.style.cursor = ''; } catch (e) {}
                 }
             });
         });
@@ -1121,6 +1183,16 @@ if ($resp) {
                 data: JSON.stringify(payload),
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try {
+                        const btn = document.querySelector('#frmUpdateEmployee button[type="submit"]');
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.dataset.prevLabel = btn.innerHTML;
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+                        }
+                    } catch (e) {}
+                },
                 success: function (response) {
                     console.log(response);
                     if (response.status === 'success') {
@@ -1150,6 +1222,16 @@ if ($resp) {
                     setTimeout(() => {
                         formAlert.classList.add('d-none');
                     }, 5000);
+                },
+                complete: function() {
+                    try {
+                        const btn = document.querySelector('#frmUpdateEmployee button[type="submit"]');
+                        if (btn) {
+                            btn.disabled = false;
+                            if (btn.dataset.prevLabel) btn.innerHTML = btn.dataset.prevLabel;
+                            delete btn.dataset.prevLabel;
+                        }
+                    } catch (e) {}
                 }
             });
         });
@@ -1170,6 +1252,9 @@ if ($resp) {
                 dataType: 'json',
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try { document.body.style.cursor = 'progress'; } catch (e) {}
+                },
                 success: function (response) {
                     console.log(response);
                     let frmDeleteEmployee = document.getElementById('frmDeleteEmployee');
@@ -1193,6 +1278,12 @@ if ($resp) {
                             new bootstrap.Modal(delModalEl).show();
                         }
                     } catch (e) { console.warn('Could not show delete modal', e); }
+                },
+                error: function(xhr, status, error) {
+                    // reset cursor in complete
+                },
+                complete: function() {
+                    try { document.body.style.cursor = ''; } catch (e) {}
                 }
             });
         });
@@ -1218,6 +1309,16 @@ if ($resp) {
                     id: employeeId,
                     method : "employees-delete"
                 }),
+                beforeSend: function() {
+                    try {
+                        const btn = document.querySelector('#frmDeleteEmployee button[type="submit"]');
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.dataset.prevLabel = btn.innerHTML;
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Deleting...';
+                        }
+                    } catch (e) {}
+                },
                 success: function (response) {
                     console.log(response);
                     if (response.status === 'success') {
@@ -1242,6 +1343,16 @@ if ($resp) {
                     setTimeout(() => {
                         formAlert.classList.add('d-none');
                     }, 5000);
+                },
+                complete: function() {
+                    try {
+                        const btn = document.querySelector('#frmDeleteEmployee button[type="submit"]');
+                        if (btn) {
+                            btn.disabled = false;
+                            if (btn.dataset.prevLabel) btn.innerHTML = btn.dataset.prevLabel;
+                            delete btn.dataset.prevLabel;
+                        }
+                    } catch (e) {}
                 }
             });
         });
