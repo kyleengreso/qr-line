@@ -20,41 +20,48 @@ $is_employee = in_array($token_role, ['employee','cashier','attendant'], true);
 $token_username = token_prop($token, 'username');
 ?>
 
-<nav class="navbar navbar-expand-md fixed-top" style="background-color: rgb(255, 110, 55);">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-
-        <!-- Sidebar Toggle Button -->
-    <?php if ($is_admin) : ?>
-        <button class="btn btn-link text-white me-3 p-0" style="border-radius: 5px; border: 1px solid rgba(255,255,255,0.12); background-color: transparent;" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle Sidebar">
-            <i class="bi bi-list fs-4"></i>
-        </button>
+<nav class="navbar navbar-expand-md fixed-top" style="background: linear-gradient(135deg, rgb(255,110,55) 0%, #e63c14 100%); box-shadow: 0 4px 12px rgba(0,0,0,.15);">
+    <div class="container-fluid d-flex justify-content-between align-items-center py-2 px-3">
+        <?php if ($is_admin) : ?>
+            <button class="btn text-white me-3 p-2 rounded-3"
+                    style="background-color: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);"
+                    data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle Sidebar">
+                <i class="bi bi-list fs-5"></i>
+            </button>
         <?php else : ?>
-        <div class="me-3" style="width:38px"></div>
+            <div class="me-3" style="width:38px"></div>
         <?php endif; ?>
 
-        <!-- Project Name -->
-        <a class="text-decoration-none" href="/public">
+        <a class="text-decoration-none flex-grow-1" href="/public">
             <span class="navbar-brand mb-0 text-white d-flex align-items-center">
-                <img src="./../asset/images/logo.png" alt="PSU logo" width="40" height="40" class="me-2">
-                <span class="fs-5 fw-normal d-md-inline d-none"><?php echo $project_name_full; ?></span>
+                <img src="./../asset/images/logo.png" alt="Logo" width="40" height="40" class="me-2">
+                <span class="fs-5 fw-semibold d-none d-md-inline"><?php echo $project_name_full; ?></span>
             </span>
         </a>
 
-        <!-- Username and Clock -->
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center gap-2">
             <?php if ($token_username) : ?>
-                    <span class="text-white me-3 d-none d-md-block">
-                        <span class="fs-6 fw-semibold"><?php echo htmlentities($token_username); ?></span>
-                    </span>
+                <span class="text-white d-none d-md-flex align-items-center px-3 py-1 rounded-3"
+                      style="background-color: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25)">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <span class="fs-6 fw-semibold"><?php echo htmlentities($token_username); ?></span>
+                </span>
             <?php endif; ?>
-            <span class="text-white me-3 d-none d-md-block" id="navbar-clock">
-                <span id="current-time"></span>
+            <span class="text-white d-none d-md-flex align-items-center px-3 py-1 rounded-3" id="navbar-clock"
+                  style="background-color: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25)">
+                <i class="bi bi-clock me-2"></i>
+                <span id="current-time" class="fw-semibold"></span>
             </span>
-            <button class="btn btn-link text-white p-1" id="btn-logout-1" aria-label="Logout">
-                <i class="bi bi-box-arrow-right fs-4"></i>
+            <button class="btn text-white p-2 rounded-3 position-relative" id="btn-notifications" aria-label="Notifications"
+                    style="background-color: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25)">
+                <i class="bi bi-bell fs-5"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notification-count">0</span>
+            </button>
+            <button class="btn text-white p-2 rounded-3" id="btn-logout-1" aria-label="Logout"
+                    style="background-color: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25)">
+                <i class="bi bi-box-arrow-right fs-5"></i>
             </button>
         </div>
-    </div>
     </div>
 </nav>
 
@@ -67,7 +74,7 @@ $token_username = token_prop($token, 'username');
     </div>
     <div class="offcanvas-body">
         <div class="d-flex align-items-center mb-3">
-            <img src="./../asset/images/user_icon.png" alt="User" class="rounded-circle me-2" width="75" height="75" style="border: 1px #111 solid">
+            <img src="./../asset/images/user_icon.png" alt="User" class="me-2" width="75" height="75" style="border: 1px #111 solid">
             <div class="text-white">
                 <h6 class="mb-0 fs-4"><?php echo htmlentities($token->username); ?></h6>
             </div>

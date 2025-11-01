@@ -48,15 +48,22 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // RealTimeClock
-let rtClock = document.getElementById("rtClock");
-if (rtClock) {
-    setInterval(function () {
-        var date = new Date();
-        rtClock.innerHTML = date.toLocaleTimeString('en-US', {
+function startClock(el) {
+    if (!el) return;
+    function tick() {
+        const date = new Date();
+        el.textContent = date.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
             hour12: true
         });
-    }, 1000);
+    }
+    tick();
+    setInterval(tick, 1000);
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const clockEl = document.getElementById('current-time') || document.getElementById('rtClock');
+    startClock(clockEl);
+});
