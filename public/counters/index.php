@@ -506,6 +506,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     timeout: 10000,
                     xhrFields: { withCredentials: true },
                     crossDomain: true,
+                        beforeSend: function() {
+                            try {
+                                container.innerHTML = '<div class="col-12 d-flex justify-content-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                            } catch (ex) { console.error(ex); }
+                        },
                         success: function(response) {
                             // render as cards
                             try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
@@ -602,6 +607,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             // generic error UI
                             try { container.innerHTML = `<div class="col-12 d-flex justify-content-center"><div class="text-danger">Error loading counters — <button class="btn btn-sm btn-secondary" onclick="loadCounters();">Retry</button></div></div>`; } catch (ex) { console.error(ex); }
                             console.error('Load counters failed', status, err, xhr && xhr.responseText);
+                        },
+                        complete: function() {
+                            // nothing special; UI is set in success/error
                         }
                 })
             }
@@ -733,6 +741,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try {
+                        container.innerHTML = '<div class="col-12 d-flex justify-content-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                    } catch (ex) { console.error(ex); }
+                },
                 success: function (response) {
                     container.innerHTML = '';
                     if (response.status === 'success') {
@@ -787,6 +800,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         }
                     } catch (ex) { console.error(ex); }
                     console.error('Error loading employees for add modal:', error, xhr && xhr.responseText);
+                },
+                complete: function() {
+                    // no-op; content replaced in success/error
                 }
             });
         }
@@ -820,6 +836,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try {
+                        container.innerHTML = '<div class="col-12 d-flex justify-content-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                    } catch (ex) { console.error(ex); }
+                },
                 success: function (response) {
                     container.innerHTML = '';
                     console.log('loadUpdateAvailableEmployees: response', response && response.status, response && response.counters && response.counters.length);
@@ -886,6 +907,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         }
                     } catch (ex) { console.error(ex); }
                     console.error('Error loading employees for update modal:', error, xhr && xhr.responseText);
+                },
+                complete: function() {
+                    // no-op; content replaced in success/error
                 }
             });
         }
@@ -976,6 +1000,16 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     counter_priority: priority,
                     user_id: employee_id
                 }),
+                beforeSend: function() {
+                    try {
+                        const submitBtn = document.getElementById('btnAddCounterSubmit');
+                        if (submitBtn) {
+                            submitBtn.dataset.prevHtml = submitBtn.innerHTML;
+                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+                            submitBtn.disabled = true;
+                        }
+                    } catch (ex) { console.error(ex); }
+                },
                 success: function(response) {
                     console.log(response);
                     if (response.status === 'success') {
@@ -1001,6 +1035,15 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         formAlertMsg.innerText = 'Failed to create counter: ' + (xhr.responseText || status);
                         formAlert.classList.remove('d-none');
                         formAlert.classList.add('alert-danger');
+                    } catch (ex) { console.error(ex); }
+                },
+                complete: function() {
+                    try {
+                        const submitBtn = document.getElementById('btnAddCounterSubmit');
+                        if (submitBtn) {
+                            submitBtn.innerHTML = submitBtn.dataset.prevHtml || 'Add Counter';
+                            submitBtn.disabled = false;
+                        }
                     } catch (ex) { console.error(ex); }
                 }
             });
@@ -1031,6 +1074,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 // server sometimes emits multiple JSON objects concatenated which breaks jQuery's parser
                 // request as text and parse the first JSON object manually to be robust
                 dataType: 'text',
+                beforeSend: function() {
+                    try { document.body.style.cursor = 'progress'; } catch (ex) { console.error(ex); }
+                },
                 success: function (raw) {
                         let response = null;
                         try {
@@ -1111,6 +1157,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     } catch (ex) {
                         console.error('Failed to log error details', ex);
                     }
+                },
+                complete: function() {
+                    try { document.body.style.cursor = 'default'; } catch (ex) { console.error(ex); }
                 }
             });
         });
@@ -1173,6 +1222,12 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     timeout: 10000,
                     xhrFields: { withCredentials: true },
                     crossDomain: true,
+                    beforeSend: function() {
+                        try {
+                            const overlay2 = document.getElementById('countersOverlay');
+                            if (overlay2) overlay2.classList.remove('d-none');
+                        } catch (ex) { console.error(ex); }
+                    },
                     success: function(response) {
                         try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
 
@@ -1236,6 +1291,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         } catch (ex) { console.error(ex); }
                         try { container.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error loading counters — <button class="btn btn-sm btn-secondary" onclick="loadCounters();">Retry</button></td></tr>`; } catch(ex){}
                         console.error('Load counters failed', status, err, xhr && xhr.responseText);
+                    },
+                    complete: function() {
+                        try { const overlay2 = document.getElementById('countersOverlay'); if (overlay2) overlay2.classList.add('d-none'); } catch (ex) { console.error(ex); }
                     }
                 });
             }
@@ -1268,6 +1326,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
+                beforeSend: function() {
+                    try {
+                        container.innerHTML = '<div class="col-12 d-flex justify-content-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                    } catch (ex) { console.error(ex); }
+                },
                 success: function (response) {
                     container.innerHTML = '';
                         console.log('loadUpdateAvailableEmployees: response', response && response.status, response && response.counters && response.counters.length);
@@ -1334,6 +1397,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         }
                     } catch (ex) { console.error(ex); }
                     console.error('Error loading employees for update modal:', error, xhr && xhr.responseText);
+                },
+                complete: function() {
+                    // no-op; content replaced in success/error
                 }
             });
         }
@@ -1488,6 +1554,16 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     idemployee: employee_id,
                     counter_priority: priority
                 }),
+                beforeSend: function() {
+                    try {
+                        const submitBtn = document.getElementById('btnUpdateCounterSubmit');
+                        if (submitBtn) {
+                            submitBtn.dataset.prevHtml = submitBtn.innerHTML;
+                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+                            submitBtn.disabled = true;
+                        }
+                    } catch (ex) { console.error(ex); }
+                },
                 success: function(response) {
                     console.log(response);
                     if (response.status === 'success') {
@@ -1514,6 +1590,15 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         formAlert.classList.remove('d-none');
                         formAlert.classList.add('alert-danger');
                     } catch (ex) { console.error(ex); }
+                },
+                complete: function() {
+                    try {
+                        const submitBtn = document.getElementById('btnUpdateCounterSubmit');
+                        if (submitBtn) {
+                            submitBtn.innerHTML = submitBtn.dataset.prevHtml || 'Update Counter';
+                            submitBtn.disabled = false;
+                        }
+                    } catch (ex) { console.error(ex); }
                 }
             });
 
@@ -1538,6 +1623,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 crossDomain: true,
                 // request as text and parse robustly because server may emit concatenated JSON objects
                 dataType: 'text',
+                beforeSend: function() {
+                    try { document.body.style.cursor = 'progress'; } catch (ex) { console.error(ex); }
+                },
                 success: function (raw) {
                     let response = null;
                     try {
@@ -1577,6 +1665,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     } catch (ex) {
                         console.error('Failed to log delete error details', ex);
                     }
+                },
+                complete: function() {
+                    try { document.body.style.cursor = 'default'; } catch (ex) { console.error(ex); }
                 }
             });
         });
@@ -1629,6 +1720,18 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     counter_id: idcounter,
                     force: !!forceFlag
                 }),
+                beforeSend: function() {
+                    try {
+                        const btn = document.getElementById('btnDeleteCounterSubmit');
+                        if (btn) {
+                            btn.dataset.prevHtml = btn.innerHTML;
+                            const forceCb = document.getElementById('delete_force');
+                            const actionLabel = (forceCb && forceCb.checked) ? 'Deleting...' : 'Detaching...';
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + actionLabel;
+                            btn.disabled = true;
+                        }
+                    } catch (ex) { console.error(ex); }
+                },
                 success: function(response) {
                     console.log(response);
                     if (response.status === 'success') {
@@ -1646,6 +1749,15 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             formAlert.classList.add('d-none');
                         }, 5000);
                     }
+                },
+                complete: function() {
+                    try {
+                        const btn = document.getElementById('btnDeleteCounterSubmit');
+                        if (btn) {
+                            btn.innerHTML = btn.dataset.prevHtml || btn.innerHTML;
+                            btn.disabled = false;
+                        }
+                    } catch (ex) { console.error(ex); }
                 }
             });
         });
@@ -1737,6 +1849,16 @@ function phpUserStatusIcon($username, $role_type, $active) {
             dataType: 'json',
             xhrFields: { withCredentials: true },
             crossDomain: true,
+            beforeSend: function() {
+                try {
+                    const btn = document.getElementById('btnExportCountersCsv');
+                    if (btn) {
+                        btn.dataset.prevHtml = btn.innerHTML;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Exporting...';
+                        btn.disabled = true;
+                    }
+                } catch (ex) { console.error(ex); }
+            },
             success: function(response) {
                 if (response && response.status === 'success' && Array.isArray(response.counters)) {
                     doExport(response.counters);
@@ -1752,6 +1874,15 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 } else {
                     alert('Failed to fetch counters for export');
                 }
+            },
+            complete: function() {
+                try {
+                    const btn = document.getElementById('btnExportCountersCsv');
+                    if (btn) {
+                        btn.innerHTML = btn.dataset.prevHtml || 'Export CSV';
+                        btn.disabled = false;
+                    }
+                } catch (ex) { console.error(ex); }
             }
         });
     });
