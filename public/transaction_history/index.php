@@ -249,6 +249,31 @@ $email = isset($token->email) ? $token->email : null;
     var transaction_desc = true;
     var tranasction_date_range = 'none';
 
+    // Format a date/time string into a friendly 12-hour local time with short month and day
+    function formatDateTime12(input) {
+        try {
+            if (!input) return '';
+            const s = String(input);
+            let d = null;
+            // Try native parse first (handles ISO 8601 and many common formats)
+            const parsed = Date.parse(s);
+            if (!isNaN(parsed)) {
+                d = new Date(parsed);
+            } else {
+                // Fallback for "YYYY-MM-DD HH:MM[:SS]" without timezone
+                const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+                if (m) {
+                    d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]), m[6] ? Number(m[6]) : 0);
+                }
+            }
+            if (!d) return s;
+            const opts = { year: 'numeric', month: 'short', day: '2-digit', hour: 'numeric', minute: '2-digit', hour12: true };
+            return d.toLocaleString(undefined, opts);
+        } catch (e) {
+            return input;
+        }
+    }
+
     let transaction_filter_daterange = document.getElementById("transaction-filter-daterange");
     transaction_filter_daterange.addEventListener('change', function (e) {
         tranasction_date_range = e.target.value;
@@ -284,13 +309,7 @@ $email = isset($token->email) ? $token->email : null;
         });
     }
     function getTransactionHistory() {
-    // show loader overlay and disable pagination while loading
-    if (transactionsOverlay) transactionsOverlay.classList.remove('d-none');
-    else if (transactionsLoader) transactionsLoader.classList.remove('d-none');
-        if (pageNextTransactions) pageNextTransactions.classList.add('disabled');
-        if (pagePrevTransactions) pagePrevTransactions.classList.add('disabled');
-        // show skeleton rows to indicate loading
-        showSkeletonRows(6);
+    // Loading indicator will be handled in $.ajax beforeSend
 
         var params = new URLSearchParams({
             transactions: true,
@@ -322,6 +341,14 @@ $email = isset($token->email) ? $token->email : null;
             timeout: 10000,
             xhrFields: { withCredentials: true },
             crossDomain: true,
+            beforeSend: function() {
+                try {
+                    if (transactionsOverlay) transactionsOverlay.classList.remove('d-none');
+                    else if (transactionsLoader) transactionsLoader.classList.remove('d-none');
+                    // show skeleton rows to indicate loading
+                    showSkeletonRows(6);
+                } catch (e) { /* ignore */ }
+            },
             success: function (response) {
                 // clear skeleton / rows
                 const tbody = table_transactions_history.querySelector('tbody');
@@ -386,7 +413,7 @@ $email = isset($token->email) ? $token->email : null;
 
                         tr.innerHTML = `
                             <td class="token-col td-truncate"><strong>${transaction.token_number || '—'}</strong></td>
-                            <td class="time-col"><small class="text-muted">${transaction.transaction_time}</small></td>
+                            <td class="time-col"><small class="text-muted">${formatDateTime12(transaction.transaction_time)}</small></td>
                             <td class="txn-col td-truncate">#${transaction.idtransaction}</td>
                             <td class="d-none d-md-table-cell td-truncate">${transaction.name || '—'}</td>
                             <td class="d-none d-md-table-cell td-truncate"><a href="mailto:${transaction.email}" class="td-truncate" data-bs-toggle="tooltip" title="${transaction.email || ''}">${transaction.email || '—'}</a></td>
@@ -481,6 +508,12 @@ $email = isset($token->email) ? $token->email : null;
                 tr.innerHTML = `<td colspan="9" class="text-center text-danger">Error loading transactions</td>`;
                 tbody.appendChild(tr);
                 console.error('Transaction load error', status, err);
+            },
+            complete: function() {
+                try {
+                    if (transactionsOverlay) transactionsOverlay.classList.add('d-none');
+                    else if (transactionsLoader) transactionsLoader.classList.add('d-none');
+                } catch (e) { /* ignore */ }
             }
         });
     }
@@ -603,7 +636,7 @@ $email = isset($token->email) ? $token->email : null;
         const meta = document.getElementById('viewTransactionMeta');
 
         modalTitle.innerText = `Transaction #${transaction.idtransaction}`;
-        modalSubtitle.innerText = transaction.transaction_time || '';
+    modalSubtitle.innerText = formatDateTime12(transaction.transaction_time) || '';
 
         // summary (left): token, name, email, payment, status
         const statusHtml = (s => {
@@ -641,7 +674,7 @@ $email = isset($token->email) ? $token->email : null;
                 <div class="card-body small text-muted">
                     <div class="mb-2"><strong>Txn #</strong><div>#${transaction.idtransaction}</div></div>
                     <div class="mb-2"><strong>Counter</strong><div>${transaction.counterNumber || '&mdash;'}</div></div>
-                    <div class="mb-2"><strong>Time</strong><div>${transaction.transaction_time || '&mdash;'}</div></div>
+                    <div class="mb-2"><strong>Time</strong><div>${formatDateTime12(transaction.transaction_time) || '&mdash;'}</div></div>
                     ${transaction.notes ? `<div class="mb-2"><strong>Notes</strong><div>${transaction.notes}</div></div>` : ''}
                 </div>
             </div>
