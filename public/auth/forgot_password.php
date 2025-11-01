@@ -53,32 +53,45 @@ $int_second = rand(1, 50);
 
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
-    <!-- <script src="./../asset/js/authenticate.js"></script> -->
+    <script>
+        const endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : 'http://127.0.0.1:5000'); ?>";
+    </script>
     <script>
         let captcha_correct = <?php echo ($int_first + $int_second)?>;
         console.log(captcha_correct);
         // Exclusively for forgot password
         function forgot_password(username) {
             let data = {
-                username: username,
-                method: 'forgot-password'
+                username: username
             };
             const form = $('#frmForgotPassword');
             message_info(form, 'Processing...');
+            if (!(endpointHost && endpointHost.length > 0)) {
+                message_error(form, 'Service unavailable');
+                return;
+            }
             $.ajax({
-                url: './../api/api_endpoint.php',
+                url: endpointHost.replace(/\/$/, '') + '/api/forgot_password',
                 type: 'POST',
                 data: JSON.stringify(data),
+                contentType: 'application/json',
+                dataType: 'json',
+                xhrFields: { withCredentials: true },
                 success: function(response) {
                     if (response.status === 'success') {
-                        message_success(form, response.message);
+                        message_success(form, response.message || 'If the account exists, password reset instructions have been sent.');
                         setTimeout(() => {
                             window.location.href = "login.php";
                         }, 2000);
                     } else {
-                        message_error(form, response.message);
+                        message_error(form, response.message || 'Request failed');
                     }
                 },
+                error: function(xhr) {
+                    let msg = 'Request failed';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                    message_error(form, msg);
+                }
             });
         }
 
