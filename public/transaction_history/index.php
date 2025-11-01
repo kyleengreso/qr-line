@@ -151,14 +151,6 @@ $email = isset($token->email) ? $token->email : null;
                         </div>
                     </div>
 
-                    <!-- Error banner (hidden by default) -->
-                    <div id="transactionsError" class="alert alert-danger d-none mb-3" role="alert" aria-live="polite">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <span class="msg">Failed to load transactions. Try again.</span>
-                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="transactionsRetry">Retry</button>
-                    </div>
-
-                    <div id="transactionsContentWrapper">
                     <!-- table -->
                     <div class="table-responsive">
                         <table class="table table-hover table-sm align-middle transactions-table" id="table-transactions-history">
@@ -193,7 +185,6 @@ $email = isset($token->email) ? $token->email : null;
                     <nav aria-label="">
                         <ul class="pagination justify-content-center mt-3 mb-0" id="transactionsPagination"></ul>
                     </nav>
-                    </div>
                 </div>
             </div>
         </div>
@@ -291,15 +282,6 @@ $email = isset($token->email) ? $token->email : null;
         });
     }
     function getTransactionHistory() {
-    // manage error banner/content visibility and disable buttons to avoid duplicate loads
-    const retryBtn = document.getElementById('transactionsRetry');
-    const refreshBtn = document.getElementById('btnRefreshTransactions');
-    function clearTxnError(){ const err = document.getElementById('transactionsError'); const wrap = document.getElementById('transactionsContentWrapper'); if (err) err.classList.add('d-none'); if (wrap) wrap.classList.remove('d-none'); }
-    function showTxnError(message){ const err = document.getElementById('transactionsError'); const wrap = document.getElementById('transactionsContentWrapper'); if (err){ const span = err.querySelector('.msg'); if (span) span.textContent = message || 'Failed to load transactions. Try again.'; err.classList.remove('d-none'); } if (wrap) wrap.classList.add('d-none'); }
-
-    if (retryBtn) { retryBtn.disabled = true; retryBtn.classList.add('disabled'); }
-    if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.classList.add('disabled'); }
-    clearTxnError();
     // show loader overlay and disable pagination while loading
     if (transactionsOverlay) transactionsOverlay.classList.remove('d-none');
     else if (transactionsLoader) transactionsLoader.classList.remove('d-none');
@@ -331,8 +313,6 @@ $email = isset($token->email) ? $token->email : null;
                 // clear skeleton / rows
                 const tbody = table_transactions_history.querySelector('tbody');
                 tbody.innerHTML = '';
-
-                clearTxnError();
 
                 if (response.status === 'success') {
                     const transactions = response.transactions || [];
@@ -367,20 +347,7 @@ $email = isset($token->email) ? $token->email : null;
                     }
 
                     // update showing count (best-effort)
-                    (function(){
-                        const el = document.getElementById('showingCount');
-                        if (!el) return;
-                        const len = Array.isArray(transactions) ? transactions.length : 0;
-                        if (len === 0) el.innerText = '0-0';
-                        else el.innerText = `1-${Math.min(paginate, len)}`;
-                    })();
-
-                        // If no rows, render a friendly empty state row
-                        if (transactions.length === 0) {
-                            const trEmpty = document.createElement('tr');
-                            trEmpty.innerHTML = `<td colspan="9" class="text-center text-muted py-4">No transactions found</td>`;
-                            tbody.appendChild(trEmpty);
-                        }
+                    document.getElementById('showingCount').innerText = `1-${Math.min(paginate, transactions.length)}`;
 
                         // render rows (compact markup, improved ARIA)
                     transactions.forEach((transaction) => {
@@ -490,40 +457,17 @@ $email = isset($token->email) ? $token->email : null;
                 // hide loader/overlay
                 if (transactionsOverlay) transactionsOverlay.classList.add('d-none');
                 else if (transactionsLoader) transactionsLoader.classList.add('d-none');
-
-                // Re-enable controls
-                if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
             },
             error: function (xhr, status, err) {
                 // hide loader and show error row
                 if (transactionsOverlay) transactionsOverlay.classList.add('d-none');
                 else if (transactionsLoader) transactionsLoader.classList.add('d-none');
-                // If the API returns 404 for no results, show empty state instead of error
-                try {
-                    if (xhr && xhr.status === 404) {
-                        clearTxnError();
-                        const tbody = table_transactions_history.querySelector('tbody');
-                        if (tbody) {
-                            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No transactions found</td></tr>`;
-                        }
-                        const countEl = document.getElementById('showingCount');
-                        if (countEl) countEl.innerText = '0-0';
-                        const container = document.getElementById('transactionsPagination');
-                        if (container) container.innerHTML = '';
-                        // Re-enable controls
-                        if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                        if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
-                        return;
-                    }
-                } catch (ex) { /* ignore */ }
-                // hide content and show banner for other errors
-                showTxnError('Failed to load transactions. Try again.');
+                const tbody = table_transactions_history.querySelector('tbody');
+                tbody.innerHTML = '';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="9" class="text-center text-danger">Error loading transactions</td>`;
+                tbody.appendChild(tr);
                 console.error('Transaction load error', status, err);
-
-                // Re-enable controls so user can retry
-                if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
             }
         });
     }
@@ -575,10 +519,6 @@ $email = isset($token->email) ? $token->email : null;
             }
         });
     }
-
-    // Retry button for error banner
-    const transactionsRetry = document.getElementById('transactionsRetry');
-    if (transactionsRetry) transactionsRetry.addEventListener('click', function(e){ e.preventDefault(); getTransactionHistory(); });
 
     // Render numeric pagination when totalPages is known
     function renderTransactionsPagination(totalPages, currentPage) {

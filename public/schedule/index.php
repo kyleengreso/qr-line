@@ -1,16 +1,18 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
+// `base.php` already normalizes the token into $token (stdClass) if cookie exists
+// Access defensively to avoid PHP notices when some claims are missing
+if (!isset($token) || !$token) {
+    $token = null;
+}
 
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
+$id = isset($token->id) ? $token->id : null;
+$username = isset($token->username) ? $token->username : null;
+// Prefer role from token, fallback to role_type cookie set during authentication
+$role_type = isset($token->role_type) ? $token->role_type : (isset($_COOKIE['role_type']) ? $_COOKIE['role_type'] : null);
+$email = isset($token->email) ? $token->email : null;
+$counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
 ?>
 
 <!DOCTYPE html>
@@ -238,6 +240,19 @@ $counterNumber = $token->counterNumber;
                 },
                 error: function(xhr, status, error) {
                     console.error("AJAX Error:", status, error);
+                    // If no schedule is found yet (404), populate sensible defaults to keep UI usable
+                    if (xhr && xhr.status === 404) {
+                        document.getElementById('schedule_requester_enable').checked = true;
+                        document.getElementById('schedule_requester_time_start').value = '08:00';
+                        document.getElementById('schedule_requester_time_end').value = '17:00';
+
+                        // Default business days Mon-Fri
+                        const all = ['sun','mon','tue','wed','thu','fri','sat'];
+                        all.forEach(id => {
+                            const cb = document.getElementById(id);
+                            if (cb) cb.checked = ['mon','tue','wed','thu','fri'].includes(id);
+                        });
+                    }
                 }
             });
         }
@@ -265,6 +280,11 @@ $counterNumber = $token->counterNumber;
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error (transaction_limiter):', status, error);
+                    // If not found (404), set sensible defaults
+                    if (xhr && xhr.status === 404) {
+                        document.getElementById('transaction_limit').value = 10;
+                        document.getElementById('transaction_limit_enable').checked = false;
+                    }
                 }
             });
         }

@@ -126,14 +126,7 @@ if ($resp) {
                         </div>
                     </div>
 
-                    <!-- Error banner (hidden by default) -->
-                    <div id="employeesError" class="alert alert-danger d-none mb-3" role="alert" aria-live="polite">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <span class="msg">Failed to load employees. Try again.</span>
-                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="employeesRetry">Retry</button>
-                    </div>
-
-                    <div class="table-responsive" id="employeesTableWrapper">
+                    <div class="table-responsive">
                         <table class="table table-hover table-sm align-middle transactions-table" id="table-employees">
                             <thead class="table-light">
                                 <tr>
@@ -501,27 +494,7 @@ if ($resp) {
             };
         }
 
-        function clearEmployeesError() {
-            const err = document.getElementById('employeesError');
-            const wrapper = document.getElementById('employeesTableWrapper');
-            if (err) err.classList.add('d-none');
-            if (wrapper) wrapper.classList.remove('d-none');
-        }
-
-        function showEmployeesError(message) {
-            const err = document.getElementById('employeesError');
-            const wrapper = document.getElementById('employeesTableWrapper');
-            if (err) {
-                const msgSpan = err.querySelector('.msg');
-                if (msgSpan) msgSpan.textContent = message || 'Failed to load employees. Try again.';
-                err.classList.remove('d-none');
-            }
-            if (wrapper) wrapper.classList.add('d-none');
-        }
-
         function showEmployeesLoading() {
-            // Ensure the table is visible when loading
-            clearEmployeesError();
             // Prefer injecting a loading row into the table body when present
             const tbody = document.querySelector('#table-employees tbody');
             if (tbody) {
@@ -651,12 +624,6 @@ if ($resp) {
             // but do not abort if it's missing.
             const employeesList = document.getElementById('employeesList');
 
-            // Disable Retry/Refresh while a request is in-flight to avoid double loads
-            const retryBtn = document.getElementById('employeesRetry');
-            const refreshBtn = document.getElementById('btnRefreshEmployees');
-            if (retryBtn) { retryBtn.disabled = true; retryBtn.classList.add('disabled'); }
-            if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.classList.add('disabled'); }
-
             // show spinner
             showEmployeesLoading();
 
@@ -688,9 +655,6 @@ if ($resp) {
                     // prefer rendering into the table body if present
                     const tbody = document.querySelector('#table-employees tbody');
                     if (tbody) tbody.innerHTML = '';
-
-                    // Ensure table is visible and error banner hidden
-                    clearEmployeesError();
 
                     if (response.status === 'success') {
                         // Flask returns list under `data` for list responses
@@ -769,10 +733,6 @@ if ($resp) {
                         else if (employeesList) employeesList.insertAdjacentHTML('beforeend', `<div class="col-12"><div class="card"><div class="card-body fw-bold text-center">No employees assigned</div></div></div>`);
                         try { syncAboutCardHeight(); } catch (e) {}
                     }
-
-                    // Re-enable Retry/Refresh buttons after successful load
-                    if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
                 },
                 error: function (xhr, status, error) {
                     console.error('Employees load error', status, error, xhr && xhr.responseText);
@@ -815,31 +775,23 @@ if ($resp) {
                         handled = true;
                     }
 
-                    // 400 with other message -> bad request (hide table and show banner)
+                    // 400 with other message -> bad request
                     if (!handled && xhr && xhr.status === 400) {
-                        showEmployeesError('Bad request. Check filters and try again.');
+                        const tbody = document.querySelector('#table-employees tbody');
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="alert alert-warning">Bad request. Check filters and try again.</div></td></tr>`;
+                        else if (employeesList) employeesList.innerHTML = `<div class="col-12"><div class="alert alert-warning">Bad request. Check filters and try again.</div></div>`;
                         handled = true;
-                    }
-
-                    // Network/offline detection
-                    if (!handled && (status === 'error' || status === 'timeout')) {
-                        if (navigator && navigator.onLine === false) {
-                            showEmployeesError('No internet connection. Please check your network and try again.');
-                            handled = true;
-                        }
                     }
 
                     // fallback
                     if (!handled) {
-                        showEmployeesError('Failed to load employees. Try again.');
+                        const tbody = document.querySelector('#table-employees tbody');
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="alert alert-danger">Failed to load employees. Try again.</div></td></tr>`;
+                        else if (employeesList) employeesList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Failed to load employees. Try again.</div></div>`;
                     }
 
                     // ensure About card height is updated
                     try { syncAboutCardHeight(); } catch (e) {}
-
-                    // Re-enable Retry/Refresh buttons so the user can try again
-                    if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
                 }
             });
         }
@@ -1293,24 +1245,6 @@ if ($resp) {
                 }
             });
         });
-
-        // Retry button on error banner
-        const employeesRetry = document.getElementById('employeesRetry');
-        if (employeesRetry) {
-            employeesRetry.addEventListener('click', function(e){
-                e.preventDefault();
-                loadEmployees();
-            });
-        }
-
-        // Hook up Refresh button in toolbar
-        const btnRefreshEmployees = document.getElementById('btnRefreshEmployees');
-        if (btnRefreshEmployees) {
-            btnRefreshEmployees.addEventListener('click', function(e){
-                e.preventDefault();
-                loadEmployees();
-            });
-        }
 
         // Delegated click handler for dynamic pagination links
         const employeesPagination = document.getElementById('employeesPagination');

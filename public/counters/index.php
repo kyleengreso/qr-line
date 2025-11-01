@@ -171,14 +171,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             <button id="btnRefreshCounters" class="btn btn-primary btn-sm">Refresh</button>
                         </div>
                     </div>
-                    <!-- Error banner (hidden by default) -->
-                    <div id="countersError" class="alert alert-danger d-none mb-3" role="alert" aria-live="polite">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <span class="msg">Failed to load counters. Try again.</span>
-                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="countersRetry">Retry</button>
-                    </div>
-
-                    <div id="countersContentWrapper">
                     <div id="cards-counters-registered" class="w-100">
                         <!-- Modern table layout for counters (client-side JS will populate tbody) -->
                         <div class="table-responsive">
@@ -222,7 +214,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             </table>
                         </div>
                         <div id="countersOverlay" class="d-none loader-overlay"><div><div class="spinner-border text-primary" role="status" aria-hidden="true"></div><div class="small text-muted mt-2">Loading...</div></div></div>
-                    </div>
                     </div>
                     <nav aria-label="">
                         <ul class="pagination justify-content-center" id="countersPagination"></ul>
@@ -490,36 +481,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
         console.warn('loadUpdateAvailableEmployees placeholder invoked');
     };
 
-        function clearCountersError() {
-            const err = document.getElementById('countersError');
-            const wrap = document.getElementById('countersContentWrapper');
-            if (err) err.classList.add('d-none');
-            if (wrap) wrap.classList.remove('d-none');
-        }
-
-        function showCountersError(message) {
-            const err = document.getElementById('countersError');
-            const wrap = document.getElementById('countersContentWrapper');
-            if (err) {
-                const msgSpan = err.querySelector('.msg');
-                if (msgSpan) msgSpan.textContent = message || 'Failed to load counters. Try again.';
-                err.classList.remove('d-none');
-            }
-            if (wrap) wrap.classList.add('d-none');
-        }
-
         function loadCounters() {
             let container = document.getElementById('cards-counters-registered');
                 if (container) {
-                // disable retry/refresh to avoid duplicate requests
-                const retryBtn = document.getElementById('countersRetry');
-                const refreshBtn = document.getElementById('btnRefreshCounters');
-                if (retryBtn) { retryBtn.disabled = true; retryBtn.classList.add('disabled'); }
-                if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.classList.add('disabled'); }
-
-                // clear any previous error banner and show content wrapper
-                clearCountersError();
-
                 const paramsObj = {
                     counters: true,
                     page: counter_page,
@@ -545,8 +509,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         success: function(response) {
                             // render as cards
                             try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
-                            // ensure content is visible and error banner hidden
-                            clearCountersError();
                             if (response.status === 'success') {
                                 const counters = response.counters || [];
                                 // keep last result for client-side export/inspection
@@ -616,16 +578,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                     </div>
                                 `;
                             }
-
-                            // Re-enable buttons after successful load
-                            if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                            if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
                         },
                         error: function(xhr, status, err) {
                             try {
                                 // treat 404 as empty result (no counters found)
                                 if (xhr && xhr.status === 404) {
-                                    clearCountersError();
                                     container.innerHTML = `
                                         <div class="col-12 d-flex justify-content-center">
                                             <div class="card text-center" style="max-width:420px;">
@@ -639,18 +596,12 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                         </div>
                                     `;
                                     const pg = document.getElementById('countersPagination'); if (pg) pg.innerHTML = '';
-                                    // Re-enable buttons
-                                    if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                                    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
                                     return;
                                 }
                             } catch (ex) { console.error(ex); }
-                            // generic error: hide content and show banner
-                            showCountersError('Failed to load counters. Try again.');
+                            // generic error UI
+                            try { container.innerHTML = `<div class="col-12 d-flex justify-content-center"><div class="text-danger">Error loading counters — <button class="btn btn-sm btn-secondary" onclick="loadCounters();">Retry</button></div></div>`; } catch (ex) { console.error(ex); }
                             console.error('Load counters failed', status, err, xhr && xhr.responseText);
-                            // Re-enable buttons so user can retry
-                            if (retryBtn) { retryBtn.disabled = false; retryBtn.classList.remove('disabled'); }
-                            if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('disabled'); }
                         }
                 })
             }
@@ -1224,7 +1175,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     crossDomain: true,
                     success: function(response) {
                         try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
-                        clearCountersError();
 
                         if (response.status === 'success' && (response.counters && response.counters.length >= 0)) {
                             const counters = response.counters || [];
@@ -1284,9 +1234,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 return;
                             }
                         } catch (ex) { console.error(ex); }
-                        // Hide content and show error banner for generic failures
-                        showCountersError('Failed to load counters. Try again.');
-                        try { container.innerHTML = ''; } catch(ex){}
+                        try { container.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error loading counters — <button class="btn btn-sm btn-secondary" onclick="loadCounters();">Retry</button></td></tr>`; } catch(ex){}
                         console.error('Load counters failed', status, err, xhr && xhr.responseText);
                     }
                 });
@@ -1810,13 +1758,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
 
     const btnRefreshCounters = document.getElementById('btnRefreshCounters');
     if (btnRefreshCounters) btnRefreshCounters.addEventListener('click', function(e) {
-        e.preventDefault();
-        loadCounters();
-    });
-
-    // Retry button on counters error banner
-    const countersRetry = document.getElementById('countersRetry');
-    if (countersRetry) countersRetry.addEventListener('click', function(e) {
         e.preventDefault();
         loadCounters();
     });
