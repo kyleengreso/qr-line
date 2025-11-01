@@ -182,6 +182,11 @@ if ($schedule) {
                     </div>
                 </div>
 
+                <p class="text-muted small mb-2">
+                    Need priority service? If you're a senior citizen, PWD, pregnant, or with an infant, please use the
+                    <a href="./requester_form_priority.php" class="text-decoration-none fw-semibold">Priority Form</a>.
+                </p>
+
                 <button type="submit" class="btn btn-primary w-100">Next</button>
             </form>
             <?php else :?>

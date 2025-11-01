@@ -90,6 +90,11 @@ foreach ($everyday as $day) {
                     </div>
                 </div>
 
+                <p class="text-muted small mb-2">
+                    Not a priority customer? Please use the
+                    <a href="./requester_form.php" class="text-decoration-none fw-semibold">Standard Form</a>.
+                </p>
+
                 <button type="submit" class="btn btn-primary w-100">Next</button>
             </form>
             <?php else :?>
