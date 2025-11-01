@@ -1,5 +1,6 @@
 <?php
 include "./../base.php";
+@include_once __DIR__ . '/../includes/config.php';
 
 $sql_cmd = "SELECT * FROM scheduler WHERE schedule_key = 'requester_form'";
 $stmt = $conn->prepare($sql_cmd);
@@ -115,28 +116,58 @@ foreach ($everyday as $day) {
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
+        // Flask endpoint host from PHP config
+        var endpointHost = "<?php echo isset($endpoint_host) ? $endpoint_host : (isset($endpoint_server) ? $endpoint_server : ''); ?>";
         function sumbitUserForm(user) {
             var form = $('#frmUserForm');
             message_info(form, 'Processing...');
+            // Try Flask first
+            if (endpointHost && endpointHost.length > 0) {
+                $.ajax({
+                    url: endpointHost.replace(/\/$/, '') + '/api/requester',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(user),
+                    xhrFields: { withCredentials: true },
+                    success: function(response) {
+                        if (response && response.status === 'success') {
+                            message_success(form, response.message || 'Success');
+                            localStorage.setItem('requester_token', response.token_number);
+                            var requester_token = localStorage.getItem('requester_token');
+                            setTimeout(function() {
+                                window.location.href = "./requester_number_priority.php?requester_token=" + requester_token;
+                            }, 800);
+                            return;
+                        }
+                        fallbackSubmit(user, form);
+                    },
+                    error: function() { fallbackSubmit(user, form); }
+                });
+            } else {
+                fallbackSubmit(user, form);
+            }
+        }
+
+        function fallbackSubmit(user, form) {
+            var legacy = Object.assign({ method: 'requester_form' }, user);
             $.ajax({
                 url: '/public/api/api_endpoint.php',
                 type: 'POST',
-                data: JSON.stringify(user),
+                data: JSON.stringify(legacy),
                 success: function(response) {
-                    console.log(response.data);
-                    if (response.status === 'success') {
-                        message_success(form, response.message);
+                    if (response && response.status === 'success') {
+                        message_success(form, response.message || 'Success');
                         localStorage.setItem('requester_token', response.token_number);
                         var requester_token = localStorage.getItem('requester_token');
                         setTimeout(function() {
-                            window.location.href = "./requester_number_pwd.php?requester_token=" + requester_token;
-                        }, 1000);
+                            window.location.href = "./requester_number_priority.php?requester_token=" + requester_token;
+                        }, 800);
                     } else {
-                        message_error(form, response.message);
+                        message_error(form, (response && response.message) || 'Submission failed');
                     }
                 },
                 error: function() {
-                    $('#user_number').text('0');
+                    message_error(form, 'Network error. Please try again.');
                 }
             });
         }
@@ -167,12 +198,11 @@ foreach ($everyday as $day) {
                 return;
             }
             var user = {
-                method : "requester_form",
                 name: $('#name').val(),
                 email: $('#email').val(),
                 payment: payment,
                 priority: priority,
-                website: `${realHost}/public/requester/requester_number.php`
+                website: `${realHost}/public/requester/requester_number_priority.php`
             };
             console.log(user);
             sumbitUserForm(user);
