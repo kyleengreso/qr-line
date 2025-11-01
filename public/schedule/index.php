@@ -177,14 +177,19 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
     <?php include_once "./../includes/footer.php"; ?>
     <script src="./../asset/js/message.js"></script>
     <script>
+        const endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
+    </script>
+    <script>
         let frmScheduleRequesterForm = document.getElementById('frmScheduleRequesterForm');
         let frmTransactionLimitForm = document.getElementById('frmTransactionLimitForm');
 
         // Load the current schedule settings
         function load_schedule_requester_form() {
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
             $.ajax({
-                url: '/public/api/api_endpoint.php?schedule-requester_form',
+                url: endpointHost.replace(/\/$/, '') + '/api/schedule/requester_form',
                 type: 'GET',
+                xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log("Response GET:", response);
                     if (response.status === 'success') {
@@ -262,18 +267,25 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
         
         // Load transaction limiter settings and populate the form
         function load_transaction_limiter() {
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
             $.ajax({
-                url: '/public/api/api_endpoint.php?transaction_limiter',
+                url: endpointHost.replace(/\/$/, '') + '/api/transaction_limiter',
                 type: 'GET',
+                xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log('Transaction limiter GET:', response);
-                    if (response.status === 'success') {
-                        const data = response.data || {};
+                    if (response && response.status === 'success') {
+                        const data = (response && response.data) || {};
                         // If a numeric value exists, populate the input
-                        const limit = (typeof data.setup_value_int !== 'undefined' && data.setup_value_int !== null) ? data.setup_value_int : document.getElementById('transaction_limit').value;
+                        const limit = (typeof data.transaction_limit !== 'undefined' && data.transaction_limit !== null)
+                            ? data.transaction_limit
+                            : document.getElementById('transaction_limit').value;
                         document.getElementById('transaction_limit').value = limit;
                         // If the record exists, enable the checkbox. If not, leave as unchecked.
-                        document.getElementById('transaction_limit_enable').checked = (typeof data.setup_value_int !== 'undefined' && data.setup_value_int !== null);
+                        const enable = (typeof data.transaction_limit_enable !== 'undefined' && data.transaction_limit_enable !== null)
+                            ? (parseInt(data.transaction_limit_enable, 10) !== 0)
+                            : false;
+                        document.getElementById('transaction_limit_enable').checked = enable;
                     } else {
                         console.error('Transaction limiter:', response.message);
                     }
@@ -290,11 +302,11 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
         }
 
         // Submit handler for transaction limit form
-        if (frmTransactionLimitForm) {
+    if (frmTransactionLimitForm) {
             frmTransactionLimitForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 let formData = new FormData(this);
-                let transaction_limit_enable = formData.get('transaction_limit_enable') ? formData.get('transaction_limit_enable') : 0;
+        let transaction_limit_enable = formData.get('transaction_limit_enable') ? 1 : 0;
                 let transaction_limit = formData.get('transaction_limit') || 0;
 
                 console.log('Transaction Limit Form Data:', { transaction_limit_enable, transaction_limit });
@@ -302,16 +314,19 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                 let notify = document.getElementById('notify-transaction-limit');
                 let notify_message = document.getElementById('notify-transaction-limit-message');
 
+                if (!(endpointHost && endpointHost.length > 0)) { return; }
                 $.ajax({
-                    url: './../api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/api/transaction_limiter',
                     type: 'POST',
+                    contentType: 'application/json',
                     data: JSON.stringify({
                         transaction_limit: parseInt(transaction_limit, 10),
-                        method: 'transaction_limiter'
+                        transaction_limit_enable: transaction_limit_enable
                     }),
+                    xhrFields: { withCredentials: true },
                     success: function(response) {
                         notify.classList.remove('alert-success', 'alert-danger', 'alert-info');
-                        if (response.status === 'success') {
+                        if (response && response.status === 'success') {
                             notify.classList.add('alert-success');
                             notify_message.innerHTML = response.message;
                             notify.classList.remove('d-none');
@@ -320,7 +335,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                             }, 1200);
                         } else {
                             notify.classList.add('alert-danger');
-                            notify_message.innerHTML = response.message;
+                            notify_message.innerHTML = response && response.message ? response.message : 'Failed to update';
                             notify.classList.remove('d-none');
                             setTimeout(() => {
                                 notify.classList.add('d-none');
@@ -354,21 +369,23 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
             let notify_scheduler_requester = document.getElementById('notify-scheduler-requester');
             let notify_scheduler_requester_message = document.getElementById('notify-scheduler-requester-message');
             
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
             $.ajax({
-                url: './../api/api_endpoint.php',
-                type: 'POST',
+                url: endpointHost.replace(/\/$/, '') + '/api/schedule/requester_form',
+                type: 'PUT',
+                contentType: 'application/json',
                 data: JSON.stringify({
                     enable: schedule_requester_enable,
                     time_start: schedule_requester_time_start,
                     time_end: schedule_requester_time_end,
                     repeat: 'daily',
-                    everyday: days,
-                    method: 'schedule-update-requester_form'
+                    everyday: days
                 }),
+                xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log("Response:" + response);
                     notify_scheduler_requester.classList.remove('alert-success', 'alert-danger', 'alert-info');
-                    if (response.status === 'success') {
+                    if (response && response.status === 'success') {
                         notify_scheduler_requester.classList.add('alert-success');
                         notify_scheduler_requester_message.innerHTML = response.message;
                         notify_scheduler_requester.classList.remove('d-none');
@@ -379,7 +396,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                         }, 2000);
                     } else {
                         notify_scheduler_requester.classList.add('alert-danger');
-                        notify_scheduler_requester_message.innerHTML = response.message;
+                        notify_scheduler_requester_message.innerHTML = response && response.message ? response.message : 'Failed to update';
                         notify_scheduler_requester.classList.remove('d-none');
                         // message_error(frmScheduleRequesterForm, response.message);
                         setTimeout(() => {

@@ -213,48 +213,21 @@ if ($schedule) {
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
-        // Read configured Flask endpoint host from PHP (supports $endpoint_host or $endpoint_server)
-        var endpointHost = "<?php echo isset($endpoint_host) ? $endpoint_host : (isset($endpoint_server) ? $endpoint_server : ''); ?>";
+        var endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
         function sumbitUserForm(user) {
             var form = $('#frmUserForm');
             message_info(form, 'Processing...');
-            // Try Flask API first; if it fails, fall back to PHP endpoint
-            if (endpointHost && endpointHost.length > 0) {
-                $.ajax({
-                    url: endpointHost.replace(/\/$/, '') + '/api/requester',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(user),
-                    xhrFields: { withCredentials: true },
-                    success: function(response) {
-                        if (response && response.status === 'success') {
-                            message_success(form, response.message || 'Success');
-                            localStorage.setItem('requester_token', response.token_number);
-                            var requester_token = localStorage.getItem('requester_token');
-                            setTimeout(function() {
-                                window.location.href = "./requester_number.php?requester_token=" + requester_token;
-                            }, 800);
-                            return;
-                        }
-                        // If unexpected response, attempt fallback
-                        fallbackSubmit(user, form);
-                    },
-                    error: function() {
-                        fallbackSubmit(user, form);
-                    }
-                });
-            } else {
-                fallbackSubmit(user, form);
+            // ONLY use Flask API via endpointHost; no PHP fallback
+            if (!(endpointHost && endpointHost.length > 0)) {
+                message_error(form, 'Service is unavailable. Please try again later.');
+                return;
             }
-        }
-
-        function fallbackSubmit(user, form) {
-            // Legacy PHP endpoint contract expects a 'method' flag
-            var legacy = Object.assign({ method: 'requester_form' }, user);
             $.ajax({
-                url: '/public/api/api_endpoint.php',
+                url: endpointHost.replace(/\/$/, '') + '/api/requester',
                 type: 'POST',
-                data: JSON.stringify(legacy),
+                contentType: 'application/json',
+                data: JSON.stringify(user),
+                xhrFields: { withCredentials: true },
                 success: function(response) {
                     if (response && response.status === 'success') {
                         message_success(form, response.message || 'Success');
@@ -272,6 +245,8 @@ if ($schedule) {
                 }
             });
         }
+
+        // Note: PHP fallback removed intentionally for local-only Flask integration
 
         var payment = null;
         var student = null;

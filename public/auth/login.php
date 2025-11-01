@@ -61,6 +61,9 @@ restrictCheckLoggedIn();
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
+        const endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
+    </script>
+    <script>
         $(document).ready(function() {
             function auth_success(message) {
                 $form = $('#frmLogIn');
@@ -108,8 +111,11 @@ restrictCheckLoggedIn();
                     }
                 }
 
+                if (!(endpointHost && endpointHost.length > 0)) {
+                    return auth_error('Authentication service unavailable');
+                }
                 $.ajax({
-                    url: 'http://127.0.0.1:5000/api/login',
+                    url: endpointHost.replace(/\/$/, '') + '/api/login',
                     type: 'POST',
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -230,20 +236,29 @@ restrictCheckLoggedIn();
                     method: 'register'
                 };
 
+                if (!(endpointHost && endpointHost.length > 0)) {
+                    return register_error('Registration service unavailable');
+                }
                 $.ajax({
-                    url: './../api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/api/register',
                     type: 'POST',
-                    data: JSON.stringify(data),
+                    data: JSON.stringify({ username: username, password: password, email: email }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    xhrFields: { withCredentials: true },
                     success: function(response) {
                         if (response.status === 'success') {
                             register_success(response.message);
-                            setTimeout(function() {
-                                window.location.href = "./login.php";
-                            }, 1000);
+                            setTimeout(function() { window.location.href = "./login.php"; }, 1000);
                         } else {
-                            register_error(response.message);
+                            register_error(response.message || 'Registration failed');
                         }
                     },
+                    error: function(xhr) {
+                        let msg = 'Registration failed';
+                        if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                        register_error(msg);
+                    }
                 })
             }
 

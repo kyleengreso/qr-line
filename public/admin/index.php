@@ -293,8 +293,7 @@ $username = isset($token->username) ? $token->username : null;
 
     <?php after_js()?>
     <script>
-        // Prefer PHP-configured endpoint host for Flask API if available
-    var endpointHost = "<?php echo isset($endpoint_host) ? $endpoint_host : (isset($endpoint_server) ? $endpoint_server : ''); ?>";
+    var endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
     var currentUsername = "<?php echo isset($username) ? htmlentities($username) : ''; ?>";
         var page_counter = 1;
         var page_transaction = 1;
@@ -349,21 +348,21 @@ $username = isset($token->username) ? $token->username : null;
                 page: page_counter,
                 paginate: paginate,
             });
+            if (!(endpointHost && endpointHost.length > 0)) {
+                console.warn('Counters service unavailable: endpointHost not set');
+                return;
+            }
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params.toString(),
                 type: 'GET',
-                success: function(response) {
-                    displayCounters(response);
-                },
-                error: function(response) {
-                    console.log(response);
-                }
+                xhrFields: { withCredentials: true },
+                success: function(response) { displayCounters(response); },
+                error: function(err) { console.error('Counters fetch failed', err); }
             });
         }
 
         function getTransactions() {
             let params = new URLSearchParams({
-                transactions: true,
                 today: true,
                 desc: true,
                 page: page_transaction,
@@ -371,14 +370,16 @@ $username = isset($token->username) ? $token->username : null;
                 email: transaction_corporate,
                 payment: transaction_payment,
             });
-            console.log(params.toString());
+            if (!(endpointHost && endpointHost.length > 0)) {
+                console.warn('Transactions service unavailable: endpointHost not set');
+                return;
+            }
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/transactions?' + params.toString(),
                 type: 'GET',
-                success: function(response) {
-                    displayTransactions(response);
-                },
-
+                xhrFields: { withCredentials: true },
+                success: function(response) { displayTransactions(response); },
+                error: function(err) { console.error('Transactions fetch failed', err); }
             });
         }
 
@@ -476,54 +477,44 @@ $username = isset($token->username) ? $token->username : null;
                     generateReportNotify.classList.add('d-none');
                 }, 5000);
             } else {
-                if (endpointHost && endpointHost.length > 0) {
-                    var pdfUrl = endpointHost.replace(/\/$/, '') + '/api/report/monthly?year=' + year + '&month=' + month;
-                    if (currentUsername && currentUsername.length > 0) {
-                        pdfUrl += '&user=' + encodeURIComponent(currentUsername);
-                    }
-                    window.open(pdfUrl, '_blank');
-                } else {
-                    var url = './../api/api_endpoint.php?generate-report&year=' + year + '&month=' + month;
-                    window.open(url, '_blank');
+                if (!(endpointHost && endpointHost.length > 0)) {
+                    generateReportNotify.classList.remove('d-none');
+                    generateReportNotify.innerHTML = '<span>Report service unavailable. Please try again later.</span>';
+                    setTimeout(() => { generateReportNotify.classList.add('d-none'); }, 5000);
+                    return;
                 }
+                var pdfUrl = endpointHost.replace(/\/$/, '') + '/api/report/monthly?year=' + year + '&month=' + month;
+                if (currentUsername && currentUsername.length > 0) {
+                    pdfUrl += '&user=' + encodeURIComponent(currentUsername);
+                }
+                window.open(pdfUrl, '_blank');
             }
 
         });
 
         // Monitor transaction
         function rtTransaction() {
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
             $.ajax({
-                url: '/public/api/api_endpoint.php?transactions_counter',
+                url: endpointHost.replace(/\/$/, '') + '/api/dashboard/admin',
                 type: 'GET',
+                xhrFields: { withCredentials: true },
                 success: function(response) {
-                    let stat = response.data;
-                    // console.log(stat);
-                    // console.log("HERE!");
-                    if (response.status === 'success') {
-
-                        $('#transactions-today').text(stat.transaction_today_total ? stat.transaction_today_total : 0);
-                        $('#transactions-pending').text(stat.transaction_today_pending ? stat.transaction_today_pending : 0);
-                        $('#transactions-completed').text(stat.transaction_today_completed ? stat.transaction_today_completed : 0);
-                        $('#transactions-cancelled').text(stat.transaction_today_cancelled ? stat.transaction_today_cancelled : 0);
-
-                        // Student Transactions Today
-                        $('#transactions-student-today').text(stat.transaction_student_today_total ? stat.transaction_student_today_total : 0);
-
-                        // Transaction Total
-                        $('#transactions-total').text(stat.transaction_total ? stat.transaction_total : 'N/A');
-                        
-                        // Transactions for yesterday ... year
-                        $('#transactions-yesterday').text(stat.transaction_yesterday_total ? stat.transaction_yesterday_total : 0);
-                        $('#transactions-week').text(stat.transaction_week_total ? stat.transaction_week_total : 0);
-                        $('#transactions-month').text(stat.transaction_month_total ? stat.transaction_month_total : 0);
-                        $('#transactions-year').text(stat.transaction_year_total ? stat.transaction_year_total : 0);
-                    } else {
-                        // Reserved
+                    let stat = (response && response.data) ? response.data : {};
+                    if (response && response.status === 'success') {
+                        $('#transactions-today').text(stat.transaction_today_total ?? 0);
+                        $('#transactions-pending').text(stat.transaction_today_pending ?? 0);
+                        $('#transactions-completed').text(stat.transaction_today_completed ?? 0);
+                        $('#transactions-cancelled').text(stat.transaction_today_cancelled ?? 0);
+                        $('#transactions-student-today').text(stat.transaction_today_student ?? 0);
+                        $('#transactions-total').text(stat.transaction_total ?? 'N/A');
+                        $('#transactions-yesterday').text(stat.transction_yesterday_total ?? 0);
+                        $('#transactions-week').text(stat.transaction_week_total ?? 0);
+                        $('#transactions-month').text(stat.transaction_month_total ?? 0);
+                        $('#transactions-year').text(stat.transaction_year_total ?? 0);
                     }
                 },
-                error: function(response) {
-                    console.log(response);
-                }
+                error: function(err) { console.error('Dashboard stats fetch failed', err); }
             });
         }
 
@@ -656,56 +647,27 @@ $username = isset($token->username) ? $token->username : null;
         }
         var transaction_stat_data_range = 'day';
         function getTransactionChart() {
-            // Try Flask endpoint (from PHP-configured endpointHost) first; fall back to PHP endpoint on failure
-            let resp = null;
+            // ONLY Flask endpoint via endpointHost; no PHP fallback
+            let resp = { stats: [] };
             let params = new URLSearchParams({ data_range: transaction_stat_data_range });
-
-            if (endpointHost && endpointHost.length > 0) {
-                $.ajax({
-                    url: endpointHost.replace(/\/$/, '') + '/api/transaction_stats?' + params.toString(),
-                    type: 'GET',
-                    async: false,
-                    xhrFields: { withCredentials: true },
-                    success: function(response) {
-                        if (response && response.status === 'success') {
-                            resp = response;
-                        }
-                    },
-                    error: function() {
-                        // Fallback to legacy PHP endpoint
-                        let legacyParams = new URLSearchParams({
-                            transactionStats: true,
-                            data_range: transaction_stat_data_range,
-                        });
-                        $.ajax({
-                            url: '/public/api/api_endpoint.php?' + legacyParams.toString(),
-                            type: 'GET',
-                            async: false,
-                            success: function(response) {
-                                if (response && response.status === 'success') {
-                                    resp = response;
-                                }
-                            }
-                        });
-                    }
-                });
-            } else {
-                // No configured endpointHost -> use legacy PHP endpoint directly
-                let legacyParams = new URLSearchParams({
-                    transactionStats: true,
-                    data_range: transaction_stat_data_range,
-                });
-                $.ajax({
-                    url: '/public/api/api_endpoint.php?' + legacyParams.toString(),
-                    type: 'GET',
-                    async: false,
-                    success: function(response) {
-                        if (response && response.status === 'success') {
-                            resp = response;
-                        }
-                    }
-                });
+            if (!(endpointHost && endpointHost.length > 0)) {
+                console.warn('Transaction stats service unavailable: endpointHost not set');
+                return resp;
             }
+            $.ajax({
+                url: endpointHost.replace(/\/$/, '') + '/api/transaction_stats?' + params.toString(),
+                type: 'GET',
+                async: false,
+                xhrFields: { withCredentials: true },
+                success: function(response) {
+                    if (response && response.status === 'success') {
+                        resp = response;
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load transaction stats');
+                }
+            });
             return resp;
         }
 

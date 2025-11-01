@@ -69,8 +69,7 @@ include './../base.php';
     </div>
     <?php after_js()?>
     <script>
-        // Read configured Flask endpoint host
-        var endpointHost = "<?php echo isset($endpoint_host) ? $endpoint_host : (isset($endpoint_server) ? $endpoint_server : ''); ?>";
+        var endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
         let this_requester_status_alert = document.getElementById("this_requester_status_alert");
         let this_requester_status_info = document.getElementById("this_requester_status_info");
 
@@ -82,27 +81,24 @@ include './../base.php';
                 window.location.href = `${realHost}/public/requester/requester_form.php`;
             }
 
-            // Prefer Flask API
-            if (endpointHost && endpointHost.length > 0) {
-                $.ajax({
-                    url: endpointHost.replace(/\/$/, '') + '/api/requester?token_number=' + encodeURIComponent(token),
-                    type: 'GET',
-                    xhrFields: { withCredentials: true },
-                    success: function(response) {
-                        if (response && response.status === 'success') {
-                            renderRequesterState(response);
-                        } else {
-                            // fallback
-                            legacyFetch(token);
-                        }
-                    },
-                    error: function() {
-                        legacyFetch(token);
-                    }
-                });
-            } else {
-                legacyFetch(token);
+            // ONLY Flask API (no PHP fallback)
+            if (!(endpointHost && endpointHost.length > 0)) {
+                alert('Service unavailable. Please try again later.');
+                return;
             }
+            $.ajax({
+                url: endpointHost.replace(/\/$/, '') + '/api/requester?token_number=' + encodeURIComponent(token),
+                type: 'GET',
+                xhrFields: { withCredentials: true },
+                success: function(response) {
+                    if (response && response.status === 'success') {
+                        renderRequesterState(response);
+                    } else {
+                        alert(response ? (response.message || 'Failed to load status') : 'Failed to load status');
+                    }
+                },
+                error: function() { $('#user_number').text('0'); alert('Network error. Please try again.'); }
+            });
         }
 
         function renderRequesterState(response) {
@@ -149,23 +145,7 @@ include './../base.php';
             $('#currentQueueNumber').text(curQ);
         }
 
-        function legacyFetch(token) {
-            var params = new URLSearchParams({ requester_number: true, requester_token: token });
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    if (response && response.status === 'success') {
-                        renderRequesterState(response);
-                    } else {
-                        alert(response ? response.message : 'Unknown error');
-                    }
-                },
-                error: function() {
-                    $('#user_number').text('0');
-                }
-            });
-        }
+        // PHP fallback removed intentionally
 
         let btnCancelRequest = document.getElementById("btnCancelRequest");
         if (btnCancelRequest) {
@@ -174,67 +154,39 @@ include './../base.php';
                 const token = new URLSearchParams(window.location.search).get('requester_token');
                 console.log(token);
                 var data = { token_number: token };
-                // Try Flask PATCH first
-                if (endpointHost && endpointHost.length > 0) {
-                    $.ajax({
-                        url: endpointHost.replace(/\/$/, '') + '/api/requester',
-                        type: "PATCH",
-                        data: JSON.stringify(data),
-                        contentType: 'application/json; charset=utf-8',
-                        xhrFields: { withCredentials: true },
-                        success: function (response) {
-                            if (response && response.status === 'success') {
-                                try {
-                                    var modalEl = document.getElementById('requestCancelModal');
-                                    var modalInstance = bootstrap.Modal.getInstance(modalEl);
-                                    if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
-                                    modalInstance.hide();
-                                } catch (e) {}
-                                alert(response.message);
-                                fetchYourQuery();
-                                setTimeout(function() { window.location.href = '/public/requester/requester_form.php'; }, 900);
-                            } else {
-                                // fallback
-                                legacyCancel(token);
-                            }
-                        },
-                        error: function () { legacyCancel(token); }
-                    });
-                } else {
-                    legacyCancel(token);
+                // ONLY Flask PATCH (no PHP fallback)
+                if (!(endpointHost && endpointHost.length > 0)) {
+                    alert('Service unavailable. Please try again later.');
+                    return;
                 }
-            });
-        }
-
-        function legacyCancel(token) {
-            var data = { method: "requester-form-cancel", token_number: token };
-            $.ajax({
-                url: '/public/api/api_endpoint.php',
-                type: "POST",
-                data: JSON.stringify(data),
-                contentType: 'application/json; charset=utf-8',
-                dataType: 'json',
-                success: function (response) {
-                    if (response && response.status === 'success') {
-                            // hide modal (bootstrap 5)
-                        try {
-                            var modalEl = document.getElementById('requestCancelModal');
-                            var modalInstance = bootstrap.Modal.getInstance(modalEl);
-                            if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
-                            modalInstance.hide();
-                        } catch (e) {}
-                        alert(response.message);
-                        fetchYourQuery();
-                        setTimeout(function() { window.location.href = '/public/requester/requester_form.php'; }, 900);
-                    } else {
-                        alert(response ? response.message : 'Unknown error');
+                $.ajax({
+                    url: endpointHost.replace(/\/$/, '') + '/api/requester',
+                    type: "PATCH",
+                    data: JSON.stringify(data),
+                    contentType: 'application/json; charset=utf-8',
+                    xhrFields: { withCredentials: true },
+                    success: function (response) {
+                        if (response && response.status === 'success') {
+                            try {
+                                var modalEl = document.getElementById('requestCancelModal');
+                                var modalInstance = bootstrap.Modal.getInstance(modalEl);
+                                if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
+                                modalInstance.hide();
+                            } catch (e) {}
+                            alert(response.message);
+                            fetchYourQuery();
+                            setTimeout(function() { window.location.href = '/public/requester/requester_form.php'; }, 900);
+                        } else {
+                            alert(response ? (response.message || 'Cancellation failed') : 'Cancellation failed');
+                        }
+                    },
+                    error: function () {
+                        alert('Network error. Please try again.');
                     }
-                },
-                error: function () {
-                    alert("An error occurred while cancelling. Please try again.");
-                }
+                });
             });
         }
+        // PHP cancel fallback removed intentionally
         fetchYourQuery();
 
         setInterval(function() {

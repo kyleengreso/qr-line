@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
+@include_once __DIR__ . '/../includes/config.php';
 
 // `base.php` normalizes the token into `$token` (stdClass) when a cookie exists.
 // Use that normalized token if available; read properties defensively to avoid
@@ -222,6 +223,7 @@ $email = isset($token->email) ? $token->email : null;
     <?php after_js()?>
 </body>
 <script>
+    const endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
     let table_transactions_history = document.getElementById("table-transactions-history");
     let searchEmail = document.getElementById("searchEmail");
     let getPaymentType = document.getElementById("getPaymentType");
@@ -301,10 +303,21 @@ $email = isset($token->email) ? $token->email : null;
             date_range: tranasction_date_range,
         });
         console.log(params.toString());
+        if (!(endpointHost && endpointHost.length > 0)) {
+            if (transactionsOverlay) transactionsOverlay.classList.add('d-none');
+            else if (transactionsLoader) transactionsLoader.classList.add('d-none');
+            const tbody = table_transactions_history.querySelector('tbody');
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="9" class="text-center text-danger">Service unavailable</td>`;
+                tbody.innerHTML = '';
+                tbody.appendChild(tr);
+            }
+            return;
+        }
         $.ajax({
-            // Call the Python Flask transactions API (local dev). We request
-            // credentials so the cookie (if any) is sent for auth.
-            url: "http://127.0.0.1:5000/api/transactions?" + params,
+            // Call the Python Flask transactions API via configured host
+            url: endpointHost.replace(/\/$/, '') + '/api/transactions?' + params,
             type: "GET",
             timeout: 10000,
             xhrFields: { withCredentials: true },
