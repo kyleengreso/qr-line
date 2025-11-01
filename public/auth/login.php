@@ -61,7 +61,7 @@ restrictCheckLoggedIn();
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
-        const endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
+        const endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : 'http://127.0.0.1:5000'); ?>";
     </script>
     <script>
         $(document).ready(function() {
@@ -174,7 +174,15 @@ restrictCheckLoggedIn();
                                 setTimeout(function() { window.location.reload(); }, 1000);
                             }
                         } else {
-                            auth_error(response.message);
+                            var msg = '';
+                            try {
+                                msg = (response && typeof response.message === 'string') ? response.message.trim() : '';
+                                if (!msg && response && response.data && typeof response.data.error === 'string') {
+                                    msg = response.data.error.trim();
+                                }
+                            } catch (e) {}
+                            if (!msg) msg = 'Login failed. Please check your username and password.';
+                            auth_error(msg);
                         }
                     },
                     error: function(xhr, textStatus, errorThrown) {
@@ -182,6 +190,13 @@ restrictCheckLoggedIn();
                         console.error('Login request failed', {xhr: xhr, textStatus: textStatus, errorThrown: errorThrown});
 
                         // Try to parse JSON response for a message, fallback to plain text or status
+                        function cleanMsg(m) {
+                            if (!m) return '';
+                            if (typeof m !== 'string') return m;
+                            var t = m.match(/\((?:[^)]*?),\s*'([^']*)'\)/);
+                            if (t && t[1]) return t[1];
+                            return m;
+                        }
                         var msg = 'An unexpected error occurred';
                         try {
                             if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -217,11 +232,16 @@ restrictCheckLoggedIn();
                             // ignore
                         }
 
-                        // Append status code for clarity when available
+                        msg = cleanMsg(msg);
+                        if (!msg || (typeof msg === 'string' && msg.trim().length === 0)) {
+                            if (xhr && xhr.status === 401) msg = 'Invalid username or password.';
+                            else if (xhr && xhr.status === 0) msg = 'Cannot reach authentication server.';
+                            else if (xhr && xhr.status >= 500) msg = 'Server error. Please try again later.';
+                            else msg = 'Request failed. Please try again.';
+                        }
                         if (xhr && xhr.status) {
                             msg = msg + ' (' + xhr.status + ')';
                         }
-
                         auth_error(msg);
                     },
                 });
