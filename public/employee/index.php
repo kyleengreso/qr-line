@@ -3,6 +3,9 @@
 include_once __DIR__ . "/../base.php";
 restrictEmployeeMode();
 
+// Ensure API endpoint host is available
+include_once __DIR__ . "/../includes/config.php";
+
 // Use normalized token payload and guard against missing fields
 $payload = getDecodedTokenPayload();
 $tok = null;
@@ -120,34 +123,24 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
 
-        // API base: prefer same-origin PHP proxy when serving the PHP site (e.g. on port 8080).
-        // If a developer explicitly runs the Flask API on another port and visits that host/port,
-        // point directly to the Flask API. Otherwise use the relative '/api' path so the webserver
-        // (or the lightweight PHP proxy under /public/api) forwards requests to Flask.
         (function() {
-            const host = window.location.hostname;
-            const port = window.location.port;
-
-            // If we're serving from the PHP server (commonly port 8080 in dev), use same-origin proxy.
-            if ((host === '127.0.0.1' || host === 'localhost') && port === '8080') {
-                window.API_BASE = '/api';
-            }
-            // If visiting the Flask server directly (e.g. 127.0.0.1:5000), hit Flask's /api.
-            else if ((host === '127.0.0.1' || host === 'localhost') && (port === '5000' || port === '')) {
-                window.API_BASE = 'http://127.0.0.1:5000/api';
-            }
-            // Default: assume server will route /api to the API backend.
-            else {
-                window.API_BASE = '/api';
-            }
-
-            console.log('Using API base:', window.API_BASE);
+            const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : '';?>";
+            window.API_BASE = endpointHost + '/api';
         })();
+
+        // Ensure browser sends cookies (token) to Flask across origins
+        if (window.jQuery && $.ajaxSetup) {
+            $.ajaxSetup({
+                xhrFields: { withCredentials: true },
+                crossDomain: true
+            });
+        }
     
         function queue_remain_set(queue_remain) {
             $.ajax({
                 url: window.API_BASE + "/cashier",
                 method: "POST",
+                contentType: 'application/json',
                 data: JSON.stringify({
                     method : "counter_queue_remain",
                     counter_number : <?php echo $counterNumber?>,
@@ -219,18 +212,19 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         function fetchTransaction() {
             let resp = null;
             console.log("Priority: ", this_counter_priority);
-            var params = new URLSearchParams({
-                cashier: true,
-                employee_id: <?php echo $id?>
-            });
-            // console.log("Params", params.toString());
             $.ajax({
-                url: window.API_BASE + '/cashier?' + params,
+                url: window.API_BASE + '/cashier',
                 type: 'GET',
+                cache: false,
                 success: function(response) {
                     console.log("RECV:", response);
                     let queue_number = document.getElementById('queue-number');
-                    if (response.status === 'success') {
+                    if (
+                        response.status === 'success' &&
+                        response.data &&
+                        typeof response.data.queue_number !== 'undefined' &&
+                        response.data.queue_number !== null
+                    ) {
                         resp = response;
                         queue_number.innerHTML = response.data.queue_number;
                         console.log(resp);
@@ -257,6 +251,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
             $.ajax({
                 url: window.API_BASE + '/cashier',
                 type: 'POST',
+                contentType: 'application/json',
                 data: JSON.stringify({
                     method: 'cashier-success',
                     idemployee: <?php echo $id?>,
@@ -281,6 +276,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
             $.ajax({
                 url: window.API_BASE + '/cashier',
                 type: 'POST',
+                contentType: 'application/json',
                 data: JSON.stringify({
                     method: 'cashier-missed',
                     idemployee: <?php echo $id?>,
@@ -303,20 +299,12 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         let table_transactions_student = document.getElementById('table-transactions-student');
         let this_employee_id = <?php echo $id?>;
         function fetchStudentTransaction() {
-            const params = new URLSearchParams({
-                transactions: true,
-                employee_id: this_employee_id,
-                students: 1,
-                email: "palawan.edu.ph",
-                desc: true,
-                date_range: 'today'
-            });
-        
             $.ajax({
-                url: window.API_BASE + '/cashier?' + params,
+                url: window.API_BASE + '/dashboard/cashier',
                 type: 'GET',
+                cache: false,
                 success: function(response) {
-                    let transactions = response.transactions;
+                    let transactions = response.data;
                     while (table_transactions_student.rows.length > 1) {
                         table_transactions_student.deleteRow(-1);
                     }
@@ -405,6 +393,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 $.ajax({
                     url: window.API_BASE + '/cashier',
                     type: 'POST',
+                    contentType: 'application/json',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,
@@ -435,6 +424,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 $.ajax({
                     url: window.API_BASE + '/cashier',
                     type: 'POST',
+                    contentType: 'application/json',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,
