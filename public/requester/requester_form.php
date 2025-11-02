@@ -213,7 +213,7 @@ if ($schedule) {
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
-        var endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
+        // endpointHost emitted centrally in base.php
         function sumbitUserForm(user) {
             var form = $('#frmUserForm');
             message_info(form, 'Processing...');

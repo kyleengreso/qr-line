@@ -132,8 +132,12 @@ function after_js() {
     <script src="./../asset/js/base.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/message.js"></script>
-    
-    ';    
+    ';
+
+    // Emit a single canonical API host snippet for client-side JS.
+    $host = getenv('FLASK_PROXY_TARGET') ?: (isset($GLOBALS['endpoint_host']) ? $GLOBALS['endpoint_host'] : (isset($GLOBALS['endpoint_server']) ? $GLOBALS['endpoint_server'] : ''));
+    $host = rtrim((string)$host, '/');
+    echo "\n<script>\nwindow.endpointHost = " . json_encode($host) . ";\nwindow.API_BASE = window.endpointHost ? window.endpointHost + '/api' : '';\n</script>\n";
     return;
 }
 

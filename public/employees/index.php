@@ -450,6 +450,8 @@ if ($resp) {
     var role_type_employee = 'none';
     var status_employee = 'none';
 
+    // endpointHost emitted centrally in base.php
+
     const search = document.getElementById('searchEmployee');
     const filterRole = document.getElementById('filterRole');
     const filterStatus = document.getElementById('filterStatus');
@@ -645,7 +647,7 @@ if ($resp) {
 
             $.ajax({
                 // call the Flask users endpoint directly for live search/filter
-                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
+                url: endpointHost + '/api/users?' + params.toString(),
                 type: 'GET',
                 timeout: 10000,
                 dataType: 'json',
@@ -858,7 +860,7 @@ if ($resp) {
             const params = new URLSearchParams({ user_id: employeeId });
 
             $.ajax({
-                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
+                url: endpointHost + '/api/users?' + params.toString(),
                 type: 'GET',
                 timeout: 8000,
                 dataType: 'json',
@@ -1067,7 +1069,7 @@ if ($resp) {
             const params = new URLSearchParams({ user_id: employeeId });
 
             $.ajax({
-                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
+                url: endpointHost + '/api/users?' + params.toString(),
                 type: 'GET',
                 timeout: 8000,
                 dataType: 'json',
@@ -1176,7 +1178,7 @@ if ($resp) {
             if (password && password.trim() !== '') payload.password = password;
 
             $.ajax({
-                url: 'http://127.0.0.1:5000/api/users',
+                url: endpointHost + '/api/users',
                 type: 'PATCH',
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
@@ -1246,7 +1248,7 @@ if ($resp) {
             const params = new URLSearchParams({ user_id: employeeId });
 
             $.ajax({
-                url: 'http://127.0.0.1:5000/api/users?' + params.toString(),
+                url: endpointHost + '/api/users?' + params.toString(),
                 type: 'GET',
                 timeout: 8000,
                 dataType: 'json',
@@ -1300,15 +1302,19 @@ if ($resp) {
             console.log(employeeId);
             console.log('ID: ' + employeeId);
             
+            // Use Flask API for hard delete (force=true)
+            // This ensures notify rows are cleaned up before employee deletion
             $.ajax({
-                url: '/public/api/api_endpoint.php',
-                type: 'POST',
+                url: endpointHost + '/api/users',
+                type: 'DELETE',
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
                 data: JSON.stringify({
-                    id: employeeId,
-                    method : "employees-delete"
+                    user_id: employeeId,
+                    force: true
                 }),
+                xhrFields: { withCredentials: true },
+                crossDomain: true,
                 beforeSend: function() {
                     try {
                         const btn = document.querySelector('#frmDeleteEmployee button[type="submit"]');
@@ -1329,8 +1335,8 @@ if ($resp) {
                             location.reload();
                         }, 1000);
                     } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none',);
+                        formAlertMsg.innerText = response.message || 'Delete failed';
+                        formAlert.classList.remove('d-none');
                         setTimeout(() => {
                             formAlert.classList.add('d-none');
                         }, 5000);
@@ -1338,7 +1344,12 @@ if ($resp) {
                 },
                 error: function(x, s, e) {
                     console.error('Delete employee error', s, e, x && x.responseText);
-                    formAlertMsg.innerText = 'Error: ' + (x.responseText || s);
+                    let msg = 'Error: ' + (x.responseText || s);
+                    try {
+                        const b = x && x.responseText ? JSON.parse(x.responseText) : null;
+                        if (b && b.message) msg = b.message;
+                    } catch (parse_err) {}
+                    formAlertMsg.innerText = msg;
                     formAlert.classList.remove('d-none');
                     setTimeout(() => {
                         formAlert.classList.add('d-none');

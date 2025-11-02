@@ -293,7 +293,7 @@ $username = isset($token->username) ? $token->username : null;
 
     <?php after_js()?>
     <script>
-    var endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
+    // endpointHost emitted centrally in base.php
     var currentUsername = "<?php echo isset($username) ? htmlentities($username) : ''; ?>";
         var page_counter = 1;
         var page_transaction = 1;

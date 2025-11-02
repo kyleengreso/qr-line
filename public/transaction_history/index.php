@@ -222,8 +222,8 @@ $email = isset($token->email) ? $token->email : null;
     <?php include_once './../includes/footer.php'; ?>
     <?php after_js()?>
 </body>
+<!-- endpointHost emitted centrally in base.php -->
 <script>
-    const endpointHost = "<?php echo isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : ''); ?>";
     let table_transactions_history = document.getElementById("table-transactions-history");
     let searchEmail = document.getElementById("searchEmail");
     let getPaymentType = document.getElementById("getPaymentType");

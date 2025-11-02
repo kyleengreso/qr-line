@@ -133,10 +133,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
 
-        (function() {
-            const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : '';?>";
-            window.API_BASE = endpointHost + '/api';
-        })();
+        // endpointHost emitted centrally in base.php
 
         // Attempt to keep the displayed COUNTER in sync with the JWT without a full reload.
         // Strategy:

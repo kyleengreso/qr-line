@@ -453,8 +453,10 @@ function phpUserStatusIcon($username, $role_type, $active) {
     <?php after_js()?>
     <script>
         var counter_search = '';
-    var counter_page = 1;
-    var paginate = 25;
+        var counter_page = 1;
+        var paginate = 25;
+
+    // endpointHost emitted centrally in base.php
 
         // small helper to escape HTML inserted via JS
         function escapeHtml(unsafe) {
@@ -501,7 +503,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 const params = new URLSearchParams(paramsObj);
                 $.ajax({
                     // Call the Flask counters API (compat layer). Include credentials so cookies are sent when available.
-                    url: "http://127.0.0.1:5000/api/counters?" + params,
+                    url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params,
                     type: 'GET',
                     timeout: 10000,
                     xhrFields: { withCredentials: true },
@@ -736,7 +738,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const params = new URLSearchParams(paramsObj);
 
             $.ajax({
-                url: "http://127.0.0.1:5000/api/counters?" + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params,
                 type: 'GET',
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
@@ -831,7 +833,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const params = new URLSearchParams(paramsObj);
 
             $.ajax({
-                url: "http://127.0.0.1:5000/api/counters?" + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params,
                 type: 'GET',
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
@@ -989,7 +991,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const priority = formData.get('transaction-filter-priority-add') || 'N';
 
             $.ajax({
-                url: 'http://127.0.0.1:5000/api/counters',
+                url: endpointHost.replace(/\/$/, '') + '/api/counters',
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
@@ -1066,7 +1068,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             let frmUpdateCounter = document.getElementById('frmUpdateCounter');
 
             $.ajax({
-                url: "http://127.0.0.1:5000/api/counters?" + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params,
                 type: 'GET',
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
@@ -1217,7 +1219,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 showSkeletonRowsCounters(6);
 
                 $.ajax({
-                    url: "http://127.0.0.1:5000/api/counters?" + params,
+                    url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params,
                     type: 'GET',
                     timeout: 10000,
                     xhrFields: { withCredentials: true },
@@ -1321,7 +1323,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const params = new URLSearchParams(paramsObj);
 
             $.ajax({
-                url: "http://127.0.0.1:5000/api/counters?" + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params,
                 type: 'GET',
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
@@ -1542,7 +1544,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const priority = formData.get('transaction-filter-priority-update') || 'N';
 
             $.ajax({
-                url: 'http://127.0.0.1:5000/api/counters',
+                url: endpointHost.replace(/\/$/, '') + '/api/counters',
                 type: 'PUT',
                 contentType: 'application/json',
                 dataType: 'json',
@@ -1616,7 +1618,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             });
 
             $.ajax({
-                url: "http://127.0.0.1:5000/api/counters?" + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params,
                 type: 'GET',
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
@@ -1710,7 +1712,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const forceFlag = (formData.get('delete_force') === '1' || formData.get('delete_force') === 'on');
 
             $.ajax({
-                url: 'http://127.0.0.1:5000/api/counters',
+                url: endpointHost.replace(/\/$/, '') + '/api/counters',
                 type: 'DELETE',
                 contentType: 'application/json',
                 dataType: 'json',
@@ -1844,7 +1846,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
 
         // Fetch full dataset from API; fall back to cached lastCounters on failure
         $.ajax({
-            url: 'http://127.0.0.1:5000/api/counters?' + params.toString(),
+            url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params.toString(),
             type: 'GET',
             dataType: 'json',
             xhrFields: { withCredentials: true },
