@@ -159,6 +159,36 @@ function restrictAdminMode() {
     requireAdmin();
 }
 
+/**
+ * Require that the current request is authenticated as an employee/cashier.
+ * Older templates call restrictEmployeeMode(), so provide this alias.
+ * Accept common aliases for the role: 'employee' and 'cashier'.
+ */
+function restrictEmployeeMode() {
+    $payload = getDecodedTokenPayload();
+    if (!$payload) {
+        if (session_status() == PHP_SESSION_NONE) session_start();
+        $_SESSION['auth_notice'] = 'You need to login first';
+        header('Location: /public/auth/login.php');
+        exit();
+    }
+
+    // Resolve role from payload or cookie
+    $current = $payload['role_type'] ?? ($payload['role'] ?? null);
+    if (!$current && isset($_COOKIE['role_type'])) {
+        $current = $_COOKIE['role_type'];
+    }
+    $norm = is_string($current) ? strtolower($current) : null;
+    $allowed = in_array($norm, ['employee', 'cashier'], true);
+
+    if (!$allowed) {
+        if (session_status() == PHP_SESSION_NONE) session_start();
+        $_SESSION['auth_notice'] = 'You need to login first';
+        header('Location: /public/auth/login.php');
+        exit();
+    }
+}
+
 
 // If this file is requested directly (not included), expose small HTTP actions
 // so we can set/clear the token cookie without separate wrapper files.

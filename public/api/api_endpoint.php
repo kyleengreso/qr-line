@@ -2686,17 +2686,34 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             return;
         }
 
-        $token = json_decode(
-            json_encode(decryptToken($_COOKIE['token'], $master_key)
-        ), true);
+        // Decode token and guard against malformed or missing fields
+        $token = json_decode(json_encode(decryptToken($_COOKIE['token'], $master_key)), true);
 
-        // fetch json_encode to queryable array
-        $user_id = $token['id'];
-        $username = $token['username'];
-        $role_type = $token['role_type'];
-        $email = $token['email'];
-        $counterNumber = $token['counterNumber'];
-        $priority = $token['priority'];
+        if (!is_array($token)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Unauthorized access. Invalid token."
+            ));
+            return;
+        }
+
+        // fetch json_encode to queryable array with safe defaults
+        $user_id = isset($token['id']) ? (int)$token['id'] : null;
+        $username = isset($token['username']) ? $token['username'] : '';
+        // support legacy 'role' key if present
+        $role_type = isset($token['role_type']) ? $token['role_type'] : (isset($token['role']) ? $token['role'] : '');
+        $email = isset($token['email']) ? $token['email'] : '';
+        // support different naming conventions
+        $counterNumber = isset($token['counterNumber']) ? $token['counterNumber'] : (isset($token['counter_number']) ? $token['counter_number'] : null);
+        $priority = isset($token['priority']) ? $token['priority'] : 'N';
+
+        if (empty($user_id)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Unauthorized access. Please login."
+            ));
+            return;
+        }
         
         // Checking if that employee is exists
         $sql_cmd = "SELECT e.id, e.username, e.role_type

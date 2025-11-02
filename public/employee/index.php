@@ -3,17 +3,21 @@
 include_once __DIR__ . "/../base.php";
 restrictEmployeeMode();
 
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
+// Use normalized token payload and guard against missing fields
+$payload = getDecodedTokenPayload();
+$tok = null;
+if (is_array($payload)) {
+    $tok = json_decode(json_encode($payload)); // stdClass for object-style access
+} elseif (is_object($payload)) {
+    $tok = $payload;
+}
 
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
-$priority = $token->priority;
+$id = isset($tok->id) ? (int)$tok->id : 0;
+$username = isset($tok->username) ? $tok->username : '';
+$role_type = isset($tok->role_type) ? $tok->role_type : (isset($tok->role) ? $tok->role : '');
+$email = isset($tok->email) ? $tok->email : '';
+$counterNumber = isset($tok->counterNumber) ? (int)$tok->counterNumber : 0;
+$priority = isset($tok->priority) ? $tok->priority : 'N';
 ?>
 
 <!DOCTYPE html>
@@ -115,10 +119,34 @@ $priority = $token->priority;
         let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
+
+        // API base: prefer same-origin PHP proxy when serving the PHP site (e.g. on port 8080).
+        // If a developer explicitly runs the Flask API on another port and visits that host/port,
+        // point directly to the Flask API. Otherwise use the relative '/api' path so the webserver
+        // (or the lightweight PHP proxy under /public/api) forwards requests to Flask.
+        (function() {
+            const host = window.location.hostname;
+            const port = window.location.port;
+
+            // If we're serving from the PHP server (commonly port 8080 in dev), use same-origin proxy.
+            if ((host === '127.0.0.1' || host === 'localhost') && port === '8080') {
+                window.API_BASE = '/api';
+            }
+            // If visiting the Flask server directly (e.g. 127.0.0.1:5000), hit Flask's /api.
+            else if ((host === '127.0.0.1' || host === 'localhost') && (port === '5000' || port === '')) {
+                window.API_BASE = 'http://127.0.0.1:5000/api';
+            }
+            // Default: assume server will route /api to the API backend.
+            else {
+                window.API_BASE = '/api';
+            }
+
+            console.log('Using API base:', window.API_BASE);
+        })();
     
         function queue_remain_set(queue_remain) {
             $.ajax({
-                url: "/public/api/api_endpoint.php",
+                url: window.API_BASE + "/cashier",
                 method: "POST",
                 data: JSON.stringify({
                     method : "counter_queue_remain",
@@ -160,7 +188,7 @@ $priority = $token->priority;
                 counter_number: <?php echo htmlspecialchars($counterNumber); ?>
             });
             $.ajax({
-                url: "/public/api/api_endpoint.php?" + param.toString(),
+                url: window.API_BASE + "/cashier?" + param.toString(),
                 method: "GET",
                 success: function(response) {
                     console.log("Response received:", response); // Log the response
@@ -197,7 +225,7 @@ $priority = $token->priority;
             });
             // console.log("Params", params.toString());
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: window.API_BASE + '/cashier?' + params,
                 type: 'GET',
                 success: function(response) {
                     console.log("RECV:", response);
@@ -227,7 +255,7 @@ $priority = $token->priority;
         btn_counter_success.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
-                url: '/public/api/api_endpoint.php',
+                url: window.API_BASE + '/cashier',
                 type: 'POST',
                 data: JSON.stringify({
                     method: 'cashier-success',
@@ -251,7 +279,7 @@ $priority = $token->priority;
         btn_counter_skip.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
-                url: '/public/api/api_endpoint.php',
+                url: window.API_BASE + '/cashier',
                 type: 'POST',
                 data: JSON.stringify({
                     method: 'cashier-missed',
@@ -285,7 +313,7 @@ $priority = $token->priority;
             });
         
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: window.API_BASE + '/cashier?' + params,
                 type: 'GET',
                 success: function(response) {
                     let transactions = response.transactions;
@@ -330,7 +358,7 @@ $priority = $token->priority;
 
         async function fetchCutOff() {
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: window.API_BASE + '/cashier?' + params,
                 type: 'GET',
                 success: function(response) {
                     console.log(response);
@@ -375,7 +403,7 @@ $priority = $token->priority;
             e.preventDefault();
             if (operational) {
                 $.ajax({
-                    url: '/public/api/api_endpoint.php',
+                    url: window.API_BASE + '/cashier',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
@@ -405,7 +433,7 @@ $priority = $token->priority;
                 });
             } else {
                 $.ajax({
-                    url: '/public/api/api_endpoint.php',
+                    url: window.API_BASE + '/cashier',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
