@@ -142,6 +142,14 @@ include './../base.php';
             $('#queueNumber').text(qNum);
             $('#counterNumber').text(cNum);
             $('#currentQueueNumber').text(curQ);
+            // Trigger sound notification when the requester's number matches the current queue
+            try {
+                if (typeof soundManager !== 'undefined' && soundManager && soundManager.onStateUpdated) {
+                    soundManager.onStateUpdated(qNum, curQ);
+                }
+            } catch (e) {
+                console.error('Sound manager error', e);
+            }
         }
 
         // PHP fallback removed intentionally
@@ -186,6 +194,81 @@ include './../base.php';
             });
         }
         // PHP cancel fallback removed intentionally
+        // Notification sound manager: plays a beep 3 times when the requester's number
+        // matches the current queue number. Uses Web Audio API with an Audio fallback
+        // so you can replace with a custom SFX URL via soundManager.setCustomSound(url).
+        (function(){
+            function NotificationSoundManager() {
+                this.audioContext = null;
+                // Default custom sound path - replace with your SFX file
+                this.customUrl = '/public/asset/audio/notify.wav';
+                this.prevMatched = false;
+                this.enabled = true;
+                this.initAudio();
+            }
+
+            NotificationSoundManager.prototype.initAudio = function() {
+                try {
+                    var AC = window.AudioContext || window.webkitAudioContext;
+                    if (AC) this.audioContext = new AC();
+                } catch (e) {
+                    this.audioContext = null;
+                }
+            };
+
+            NotificationSoundManager.prototype.setCustomSound = function(url) {
+                this.customUrl = url;
+            };
+
+            NotificationSoundManager.prototype.playBeepOnce = function() {
+                if (!this.enabled) return;
+                if (this.customUrl) {
+                    var a = new Audio(this.customUrl);
+                    a.play().catch(function(){});
+                    return;
+                }
+                if (!this.audioContext) this.initAudio();
+                if (!this.audioContext) return;
+                var ctx = this.audioContext;
+                var o = ctx.createOscillator();
+                var g = ctx.createGain();
+                o.type = 'sine';
+                o.frequency.value = 880;
+                g.gain.value = 0.25;
+                o.connect(g);
+                g.connect(ctx.destination);
+                o.start();
+                g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+                o.stop(ctx.currentTime + 0.25);
+            };
+
+            NotificationSoundManager.prototype.playThreeTimes = function() {
+                this.playBeepOnce();
+                var self = this;
+                setTimeout(function() { self.playBeepOnce(); }, 400);
+                setTimeout(function() { self.playBeepOnce(); }, 800);
+            };
+
+            NotificationSoundManager.prototype.onStateUpdated = function(qNum, curQ) {
+                try {
+                    if (!this.enabled) return;
+                    if (qNum == null || curQ == null) { this.prevMatched = false; return; }
+                    if (String(qNum) === String(curQ) && String(qNum) !== 'N/A') {
+                        if (!this.prevMatched) {
+                            this.playThreeTimes();
+                            this.prevMatched = true;
+                        }
+                    } else {
+                        this.prevMatched = false;
+                    }
+                } catch (e) {}
+            };
+
+            NotificationSoundManager.prototype.toggleEnabled = function() { this.enabled = !this.enabled; return this.enabled; };
+
+            window.soundManager = new NotificationSoundManager();
+        })();
+
         fetchYourQuery();
 
         setInterval(function() {
