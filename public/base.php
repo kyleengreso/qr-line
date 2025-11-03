@@ -4,8 +4,6 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/./includes/db_conn.php';
-
 // Load global config (CORS, endpoint server, allowed origins)
 @include_once __DIR__ . '/includes/config.php';
 

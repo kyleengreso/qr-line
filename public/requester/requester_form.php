@@ -1,18 +1,23 @@
 <?php
 include "./../base.php";
 @include_once __DIR__ . '/../includes/config.php';
+@include_once __DIR__ . '/../includes/api_client.php';
 
-$sql_cmd = "SELECT * FROM scheduler WHERE schedule_key = 'requester_form'";
-$stmt = $conn->prepare($sql_cmd);
-$stmt->execute();
-$result = $stmt->get_result();
-
-$schedule = $result->fetch_assoc();
+try {
+    $api = get_api_client();
+    $response = $api->get('/api/schedule/requester_form');
+    $schedule = isset($response['data']) ? $response['data'] : null;
+} catch (Exception $e) {
+    error_log("API Error in requester_form.php: " . $e->getMessage());
+    $schedule = null;
+}
 
 // Defaults
 $schedule_present = false;
 $schedule_day_announcment = "Schedule is closed";
 $time_now = date("h:i:s A");
+$time_start = 'N/A';
+$time_end = 'N/A';
 
 if ($schedule) {
     $enabled = (int)($schedule['enable'] ?? 0);
