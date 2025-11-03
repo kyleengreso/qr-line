@@ -53,7 +53,9 @@ $int_second = rand(1, 50);
 
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
-    <!-- endpointHost emitted centrally in base.php -->
+    <script>
+        const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    </script>
     <script>
         let captcha_correct = <?php echo ($int_first + $int_second)?>;
         console.log(captcha_correct);

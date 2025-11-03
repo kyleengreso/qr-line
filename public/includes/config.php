@@ -6,7 +6,7 @@ $allowed_origins = [
     'https://qrline.miceff.com',
 ];
 
-$endpoint_server = "http://qrline.pythonanywhere.com";
+$endpoint_server = "https://qrline.pythonanywhere.com";
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 

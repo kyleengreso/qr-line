@@ -84,8 +84,12 @@ include "./../base.php"
 <script>
     // Monitor
 function rtTransaction() {
+    if (!(typeof endpointHost !== 'undefined' && endpointHost && endpointHost.length > 0)) {
+        console.warn('API host not configured; stats unavailable');
+        return;
+    }
     $.ajax({
-        url: './../api/api_endpoint.php?dashboard_stats',
+        url: endpointHost.replace(/\/$/, '') + '/api/dashboard_stats',
         type: 'GET',
         success: function(response) {
             let stat = response.data;

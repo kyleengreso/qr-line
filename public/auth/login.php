@@ -60,7 +60,9 @@ restrictCheckLoggedIn();
 
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
-    <!-- endpointHost emitted centrally in base.php -->
+    <script>
+        const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    </script>
     <script>
         $(document).ready(function() {
             function auth_success(message) {

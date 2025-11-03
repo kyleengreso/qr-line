@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST
 // Attempt to call Flask logout server-side to invalidate token on the API side.
 $token = $_COOKIE['token'] ?? null;
 if ($token) {
-    $endpoint = isset($endpoint_server) ? $endpoint_server : (isset($endpoint_host) ? $endpoint_host : null);
+    $endpoint = isset($endpoint_server) ? $endpoint_server : null;
     $endpoint = $endpoint ? rtrim($endpoint, '/') : null;
     $apiUrl = $endpoint ? ($endpoint . '/api/logout') : null;
     // Use cURL to POST and include the token as a Cookie header so Flask sees it.

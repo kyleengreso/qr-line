@@ -20,34 +20,12 @@ $role_type = isset($token->role_type) ? $token->role_type : (isset($_COOKIE['rol
 $email = isset($token->email) ? $token->email : null;
 $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
 // Server-side fetch employees to render the page initially (fallback to client-side AJAX)
+// Note: The Flask API server is called client-side via buildApiUrl() in JavaScript
 $employees = [];
 $total = 0;
 $activeCount = 0;
 $inactiveCount = 0;
 $adminsCount = 0;
-// Build internal API URL
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'];
-$api_url = $protocol . '://' . $host . '/public/api/api_endpoint.php?employees=true&paginate=1000';
-// Use cURL to fetch
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $api_url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-$resp = curl_exec($ch);
-curl_close($ch);
-if ($resp) {
-    $data = json_decode($resp, true);
-    if (is_array($data) && isset($data['status']) && $data['status'] === 'success' && isset($data['employees'])) {
-        $employees = $data['employees'];
-        $total = count($employees);
-        foreach ($employees as $e) {
-            if (isset($e['active']) && $e['active'] == 1) $activeCount++;
-            if (isset($e['role_type']) && $e['role_type'] === 'admin') $adminsCount++;
-        }
-        $inactiveCount = $total - $activeCount;
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -443,6 +421,8 @@ if ($resp) {
     <?php include_once "./../includes/footer.php";?>
     <script src="./../asset/js/message.js"></script>
     <script>       
+    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    
     var employee_search = '';
     var page_employees = 1;
     // read default per-page from select if present
@@ -450,8 +430,7 @@ if ($resp) {
     var role_type_employee = 'none';
     var status_employee = 'none';
 
-    // endpointHost emitted centrally in base.php
-
+    // buildApiUrl is provided by base.js
     const search = document.getElementById('searchEmployee');
     const filterRole = document.getElementById('filterRole');
     const filterStatus = document.getElementById('filterStatus');
@@ -645,17 +624,29 @@ if ($resp) {
             params.set('set_limit', set_limit);
             params.set('set_offset', set_offset);
 
+            // Choose API URL via helper; require endpointHost (do not fall back to local php proxy)
+            let apiUrl = buildApiUrl('/api/users', params);
+            if (!apiUrl) {
+                console.error('API host not configured. Set $endpoint_server in includes/config.php');
+                const tbody = document.querySelector('#table-employees tbody');
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Service unavailable — API host not configured.</td></tr>`;
+                try { document.dispatchEvent(new CustomEvent('employees:loaded')); } catch (e) {}
+                return;
+            }
+
             $.ajax({
-                // call the Flask users endpoint directly for live search/filter
-                url: endpointHost + '/api/users?' + params.toString(),
+                // call chosen API URL (proxy for same-origin auth, or direct host when same-origin)
+                url: apiUrl,
                 type: 'GET',
                 timeout: 10000,
                 dataType: 'json',
+                // when calling the remote host cross-origin we'd require credentials; for proxy it's same-origin
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
-                beforeSend: function() {
-                    try { showEmployeesLoading(); } catch (e) {}
-                },
+                    beforeSend: function() {
+                        try { showEmployeesLoading(); } catch (e) {}
+                        try { document.dispatchEvent(new CustomEvent('employees:loading')); } catch (e) {}
+                    },
                 success: function (response) {
                     // prefer rendering into the table body if present
                     const tbody = document.querySelector('#table-employees tbody');
@@ -811,6 +802,7 @@ if ($resp) {
                 },
                 complete: function() {
                     // nothing needed; table/list rendering replaces the loader
+                    try { document.dispatchEvent(new CustomEvent('employees:loaded')); } catch (e) {}
                 }
             });
         }
@@ -859,8 +851,21 @@ if ($resp) {
             // Call Flask users endpoint for single-user fetch
             const params = new URLSearchParams({ user_id: employeeId });
 
+            // Use helper to pick direct URL; do not fallback to local proxy
+            let apiUrl = buildApiUrl('/api/users', params);
+            if (!apiUrl) {
+                console.error('API host not configured. Set $endpoint_server in includes/config.php');
+                const viewModalEl = document.getElementById('viewEmployeeModal');
+                if (viewModalEl) {
+                    try { new bootstrap.Modal(viewModalEl).show(); } catch (e) {}
+                    const body = document.getElementById('viewEmployeeBody');
+                    if (body) body.innerHTML = '<div class="alert alert-danger">Service unavailable — API host not configured.</div>';
+                }
+                return;
+            }
+
             $.ajax({
-                url: endpointHost + '/api/users?' + params.toString(),
+                url: apiUrl,
                 type: 'GET',
                 timeout: 8000,
                 dataType: 'json',
@@ -997,8 +1002,15 @@ if ($resp) {
                 return;
             }
 
+            if (!(typeof endpointHost !== 'undefined' && endpointHost && endpointHost.length > 0)) {
+                formAlertMsg.innerText = 'Service unavailable — API host not configured.';
+                formAlert.classList.remove('d-none');
+                setTimeout(() => { formAlert.classList.add('d-none'); }, 5000);
+                return;
+            }
+
             $.ajax({
-                url: '/public/api/api_endpoint.php',
+                url: buildApiUrl('/api/users'),
                 type: 'POST',
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
@@ -1006,8 +1018,7 @@ if ($resp) {
                     username : username,
                     password : password,
                     email : email,
-                    role_type : role_type,
-                    method : "employees-add",
+                    user_role : role_type,
                     active: active
                 }),
                 beforeSend: function() {
@@ -1068,8 +1079,15 @@ if ($resp) {
             // Fetch single user from Flask users endpoint
             const params = new URLSearchParams({ user_id: employeeId });
 
+            // Use helper to pick direct URL; do not fallback to local proxy
+            let apiUrl = buildApiUrl('/api/users', params);
+            if (!apiUrl) {
+                console.error('API host not configured. Set $endpoint_server in includes/config.php');
+                return;
+            }
+
             $.ajax({
-                url: endpointHost + '/api/users?' + params.toString(),
+                url: apiUrl,
                 type: 'GET',
                 timeout: 8000,
                 dataType: 'json',
@@ -1177,8 +1195,17 @@ if ($resp) {
             if (typeof active !== 'undefined') payload.active = active;
             if (password && password.trim() !== '') payload.password = password;
 
+            // Update via API helper (PATCH). Do not fall back to local proxy.
+            let apiUrl = buildApiUrl('/api/users');
+            if (!apiUrl) {
+                console.error('API host not configured. Set $endpoint_server in includes/config.php');
+                let formAlertMsg = document.getElementById('updateEmployeeAlertMsg');
+                if (formAlertMsg) formAlertMsg.innerText = 'Service unavailable — API host not configured.';
+                return;
+            }
+
             $.ajax({
-                url: endpointHost + '/api/users',
+                url: apiUrl,
                 type: 'PATCH',
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
@@ -1247,8 +1274,15 @@ if ($resp) {
 
             const params = new URLSearchParams({ user_id: employeeId });
 
+            // Use helper to pick direct or proxied URL for delete confirmation fetch
+            let apiUrl = buildApiUrl('/api/users', params);
+            if (!apiUrl) {
+                console.error('API host not configured. Set $endpoint_server in includes/config.php');
+                return;
+            }
+
             $.ajax({
-                url: endpointHost + '/api/users?' + params.toString(),
+                url: apiUrl,
                 type: 'GET',
                 timeout: 8000,
                 dataType: 'json',
@@ -1304,8 +1338,15 @@ if ($resp) {
             
             // Use Flask API for hard delete (force=true)
             // This ensures notify rows are cleaned up before employee deletion
+            // Delete via API helper (DELETE)
+            let apiUrl = buildApiUrl('/api/users');
+            if (!apiUrl) {
+                console.error('API host not configured. Set $endpoint_server in includes/config.php');
+                return;
+            }
+
             $.ajax({
-                url: endpointHost + '/api/users',
+                url: apiUrl,
                 type: 'DELETE',
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
@@ -1387,6 +1428,84 @@ if ($resp) {
         }
 
         loadEmployees();
+
+        // Add simple spinner UX for Refresh and Export buttons
+        (function() {
+            const btnRefresh = document.getElementById('btnRefreshEmployees');
+            const btnExport = document.getElementById('btnExportEmployeesCsv');
+
+            function setLoadingBtn(btn, label) {
+                if (!btn) return;
+                try {
+                    btn.dataset.prevLabel = btn.innerHTML;
+                } catch (e) {}
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + label;
+            }
+
+            function restoreBtn(btn) {
+                if (!btn) return;
+                btn.disabled = false;
+                try {
+                    if (btn.dataset.prevLabel) {
+                        btn.innerHTML = btn.dataset.prevLabel;
+                        delete btn.dataset.prevLabel;
+                    }
+                } catch (e) {}
+            }
+
+            if (btnRefresh) {
+                btnRefresh.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    setLoadingBtn(this, 'Refreshing...');
+                    // Trigger reload; `employees:loaded` event will restore the button
+                    loadEmployees();
+                });
+            }
+
+            if (btnExport) {
+                btnExport.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const btn = this;
+                    setLoadingBtn(btn, 'Exporting...');
+
+                    // Attempt to download CSV from the Flask API
+                    const downloadParams = new URLSearchParams({ format: 'csv', paginate: 1000 });
+                    let url = buildApiUrl('/api/users', downloadParams);
+                    if (!url) {
+                        alert('Service unavailable — API host not configured.');
+                        restoreBtn(btn);
+                        return;
+                    }
+
+                    fetch(url, { credentials: 'include' })
+                        .then(resp => {
+                            if (!resp.ok) throw new Error('Export failed (status ' + resp.status + ')');
+                            return resp.blob();
+                        })
+                        .then(blob => {
+                            const a = document.createElement('a');
+                            const urlBlob = URL.createObjectURL(blob);
+                            a.href = urlBlob;
+                            a.download = 'employees.csv';
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(urlBlob);
+                        })
+                        .catch(err => {
+                            console.error('Export CSV failed', err);
+                            alert('Failed to export CSV: ' + (err && err.message ? err.message : err));
+                        })
+                        .finally(() => {
+                            restoreBtn(btn);
+                        });
+                });
+            }
+
+            // Restore refresh button when employees load completes
+            document.addEventListener('employees:loaded', function() { restoreBtn(btnRefresh); });
+        })();
     </script>
 </body>
 </html>

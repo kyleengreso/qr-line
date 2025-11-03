@@ -293,7 +293,7 @@ $username = isset($token->username) ? $token->username : null;
 
     <?php after_js()?>
     <script>
-    // endpointHost emitted centrally in base.php
+    var endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
     var currentUsername = "<?php echo isset($username) ? htmlentities($username) : ''; ?>";
         var page_counter = 1;
         var page_transaction = 1;
@@ -805,7 +805,7 @@ $username = isset($token->username) ? $token->username : null;
         });
 
         $.ajax({
-            url: '/public/api/api_endpoint.php?' + params,
+            url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php?' + params,
             type: 'GET',
             success: function(response) {
                 console.log(response);
@@ -844,7 +844,7 @@ $username = isset($token->username) ? $token->username : null;
             e.preventDefault();
             if (operational) {
                 $.ajax({
-                    url: '/public/api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
@@ -871,7 +871,7 @@ $username = isset($token->username) ? $token->username : null;
                 });
             } else {
                 $.ajax({
-                    url: `${realHost}/public/api/api_endpoint.php`,
+                    url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',

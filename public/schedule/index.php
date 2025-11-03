@@ -176,7 +176,9 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
     <?php after_js() ?>
     <?php include_once "./../includes/footer.php"; ?>
     <script src="./../asset/js/message.js"></script>
-    <!-- endpointHost emitted centrally in base.php -->
+    <script>
+    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    </script>
     <script>
         let frmScheduleRequesterForm = document.getElementById('frmScheduleRequesterForm');
         let frmTransactionLimitForm = document.getElementById('frmTransactionLimitForm');

@@ -6,6 +6,9 @@ if (session_status() == PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/./includes/db_conn.php';
 
+// Load global config (CORS, endpoint server, allowed origins)
+@include_once __DIR__ . '/includes/config.php';
+
 // Project Information
 $project_name = "QR-Line";
 $project_name_alt = "qr-line";
@@ -132,12 +135,8 @@ function after_js() {
     <script src="./../asset/js/base.js"></script>
     <script src="./../asset/js/jquery-3.7.1.js"></script>
     <script src="./../asset/js/message.js"></script>
-    ';
-
-    // Emit a single canonical API host snippet for client-side JS.
-    $host = getenv('FLASK_PROXY_TARGET') ?: (isset($GLOBALS['endpoint_host']) ? $GLOBALS['endpoint_host'] : (isset($GLOBALS['endpoint_server']) ? $GLOBALS['endpoint_server'] : ''));
-    $host = rtrim((string)$host, '/');
-    echo "\n<script>\nwindow.endpointHost = " . json_encode($host) . ";\nwindow.API_BASE = window.endpointHost ? window.endpointHost + '/api' : '';\n</script>\n";
+    
+    ';    
     return;
 }
 
