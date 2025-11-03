@@ -62,8 +62,12 @@ include "./../base.php"
         let params = new URLSearchParams({
             counter_current_number: true
         })
+        if (!(typeof endpointHost !== 'undefined' && endpointHost && endpointHost.length > 0)) {
+            console.warn('API host not configured; cashier stats unavailable');
+            return;
+        }
         $.ajax({
-            url: '/public/api/api_endpoint.php?' + params,
+            url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php?' + params,
             type: 'GET',
             success: function(response) {
                 counters_list.innerHTML = "";

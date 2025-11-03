@@ -1,7 +1,7 @@
 <?php
 include_once __DIR__ . '/../base.php';
-
 restrictCheckLoggedIn();
+
 ?>
 
 <!DOCTYPE html>
@@ -27,6 +27,12 @@ restrictCheckLoggedIn();
                 <p>Login to continue</p>
             </div>
             <form class="needs-validation" method="POST" id="frmLogIn" novalidate>
+                <?php if (session_status() == PHP_SESSION_NONE) session_start();
+                if (isset($_SESSION['auth_notice'])) {
+                    echo '<div class="alert alert-warning">' . htmlentities($_SESSION['auth_notice']) . '</div>';
+                    unset($_SESSION['auth_notice']);
+                }
+                ?>
                 <div class="input-group mb-2">
                     <div class="input-group-text" ><i class="bi bi-person-fill"></i></div>
                     <div class="form-floating">
@@ -54,6 +60,9 @@ restrictCheckLoggedIn();
 
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
+    <script>
+        const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    </script>
     <script>
         $(document).ready(function() {
             function auth_success(message) {
@@ -84,29 +93,156 @@ restrictCheckLoggedIn();
                 var data = {
                     username: username,
                     password: password,
-                    method: 'login',
                     device_name: navigator.userAgent
                 };
 
+                // helper to decode JWT payload without verification (for routing)
+                function parseJwt (token) {
+                    try {
+                        var parts = token.split('.');
+                        if (parts.length !== 3) return null;
+                        var payload = parts[1];
+                        // Add padding if needed
+                        while (payload.length % 4 !== 0) payload += '=';
+                        var decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+                        return JSON.parse(decoded);
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
+                if (!(endpointHost && endpointHost.length > 0)) {
+                    return auth_error('Authentication service unavailable');
+                }
                 $.ajax({
-                    url: './../api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/api/login',
                     type: 'POST',
                     data: JSON.stringify(data),
                     contentType: 'application/json',
                     dataType: 'json',
+                    xhrFields: { withCredentials: true }, // allow cookie from API server
                     success: function(response) {
                         if (response.status === 'success') {
                             auth_success(response.message);
-                            setTimeout(function() {
-                                if (response.data.role_type === 'admin') {
-                                    window.location.href = "/public/admin";
-                                } else if (response.data.role_type === 'employee') {
-                                    window.location.href = "/public/employee";
+                            var token = response.data && response.data.token;
+                            // Prefer the server-provided role if available (API returns data.role)
+                            var role = (response.data && response.data.role) ? response.data.role : null;
+                            if (token) {
+                                var p = parseJwt(token);
+                                if (p && !role) {
+                                    role = p.role_type || p.user_role || p.role || null;
                                 }
-                            }, 1000);
+
+                                // Post token to local PHP endpoint that will set the cookie on this origin
+                                // Then immediately redirect based on role returned by the API.
+                                $.ajax({
+                                    url: '/public/includes/system_auth.php?action=set_token',
+                                    type: 'POST',
+                                    data: JSON.stringify({ token: token, role: role }),
+                                    contentType: 'application/json',
+                                    dataType: 'json',
+                                    success: function() {
+                                        // Ensure any server-set "auth_notice" is not shown
+                                        // (it may have been rendered when the page loaded). Remove
+                                        // any existing alerts from the form before redirecting.
+                                        $form.find('.alert').remove();
+
+                                        // Also set the cookie client-side so the next navigation
+                                        // immediately contains the token for server-side checks.
+                                        try {
+                                            // max-age = 30 days
+                                            var maxAge = 86400 * 30;
+                                            document.cookie = 'token=' + encodeURIComponent(token) + '; path=/; max-age=' + maxAge + ';';
+                                        } catch (e) {
+                                            // ignore
+                                        }
+
+                                        if (role === 'admin') {
+                                            window.location.href = "/public/admin/index.php";
+                                        } else if (role === 'employee') {
+                                            window.location.href = "/public/employee/index.php";
+                                        } else {
+                                            window.location.reload();
+                                        }
+                                    },
+                                    error: function() {
+                                        // If local set-cookie fails, fallback to reload
+                                        window.location.reload();
+                                    }
+                                });
+                            } else {
+                                setTimeout(function() { window.location.reload(); }, 1000);
+                            }
                         } else {
-                            auth_error(response.message);
+                            var msg = '';
+                            try {
+                                msg = (response && typeof response.message === 'string') ? response.message.trim() : '';
+                                if (!msg && response && response.data && typeof response.data.error === 'string') {
+                                    msg = response.data.error.trim();
+                                }
+                            } catch (e) {}
+                            if (!msg) msg = 'Login failed. Please check your username and password.';
+                            auth_error(msg);
                         }
+                    },
+                    error: function(xhr, textStatus, errorThrown) {
+                        // Log full error to console for debugging
+                        console.error('Login request failed', {xhr: xhr, textStatus: textStatus, errorThrown: errorThrown});
+
+                        // Try to parse JSON response for a message, fallback to plain text or status
+                        function cleanMsg(m) {
+                            if (!m) return '';
+                            if (typeof m !== 'string') return m;
+                            var t = m.match(/\((?:[^)]*?),\s*'([^']*)'\)/);
+                            if (t && t[1]) return t[1];
+                            return m;
+                        }
+                        var msg = 'An unexpected error occurred';
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                try {
+                                    var parsed = JSON.parse(xhr.responseText);
+                                    if (parsed && parsed.message) {
+                                        msg = parsed.message;
+                                    } else {
+                                        msg = xhr.responseText;
+                                    }
+                                } catch (e) {
+                                    // not JSON
+                                    msg = xhr.responseText;
+                                }
+                            } else if (xhr.statusText) {
+                                msg = xhr.statusText + ' (' + xhr.status + ')';
+                            }
+                        } catch (e) {
+                            msg = 'Request failed';
+                        }
+
+                        // Hide raw server-side internal messages from users and show friendly guidance.
+                        // If the server returned something that looks like a missing .env/config error,
+                        // show a non-sensitive message and keep full details in the console.
+                        try {
+                            if (typeof msg === 'string' && msg.toLowerCase().indexOf('.env') !== -1) {
+                                console.warn('Server configuration error (masked to user):', msg);
+                                msg = 'Server configuration error. Please contact the administrator.';
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+
+                        msg = cleanMsg(msg);
+                        if (!msg || (typeof msg === 'string' && msg.trim().length === 0)) {
+                            if (xhr && xhr.status === 401) msg = 'Invalid username or password.';
+                            else if (xhr && xhr.status === 0) msg = 'Cannot reach authentication server.';
+                            else if (xhr && xhr.status >= 500) msg = 'Server error. Please try again later.';
+                            else msg = 'Request failed. Please try again.';
+                        }
+                        if (xhr && xhr.status) {
+                            msg = msg + ' (' + xhr.status + ')';
+                        }
+                        auth_error(msg);
                     },
                 });
             }
@@ -120,20 +256,29 @@ restrictCheckLoggedIn();
                     method: 'register'
                 };
 
+                if (!(endpointHost && endpointHost.length > 0)) {
+                    return register_error('Registration service unavailable');
+                }
                 $.ajax({
-                    url: './../api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/api/register',
                     type: 'POST',
-                    data: JSON.stringify(data),
+                    data: JSON.stringify({ username: username, password: password, email: email }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    xhrFields: { withCredentials: true },
                     success: function(response) {
                         if (response.status === 'success') {
                             register_success(response.message);
-                            setTimeout(function() {
-                                window.location.href = "./login.php";
-                            }, 1000);
+                            setTimeout(function() { window.location.href = "./login.php"; }, 1000);
                         } else {
-                            register_error(response.message);
+                            register_error(response.message || 'Registration failed');
                         }
                     },
+                    error: function(xhr) {
+                        let msg = 'Registration failed';
+                        if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                        register_error(msg);
+                    }
                 })
             }
 

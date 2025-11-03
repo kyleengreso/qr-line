@@ -1,16 +1,18 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
+// `base.php` already normalizes the token into $token (stdClass) if cookie exists
+// Access defensively to avoid PHP notices when some claims are missing
+if (!isset($token) || !$token) {
+    $token = null;
+}
 
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
+$id = isset($token->id) ? $token->id : null;
+$username = isset($token->username) ? $token->username : null;
+// Prefer role from token, fallback to role_type cookie set during authentication
+$role_type = isset($token->role_type) ? $token->role_type : (isset($_COOKIE['role_type']) ? $_COOKIE['role_type'] : null);
+$email = isset($token->email) ? $token->email : null;
+$counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
 ?>
 
 <!DOCTYPE html>
@@ -54,8 +56,8 @@ $counterNumber = $token->counterNumber;
                             <span id="notify-transaction-limit-message">Transaction limit set successfully.</span>
                         </div>
                         <div class="mb-4 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="schedule_requester_enable" id="schedule_requester_enable" value="1">
-                            <label class="form-check-label" for="schedule_requester_enable">Enable</label>
+                            <input class="form-check-input" type="checkbox" name="transaction_limit_enable" id="transaction_limit_enable" value="1">
+                            <label class="form-check-label" for="transaction_limit_enable">Enable</label>
                         </div>
                         <div class="row mb-2">
                             <div class="col-12">
@@ -175,13 +177,19 @@ $counterNumber = $token->counterNumber;
     <?php include_once "./../includes/footer.php"; ?>
     <script src="./../asset/js/message.js"></script>
     <script>
+    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    </script>
+    <script>
         let frmScheduleRequesterForm = document.getElementById('frmScheduleRequesterForm');
+        let frmTransactionLimitForm = document.getElementById('frmTransactionLimitForm');
 
         // Load the current schedule settings
         function load_schedule_requester_form() {
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
             $.ajax({
-                url: '/public/api/api_endpoint.php?schedule-requester_form',
+                url: endpointHost.replace(/\/$/, '') + '/api/schedule/requester_form',
                 type: 'GET',
+                xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log("Response GET:", response);
                     if (response.status === 'success') {
@@ -191,19 +199,45 @@ $counterNumber = $token->counterNumber;
                         document.getElementById('schedule_requester_time_end').value = schedule.time_end;
         
                         // Validate and process `schedule.everyday`
-                        if (schedule.everyday && schedule.everyday.trim() !== '') {
-                            let days = schedule.everyday.split(';');
-                            days.forEach(day => {
-                                console.log(`Checking day: ${day}`);
-                                let checkbox = document.getElementById(day);
-                                if (checkbox) {
-                                    checkbox.checked = true;
-                                } else {
-                                    console.error(`Checkbox with id "${day}" not found`);
-                                }
+                        // treat null/empty as "every day" and support JSON array/object or semicolon/comma separated strings
+                        if (!schedule.everyday || schedule.everyday.trim() === '') {
+                            // No restriction -> check all day boxes
+                            ['sun','mon','tue','wed','thu','fri','sat'].forEach(id => {
+                                const cb = document.getElementById(id);
+                                if (cb) cb.checked = true;
                             });
                         } else {
-                            console.warn("No days found in `schedule.everyday`");
+                            let raw = schedule.everyday;
+                            try {
+                                const parsed = JSON.parse(raw);
+                                if (Array.isArray(parsed)) {
+                                    parsed.forEach(d => {
+                                        const id = String(d).toLowerCase();
+                                        const cb = document.getElementById(id);
+                                        if (cb) cb.checked = true;
+                                    });
+                                } else if (parsed && typeof parsed === 'object') {
+                                    Object.keys(parsed).forEach(k => {
+                                        if (parsed[k]) {
+                                            const id = String(k).toLowerCase();
+                                            const cb = document.getElementById(id);
+                                            if (cb) cb.checked = true;
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                // not JSON, try semicolon/comma separated
+                                let days = raw.split(/[,;\s]+/).filter(Boolean);
+                                days.forEach(day => {
+                                    const id = String(day).toLowerCase();
+                                    const checkbox = document.getElementById(id);
+                                    if (checkbox) {
+                                        checkbox.checked = true;
+                                    } else {
+                                        console.error(`Checkbox with id "${day}" not found`);
+                                    }
+                                });
+                            }
                         }
                     } else {
                         console.error(response.message);
@@ -211,11 +245,112 @@ $counterNumber = $token->counterNumber;
                 },
                 error: function(xhr, status, error) {
                     console.error("AJAX Error:", status, error);
+                    // If no schedule is found yet (404), populate sensible defaults to keep UI usable
+                    if (xhr && xhr.status === 404) {
+                        document.getElementById('schedule_requester_enable').checked = true;
+                        document.getElementById('schedule_requester_time_start').value = '08:00';
+                        document.getElementById('schedule_requester_time_end').value = '17:00';
+
+                        // Default business days Mon-Fri
+                        const all = ['sun','mon','tue','wed','thu','fri','sat'];
+                        all.forEach(id => {
+                            const cb = document.getElementById(id);
+                            if (cb) cb.checked = ['mon','tue','wed','thu','fri'].includes(id);
+                        });
+                    }
                 }
             });
         }
 
         load_schedule_requester_form();
+        load_transaction_limiter();
+        
+        // Load transaction limiter settings and populate the form
+        function load_transaction_limiter() {
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
+            $.ajax({
+                url: endpointHost.replace(/\/$/, '') + '/api/transaction_limiter',
+                type: 'GET',
+                xhrFields: { withCredentials: true },
+                success: function(response) {
+                    console.log('Transaction limiter GET:', response);
+                    if (response && response.status === 'success') {
+                        const data = (response && response.data) || {};
+                        // If a numeric value exists, populate the input
+                        const limit = (typeof data.transaction_limit !== 'undefined' && data.transaction_limit !== null)
+                            ? data.transaction_limit
+                            : document.getElementById('transaction_limit').value;
+                        document.getElementById('transaction_limit').value = limit;
+                        // If the record exists, enable the checkbox. If not, leave as unchecked.
+                        const enable = (typeof data.transaction_limit_enable !== 'undefined' && data.transaction_limit_enable !== null)
+                            ? (parseInt(data.transaction_limit_enable, 10) !== 0)
+                            : false;
+                        document.getElementById('transaction_limit_enable').checked = enable;
+                    } else {
+                        console.error('Transaction limiter:', response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error (transaction_limiter):', status, error);
+                    // If not found (404), set sensible defaults
+                    if (xhr && xhr.status === 404) {
+                        document.getElementById('transaction_limit').value = 10;
+                        document.getElementById('transaction_limit_enable').checked = false;
+                    }
+                }
+            });
+        }
+
+        // Submit handler for transaction limit form
+    if (frmTransactionLimitForm) {
+            frmTransactionLimitForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+        let transaction_limit_enable = formData.get('transaction_limit_enable') ? 1 : 0;
+                let transaction_limit = formData.get('transaction_limit') || 0;
+
+                console.log('Transaction Limit Form Data:', { transaction_limit_enable, transaction_limit });
+
+                let notify = document.getElementById('notify-transaction-limit');
+                let notify_message = document.getElementById('notify-transaction-limit-message');
+
+                if (!(endpointHost && endpointHost.length > 0)) { return; }
+                $.ajax({
+                    url: endpointHost.replace(/\/$/, '') + '/api/transaction_limiter',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        transaction_limit: parseInt(transaction_limit, 10),
+                        transaction_limit_enable: transaction_limit_enable
+                    }),
+                    xhrFields: { withCredentials: true },
+                    success: function(response) {
+                        notify.classList.remove('alert-success', 'alert-danger', 'alert-info');
+                        if (response && response.status === 'success') {
+                            notify.classList.add('alert-success');
+                            notify_message.innerHTML = response.message;
+                            notify.classList.remove('d-none');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1200);
+                        } else {
+                            notify.classList.add('alert-danger');
+                            notify_message.innerHTML = response && response.message ? response.message : 'Failed to update';
+                            notify.classList.remove('d-none');
+                            setTimeout(() => {
+                                notify.classList.add('d-none');
+                            }, 2000);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        notify.classList.add('alert-danger');
+                        notify_message.innerHTML = 'Network or server error';
+                        notify.classList.remove('d-none');
+                        setTimeout(() => { notify.classList.add('d-none'); }, 2000);
+                    }
+                });
+            });
+        }
         frmScheduleRequesterForm.addEventListener('submit', function(e) {
             e.preventDefault();
             let formData = new FormData(this);
@@ -234,21 +369,23 @@ $counterNumber = $token->counterNumber;
             let notify_scheduler_requester = document.getElementById('notify-scheduler-requester');
             let notify_scheduler_requester_message = document.getElementById('notify-scheduler-requester-message');
             
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
             $.ajax({
-                url: './../api/api_endpoint.php',
-                type: 'POST',
+                url: endpointHost.replace(/\/$/, '') + '/api/schedule/requester_form',
+                type: 'PUT',
+                contentType: 'application/json',
                 data: JSON.stringify({
                     enable: schedule_requester_enable,
                     time_start: schedule_requester_time_start,
                     time_end: schedule_requester_time_end,
                     repeat: 'daily',
-                    everyday: days,
-                    method: 'schedule-update-requester_form'
+                    everyday: days
                 }),
+                xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log("Response:" + response);
                     notify_scheduler_requester.classList.remove('alert-success', 'alert-danger', 'alert-info');
-                    if (response.status === 'success') {
+                    if (response && response.status === 'success') {
                         notify_scheduler_requester.classList.add('alert-success');
                         notify_scheduler_requester_message.innerHTML = response.message;
                         notify_scheduler_requester.classList.remove('d-none');
@@ -259,7 +396,7 @@ $counterNumber = $token->counterNumber;
                         }, 2000);
                     } else {
                         notify_scheduler_requester.classList.add('alert-danger');
-                        notify_scheduler_requester_message.innerHTML = response.message;
+                        notify_scheduler_requester_message.innerHTML = response && response.message ? response.message : 'Failed to update';
                         notify_scheduler_requester.classList.remove('d-none');
                         // message_error(frmScheduleRequesterForm, response.message);
                         setTimeout(() => {

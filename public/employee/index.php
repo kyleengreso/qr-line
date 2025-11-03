@@ -3,17 +3,24 @@
 include_once __DIR__ . "/../base.php";
 restrictEmployeeMode();
 
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
+// Ensure API endpoint host is available
+include_once __DIR__ . "/../includes/config.php";
 
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
-$priority = $token->priority;
+// Use normalized token payload and guard against missing fields
+$payload = getDecodedTokenPayload();
+$tok = null;
+if (is_array($payload)) {
+    $tok = json_decode(json_encode($payload)); // stdClass for object-style access
+} elseif (is_object($payload)) {
+    $tok = $payload;
+}
+
+$id = isset($tok->id) ? (int)$tok->id : 0;
+$username = isset($tok->username) ? $tok->username : '';
+$role_type = isset($tok->role_type) ? $tok->role_type : (isset($tok->role) ? $tok->role : '');
+$email = isset($tok->email) ? $tok->email : '';
+$counterNumber = isset($tok->counterNumber) ? (int)$tok->counterNumber : 0;
+$priority = isset($tok->priority) ? $tok->priority : 'N';
 ?>
 
 <!DOCTYPE html>
@@ -59,11 +66,9 @@ $priority = $token->priority;
                     
                     <div class="w-100 mb-4">
                         <div class="card border-1 p-4 text-center">
-                            <form class="d-none" action="" id="frmCutOff_trigger">
-                                <div class="alert alert-info text-start d-none" id="cutOff_trigger_notification">
-                                    <span id="cutOff_trigger_message">
-                                        Standby...
-                                    </span>
+                            <form class="" action="" id="frmCutOff_trigger">
+                                <div class="alert alert-info text-start" id="cutOff_trigger_notification">
+                                    <span id="cutOff_trigger_message">1 queue remain.</span>
                                 </div>
                                 <div class="form-floating mb-4">
                                     <select class="form-select" name="cut_off_select" id="cut_off_select">
@@ -91,9 +96,21 @@ $priority = $token->priority;
                             <tr>
                                 <th scope="col-2">#</th>
                                 <th scope="col">Email</th>
-                                <th scope="col">Payment</th>                            </tr>
+                                <th scope="col">Payment</th>
+                            </tr>
                         </thead>
+                        <tbody>
+                            <!-- Rows are rendered by JS -->
+                        </tbody>
                     </table>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div>
+                            <small class="text-muted" id="transactions-count">&nbsp;</small>
+                        </div>
+                        <div id="transactions-pagination" class="btn-group" role="group" aria-label="Transactions pagination">
+                            <!-- Pagination controls injected by JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
             </div>
@@ -115,13 +132,137 @@ $priority = $token->priority;
         let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
+
+        (function() {
+            const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : '';?>";
+            window.API_BASE = endpointHost + '/api';
+        })();
+
+        // Attempt to keep the displayed COUNTER in sync with the JWT without a full reload.
+        // Strategy:
+        // 1. Try to read the `token` cookie in JS and decode the JWT payload.
+        // 2. If the cookie is HttpOnly (not readable), fall back to calling the
+        //    local PHP helper `public/includes/system_auth.php?action=status` which
+        //    returns the decoded payload server-side.
+        // 3. Only update the DOM when the token (or decoded payload) changes.
+        (function() {
+            let lastTokenValue = null;
+
+            function tryGetTokenFromCookie() {
+                try {
+                    const match = document.cookie.match('(?:^|; )token=([^;]*)');
+                    return match ? decodeURIComponent(match[1]) : null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function base64UrlDecode(str) {
+                try {
+                    str = str.replace(/-/g, '+').replace(/_/g, '/');
+                    // Pad base64 string
+                    while (str.length % 4) str += '=';
+                    // atob returns a binary string; decodeURIComponent/escape handles UTF-8
+                    const decoded = atob(str);
+                    try {
+                        // Percent-encode UTF-8 bytes then decode
+                        return decodeURIComponent(Array.prototype.map.call(decoded, function(c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                    } catch (e) {
+                        return decoded;
+                    }
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function decodeJwt(token) {
+                if (!token) return null;
+                const parts = token.split('.');
+                if (parts.length < 2) return null;
+                const payload = parts[1];
+                const json = base64UrlDecode(payload);
+                if (!json) return null;
+                try {
+                    return JSON.parse(json);
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function updateCounterFromPayload(payload) {
+                if (!payload) return;
+                const el = document.getElementById('employee-counter-number');
+                if (!el) return;
+                // Accept multiple common claim names (legacy compat)
+                const counter = (payload.counterNumber !== undefined && payload.counterNumber !== null)
+                    ? payload.counterNumber
+                    : (payload.counter_number !== undefined && payload.counter_number !== null)
+                        ? payload.counter_number
+                        : (payload.counter !== undefined && payload.counter !== null)
+                            ? payload.counter
+                            : null;
+
+                if (counter !== null && counter !== undefined) {
+                    // Only update when value differs to avoid unnecessary DOM churn
+                    const asInt = parseInt(counter, 10);
+                    if (!Number.isNaN(asInt) && el.innerText != asInt) {
+                        el.innerText = asInt;
+                    }
+                }
+            }
+
+            async function refreshCounterFromToken() {
+                // First try local cookie (may be HttpOnly)
+                const token = tryGetTokenFromCookie();
+                if (token) {
+                    if (token === lastTokenValue) return; // unchanged
+                    lastTokenValue = token;
+                    const payload = decodeJwt(token);
+                    if (payload) {
+                        updateCounterFromPayload(payload);
+                        return;
+                    }
+                }
+
+                // Fallback: ask PHP to decode token server-side (same-origin)
+                try {
+                    const resp = await fetch('/public/includes/system_auth.php?action=status', { credentials: 'same-origin' });
+                    if (resp.ok) {
+                        const j = await resp.json();
+                        if (j && j.decoded) {
+                            // stringify to compare for changes
+                            const sig = JSON.stringify(j.decoded);
+                            if (sig === lastTokenValue) return;
+                            lastTokenValue = sig;
+                            updateCounterFromPayload(j.decoded);
+                        }
+                    }
+                } catch (e) {
+                    // ignore network errors — best-effort only
+                }
+            }
+
+            // Kick off initial refresh and poll (lightweight) so UI updates when token changes.
+            refreshCounterFromToken();
+            setInterval(refreshCounterFromToken, 5000);
+        })();
+
+        // Ensure browser sends cookies (token) to Flask across origins
+        if (window.jQuery && $.ajaxSetup) {
+            $.ajaxSetup({
+                xhrFields: { withCredentials: true },
+                crossDomain: true
+            });
+        }
     
         function queue_remain_set(queue_remain) {
             $.ajax({
-                url: "/public/api/api_endpoint.php",
-                method: "POST",
+                url: window.API_BASE + "/cashier",
+                type: 'PATCH',
+                contentType: 'application/json',
                 data: JSON.stringify({
-                    method : "counter_queue_remain",
                     counter_number : <?php echo $counterNumber?>,
                     queue_remain : queue_remain
                 }),
@@ -129,7 +270,7 @@ $priority = $token->priority;
                     cutOff_trigger_notification.classList.remove('d-none');
                     notify_priority = true;
                     if (notify_priority && queue_remain != null) {
-                        cutOff_trigger_message.innerText = "Queue remining set to " + queue_remain;
+                        cutOff_trigger_message.innerText = "Queue remaining set to " + queue_remain;
                     } else if (notify_priority && queue_remain == null) {
                         cutOff_trigger_message.innerText = "Auto-cut off is disabled";
                     }
@@ -137,6 +278,8 @@ $priority = $token->priority;
                         notify_priority = false;
                         cutOff_trigger_notification.classList.add('d-none');
                     },notify_priority_timer * 1000);
+                    // Refresh current queue_remain after change
+                    queue_remain_get();
                     console.log(response);
                 }
             });
@@ -145,12 +288,14 @@ $priority = $token->priority;
         let cut_off_select = document.getElementById('cut_off_select');
         cut_off_select.addEventListener('change', function (e) {
             console.log(this.value);
-            if (this.value == "null") {
-                fetchCutOff();
-                queue_remain_set(this.null);
+            fetchCutOff();
+            if (this.value === "null") {
+                // Disable auto-cutoff
+                queue_remain_set(null);
             } else {
-                fetchCutOff();
-                queue_remain_set(this.value);
+                // Set numeric cutoff value
+                const v = parseInt(this.value, 10);
+                queue_remain_set(Number.isNaN(v) ? null : v);
             }
         });
 
@@ -160,7 +305,7 @@ $priority = $token->priority;
                 counter_number: <?php echo htmlspecialchars($counterNumber); ?>
             });
             $.ajax({
-                url: "/public/api/api_endpoint.php?" + param.toString(),
+                url: window.API_BASE + "/cashier?" + param.toString(),
                 method: "GET",
                 success: function(response) {
                     console.log("Response received:", response); // Log the response
@@ -169,6 +314,11 @@ $priority = $token->priority;
                         if (response.queue_remain != null) {
                             if (cutOff_trigger_notification.classList.contains('d-none')) {
                                 cutOff_trigger_notification.classList.remove('d-none');
+                            }
+                            // Update the inner message span instead of replacing the container
+                            if (typeof cutOff_trigger_message !== 'undefined' && cutOff_trigger_message) {
+                                cutOff_trigger_message.innerText = response.queue_remain + " queue remain.";
+                            } else {
                                 cutOff_trigger_notification.innerText = response.queue_remain + " queue remain.";
                             }
                         } else {
@@ -191,18 +341,19 @@ $priority = $token->priority;
         function fetchTransaction() {
             let resp = null;
             console.log("Priority: ", this_counter_priority);
-            var params = new URLSearchParams({
-                cashier: true,
-                employee_id: <?php echo $id?>
-            });
-            // console.log("Params", params.toString());
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: window.API_BASE + '/cashier',
                 type: 'GET',
+                cache: false,
                 success: function(response) {
                     console.log("RECV:", response);
                     let queue_number = document.getElementById('queue-number');
-                    if (response.status === 'success') {
+                    if (
+                        response.status === 'success' &&
+                        response.data &&
+                        typeof response.data.queue_number !== 'undefined' &&
+                        response.data.queue_number !== null
+                    ) {
                         resp = response;
                         queue_number.innerHTML = response.data.queue_number;
                         console.log(resp);
@@ -227,14 +378,20 @@ $priority = $token->priority;
         btn_counter_success.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
-                url: '/public/api/api_endpoint.php',
+                url: window.API_BASE + '/cashier',
                 type: 'POST',
+                contentType: 'application/json',
                 data: JSON.stringify({
                     method: 'cashier-success',
                     idemployee: <?php echo $id?>,
                 }),
                 success: function(response) {
                     if (response.status === 'success') {
+                        // Update remaining queue count immediately
+                        queue_remain_get();
+                        // Also refresh the current transaction and student list
+                        fetchTransaction();
+                        fetchStudentTransaction();
                         return;
                     } else {
                         console.log('Error:', response.message);
@@ -251,14 +408,19 @@ $priority = $token->priority;
         btn_counter_skip.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
-                url: '/public/api/api_endpoint.php',
+                url: window.API_BASE + '/cashier',
                 type: 'POST',
+                contentType: 'application/json',
                 data: JSON.stringify({
                     method: 'cashier-missed',
                     idemployee: <?php echo $id?>,
                 }),
                 success: function(response) {
                     if (response.status === 'success') {
+                        // Update remaining queue count immediately
+                        queue_remain_get();
+                        fetchTransaction();
+                        fetchStudentTransaction();
                         return;
                     } else {
                         console.log('Error:', response.message);
@@ -274,38 +436,99 @@ $priority = $token->priority;
         // Students
         let table_transactions_student = document.getElementById('table-transactions-student');
         let this_employee_id = <?php echo $id?>;
-        function fetchStudentTransaction() {
-            const params = new URLSearchParams({
-                transactions: true,
-                employee_id: this_employee_id,
-                students: 1,
-                email: "palawan.edu.ph",
-                desc: true,
-                date_range: 'today'
-            });
-        
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    let transactions = response.transactions;
-                    while (table_transactions_student.rows.length > 1) {
-                        table_transactions_student.deleteRow(-1);
-                    }
-                    if (Array.isArray(transactions) && transactions.length > 0) {
-                        transactions.forEach((transaction) => {
-                            let row = table_transactions_student.insertRow();
-                            let cell1 = row.insertCell(0);
-                            let cell2 = row.insertCell(1);
-                            let cell3 = row.insertCell(2);
-                            cell1.innerHTML = transaction.queue_number;
-                            cell2.innerHTML = transaction.email;
-                            cell3.innerHTML = transaction.payment;
-                        });
-                    } else {
-                        // console.warn("No transactions found or invalid data format.");
-                    }
+        // Client-side pagination state
+        let studentTransactions = [];
+        let studentTxnPage = 1;
+        const studentPageSize = 10; // rows per page
 
+        function renderStudentTransactionsPage() {
+            // Clear tbody
+            const tbody = table_transactions_student.querySelector('tbody');
+            while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+            if (!Array.isArray(studentTransactions) || studentTransactions.length === 0) {
+                document.getElementById('transactions-count').innerText = '';
+                updateTransactionsPagination();
+                return;
+            }
+
+            const total = studentTransactions.length;
+            const totalPages = Math.max(1, Math.ceil(total / studentPageSize));
+            if (studentTxnPage > totalPages) studentTxnPage = totalPages;
+            const start = (studentTxnPage - 1) * studentPageSize;
+            const end = Math.min(start + studentPageSize, total);
+
+            for (let i = start; i < end; i++) {
+                const transaction = studentTransactions[i];
+                const row = document.createElement('tr');
+                const cell1 = document.createElement('td');
+                const cell2 = document.createElement('td');
+                const cell3 = document.createElement('td');
+                cell1.innerText = transaction.queue_number || '';
+                cell2.innerText = transaction.email || '';
+                cell3.innerText = transaction.payment || '';
+                row.appendChild(cell1);
+                row.appendChild(cell2);
+                row.appendChild(cell3);
+                tbody.appendChild(row);
+            }
+
+            document.getElementById('transactions-count').innerText = `Showing ${start + 1}–${end} of ${total}`;
+            updateTransactionsPagination(totalPages);
+        }
+
+        function updateTransactionsPagination(totalPages) {
+            const container = document.getElementById('transactions-pagination');
+            // If totalPages is not provided, compute from current data
+            if (typeof totalPages === 'undefined') {
+                totalPages = Math.max(1, Math.ceil((studentTransactions.length || 0) / studentPageSize));
+            }
+            container.innerHTML = '';
+
+            const prev = document.createElement('button');
+            prev.type = 'button';
+            prev.className = 'btn btn-sm btn-outline-primary';
+            prev.innerText = 'Prev';
+            prev.disabled = studentTxnPage <= 1;
+            prev.onclick = function() {
+                if (studentTxnPage > 1) {
+                    studentTxnPage--;
+                    renderStudentTransactionsPage();
+                }
+            };
+
+            const next = document.createElement('button');
+            next.type = 'button';
+            next.className = 'btn btn-sm btn-outline-primary';
+            next.innerText = 'Next';
+            next.disabled = studentTxnPage >= totalPages;
+            next.onclick = function() {
+                if (studentTxnPage < totalPages) {
+                    studentTxnPage++;
+                    renderStudentTransactionsPage();
+                }
+            };
+
+            const pageInfo = document.createElement('span');
+            pageInfo.className = 'mx-2 align-self-center';
+            pageInfo.innerText = `Page ${studentTxnPage} / ${totalPages}`;
+
+            container.appendChild(prev);
+            container.appendChild(pageInfo);
+            container.appendChild(next);
+        }
+
+        function fetchStudentTransaction() {
+            $.ajax({
+                url: window.API_BASE + '/dashboard/cashier',
+                type: 'GET',
+                cache: false,
+                success: function(response) {
+                    let transactions = response.data || [];
+                    if (!Array.isArray(transactions)) transactions = [];
+                    studentTransactions = transactions;
+                    studentTxnPage = 1; // reset to first page on refresh
+                    renderStudentTransactionsPage();
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);
@@ -330,7 +553,7 @@ $priority = $token->priority;
 
         async function fetchCutOff() {
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: window.API_BASE + '/cashier?' + params,
                 type: 'GET',
                 success: function(response) {
                     console.log(response);
@@ -375,8 +598,9 @@ $priority = $token->priority;
             e.preventDefault();
             if (operational) {
                 $.ajax({
-                    url: '/public/api/api_endpoint.php',
+                    url: window.API_BASE + '/cashier',
                     type: 'POST',
+                    contentType: 'application/json',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,
@@ -405,8 +629,9 @@ $priority = $token->priority;
                 });
             } else {
                 $.ajax({
-                    url: '/public/api/api_endpoint.php',
+                    url: window.API_BASE + '/cashier',
                     type: 'POST',
+                    contentType: 'application/json',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,

@@ -1,38 +1,105 @@
 <?php
-// QR-LINE Self-Endpoint v2
-// (c) QR-Line. All Rights Reserved 2025
+/*
+
+    QR-LINE API Endpoint
+    Copyright (c) 2025 Mark Cedie Buday. All Rights Reserved
+
+*/
 
 require_once __DIR__ . '/./../base.php';
 require_once __DIR__ . '/./../includes/system_auth.php';
+require_once __DIR__ . '/./../includes/config.php';
 
-/**
- *  NOTE:
- * This API reponse must less than 100ms
- * 
- * 
- * 
- */
+/*
+   NOTE:
+   
+   This API reponse must less than 100ms between 
+  
+  
+  
+*/
+
 header("Content-Type: application/json");
 
+// Start output buffering so we can normalize HTTP status codes based on JSON responses
+if (!ob_get_level()) {
+    ob_start();
+}
+
 global $conn;
+
+function determine_http_status_code(array $data): int {
+    $status = isset($data['status']) ? strtolower($data['status']) : '';
+    $message = isset($data['message']) ? strtolower($data['message']) : '';
+
+    if ($status === 'success') {
+        if (strpos($message, 'created') !== false || strpos($message, 'registered') !== false || strpos($message, 'generated') !== false || strpos($message, 'queued') !== false) {
+            return 201;
+        }
+        return 200;
+    }
+
+    if (strpos($message, 'database') !== false || strpos($message, 'error:') !== false || strpos($message, 'exception') !== false) return 500;
+    if (strpos($message, 'invalid token') !== false || strpos($message, 'no token') !== false || (strpos($message, 'invalid') !== false && strpos($message, 'password') !== false)) return 401;
+    if (strpos($message, 'deactivated') !== false || strpos($message, 'forbidden') !== false) return 403;
+    if (strpos($message, 'not found') !== false || strpos($message, 'not assigned') !== false || strpos($message, 'no transactions') !== false) return 404;
+    if (strpos($message, 'already') !== false || strpos($message, 'exists') !== false || strpos($message, 'already registered') !== false) return 409;
+    if (strpos($message, 'input') !== false || strpos($message, 'please') !== false || strpos($message, 'invalid request') !== false) return 400;
+
+    return 400;
+}
+
+function getCounterId($counterNumber) {
+    global $conn;
+    $sql_cmd = "SELECT c.idcounter
+                FROM counters c
+                WHERE c.counterNumber = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$counterNumber]);
+    $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($counter) == 0) {
+        return null;
+    }
+    return $counter[0]['idcounter'];
+}
+
+register_shutdown_function(function() {
+    if (!ob_get_level()) return;
+    $buffer = ob_get_contents();
+    if ($buffer === '') {
+        if (ob_get_level()) ob_end_flush();
+        return;
+    }
+    $decoded = json_decode($buffer, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded) && isset($decoded['status'])) {
+        $code = determine_http_status_code($decoded);
+        header('Content-Type: application/json', true, $code);
+        ob_end_clean();
+        echo json_encode($decoded);
+        return;
+    }
+    if (ob_get_level()) ob_end_flush();
+});
 
 if (isset($_COOKIE['token'])) {
     $token = $_COOKIE['token'];
     $decToken = decryptToken($token, $master_key);
-    if ($decToken) {
-        $this_username = $decToken['username'];
-        $this_role_type = $decToken['role_type'];
-        $this_email = $decToken['email'];
+    if ($decToken && is_array($decToken)) {
+        // Use defensive access to avoid PHP warnings when keys are missing.
+        $this_username = $decToken['username'] ?? ($decToken['user'] ?? null);
+        // Accept either role_type or role for compatibility
+        $this_role_type = $decToken['role_type'] ?? ($decToken['role'] ?? null);
+        $this_email = $decToken['email'] ?? null;
         $this_counterNumber = $decToken['counterNumber'] ?? null;
         $this_priority = $decToken['priority'] ?? null;
-        $this_user_id = $decToken['id'];
+        $this_user_id = $decToken['id'] ?? ($decToken['user_id'] ?? null);
     }
-} 
+}
 if (!$conn) {
     echo json_encode(array(
         "status" => "error",
         "message" => "Database connection error"));
-    exit;
+    
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -40,34 +107,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = json_decode(file_get_contents("php://input"));
     
     if (!isset($data->method)) {
-        $conn->close();
+        
         echo json_encode(array(
             "status" => "error",
             "message" => "Invalid request"
         ));
-        exit;
+        
     }
 
     $method = $data->method;
     if ($method == "logout") {
         // Check token from cookie
         if (isset($_COOKIE['token'])) {
-            $token = $_COOKIE['token'];
+            $token = json_encode($_COOKIE['token'], true);
             $decToken = decryptToken($token, $master_key);
             $web = false;
             if ($decToken) {
                 // Log the login
                 $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
-                $stmt = $conn->prepare($sql_cmd);
+                $stmt = $conn->pdo->prepare($sql_cmd);
 
                 $user_id = $decToken['id'];
                 $username = $decToken['username'];
                 $comment = "LOG_OUT: " . $username . " is logged out";
                 $curdate = date("Y-m-d H:i:s");
 
-                $stmt->bind_param("sss", $user_id, $comment, $curdate);
-                $stmt->execute();
-                $stmt->close();
+                $stmt->execute([$user_id, $comment, $curdate]);
                 // Delete the cookie
                 setcookie("token", "", time() - 3600, "/");
                 echo json_encode(array(
@@ -77,23 +142,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 if ($web) {
                     header("Location: " . "/../auth/login.php");
                 }
-                $conn->close();
-                exit;
+                
+                
             } else {
                 echo json_encode(array(
                     "status" => "error",
                     "message" => "Invalid token"
                 ));
-                $conn->close();
-                exit;
+                
+                
             }
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No token found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     } else if ($method == "login") {
         if (!isset($data->username) || !isset($data->password)) {
@@ -101,36 +166,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username and password!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $username = $data->username;
         $password = $data->password;
 
-        $sql_cmd = "SELECT e.id, e.username, e.password, e.active, e.role_type, e.email
-                    FROM employees e
-                    WHERE e.username = ? OR e.email = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $username, $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows == 0) {
+    $sql_cmd = "SELECT e.id, e.username, e.password, e.active, e.role_type, e.email
+            FROM employees e
+            WHERE e.username = ? OR e.email = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$username, $username]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($employee) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Username or Password is invalid"
             ));
-            $conn->close();
-            exit;
-        }
+                    http_response_code(401);
+                    return;
+                }
         if ($employee[0]['active'] == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Account is deactivated"
             ));
-            $conn->close();
-            exit;
+            http_response_code(403);
+            return;
         }
         if (password_verify($password, $employee[0]['password'])) {
             
@@ -139,20 +201,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $sql_cmd = "SELECT c.counterNumber, c.counter_priority
                             FROM counters c
                             WHERE c.idemployee = ?";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("s", $employee[0]['id']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $counter = $result->fetch_all(MYSQLI_ASSOC);
-                $stmt->close();
+                $stmt = $conn->pdo->prepare($sql_cmd);
+                $stmt->execute([$employee[0]['id']]);
+                $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
                 if (!$counter) {
                     echo json_encode(array(
                         "status" => "error",
                         "message" => "Cashier was not assigned yet"
                     ));
-                    $conn->close();
-                    exit;
+                    http_response_code(404);
+                    return;
+                    exit(0);
                 }
             }
 
@@ -168,17 +228,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $encToken = encryptToken($token, $master_key);
             setcookie("token", $encToken, time() + (86400 * 30), "/");
 
-            // Log the login
-            $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at, device_name) VALUES (?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql_cmd);
-            
+            // Log the login — try to include device_name if the column exists, otherwise fall back
             $user_id = $employee[0]['id'];
             $comment = "LOG_IN: " . $employee[0]['username'] . " is logged in";
             $curdate = date("Y-m-d H:i:s");
             $device_name = $data->device_name ?? null;
-            $stmt->bind_param("ssss", $user_id, $comment, $curdate, $device_name);
-            $stmt->execute();
-            $stmt->close();
+
+            try {
+                $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at, device_name) VALUES (?, ?, ?, ?)";
+                $stmt = $conn->pdo->prepare($sql_cmd);
+                $stmt->execute([$user_id, $comment, $curdate, $device_name]);
+            } catch (PDOException $e) {
+                // If the column doesn't exist (SQLSTATE 42S22 / error 1054), retry without device_name
+                $msg = $e->getMessage();
+                $sqlstate = $e->getCode();
+                if ($sqlstate === '42S22' || stripos($msg, 'unknown column') !== false || stripos($msg, '1054') !== false) {
+                    $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
+                    $stmt = $conn->pdo->prepare($sql_cmd);
+                    $stmt->execute([$user_id, $comment, $curdate]);
+                } else {
+                    // Re-throw other PDO exceptions so they can be handled/visible
+                    throw $e;
+                }
+            }
 
         
             echo json_encode(array(
@@ -186,73 +258,67 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Login successful",
                 "data" => $token
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             // Attempt login
             $sql_cmd = "SELECT setup_value_int
                         FROM setup_system
                         WHERE setup_key = 'attempt_login'";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $setup = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $setup = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $attempt_set = $setup[0]['setup_value_int'];
 
             $sql_cmd = "SELECT attempt_login
                         FROM employees
                         WHERE username = ? or email = ?";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("ss", $username, $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $attempt = $result->fetch_all(MYSQLI_ASSOC)[0]['attempt_login'];
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$username, $username]);
+            $attempt = $stmt->fetchAll(PDO::FETCH_ASSOC)[0]['attempt_login'];
             if ($attempt < $attempt_set) {
                 $attempt = $attempt + 1;
                 $sql_cmd = "UPDATE employees
                             SET attempt_login = ?
                             WHERE username = ? or email = ?";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("sss", $attempt, $username, $username);
-                $stmt->execute();
-                $stmt->close();
+                $stmt = $conn->pdo->prepare($sql_cmd);
+                $stmt->execute([$attempt, $username, $username]);
                 echo json_encode(array(
                     "status" => "error",
                     "attempt" => $attempt,
                     "message" => "Username or Password is invalid"
                 ));
-                $conn->close();
-                exit;
+                http_response_code(401);
+                return;
+                
+                
             } else {
                 // Deactivate
                 $sql_cmd = "UPDATE employees
                             SET active = 0
                             WHERE username = ? or email = ?";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("ss", $username, $username);
-                $stmt->execute();
-                $stmt->close();
+                $stmt = $conn->pdo->prepare($sql_cmd);
+                $stmt->execute([$username, $username]);
 
                 // Log the deactivated account 
                 $sql_cmd = "INSERT INTO user_logs (user_id, comment, updated_at) VALUES (?, ?, ?)";
-                $stmt = $conn->prepare($sql_cmd);
+                $stmt = $conn->pdo->prepare($sql_cmd);
                 $user_id = $employee[0]['id'];
                 $comment = "LOG_IN: " . $employee[0]['username'] . " has been deactivated after attempting many times";
                 echo json_encode(array(
                     "status" => "error",
                     "message" => "Account is deactivated"
                 ));
-                $conn->close();
-                exit;
+                
+                
             }
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Username or Password is invalid"
             ));
-            $conn->close();
-            exit;
+            http_response_code(401);
+            return;
+            
         }
     // REGISTER
     } else if ($method == "register") {
@@ -261,8 +327,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username, password and email!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $username = $data->username;
         $password = $data->password;
@@ -271,42 +337,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $sql_cmd = "SELECT e.id
                     FROM employees e
                     WHERE e.username = ? OR e.email = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $username, $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows > 0) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$username, $email]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($employee) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Username or Email already exists"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             $hash_password = password_hash($password, PASSWORD_DEFAULT);
             $sql_cmd = "INSERT INTO employees (username, password, email) VALUES (?, ?, ?)";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("sss", $username, $hash_password, $email);
-            if ($stmt->execute()) {
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            if ($stmt->execute([$username, $hash_password, $email])) {
                 echo json_encode(array(
                     "status" => "success",
                     "message" => "Employee registered successfully"
                 ));
-                $conn->close();
-                exit;
+                
+                
             } else {
                 echo json_encode(array(
                     "status" => "success",
                     "message" => "Error: " . $conn->error
                 ));
-                $conn->close();
-                exit;
+                
+                
             }
         }
 
-        exit;
+        
     
     } else if ($method == "forgot-password") {
         if (!isset($data->username)) {
@@ -314,43 +376,39 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // Find the username 
         $username = $data->username;
 
-        $sql_cmd = "SELECT e.id, e.username, e.email
-                    FROM employees e
-                    WHERE e.username = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+    $sql_cmd = "SELECT e.id, e.username, e.email
+            FROM employees e
+            WHERE e.username = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$username]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows == 0) {
+    if (count($employee) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Can't find username " . $username . "."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // Generate 12 digit password
         $password = bin2hex(random_bytes(6));
         $hash_password = password_hash($password, PASSWORD_DEFAULT);
-        $sql_cmd = "UPDATE employees
-                    SET password = ?
-                    WHERE username = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $hash_password, $username);
-        $stmt->execute();
-        // if affected_row
-        if ($stmt->affected_rows > 0) {
+    $sql_cmd = "UPDATE employees
+            SET password = ?
+            WHERE username = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$hash_password, $username]);
+    // if affected_row
+    if ($stmt->rowCount() > 0) {
             include_once __DIR__ . '/email_content.php';
             $employee = array(
                 "username" => $username,
@@ -363,22 +421,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "Password reset successfully",
                 "new_password" => $password
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
     // EMPLOYEES
@@ -388,27 +446,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         
         // Check if the employee exists
-        $sql_cmd = "SELECT *
-                    FROM employees
-                    WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
+    $sql_cmd = "SELECT *
+            FROM employees
+            WHERE id = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$data->id]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows == 0) {
+    if (count($employee) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $employee = $employee[0];
@@ -422,20 +478,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "UPDATE counters c
                         SET c.queue_remain = NULL
                         WHERE c.idemployee = ?";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $data->id);
-            $stmt->execute();
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$data->id]);
         }
 
         // Toggle cut off
-        $sql_cmd = "UPDATE employees
-                    SET cut_off_state = ?
-                    WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $cut_off, $data->id);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    $sql_cmd = "UPDATE employees
+            SET cut_off_state = ?
+            WHERE id = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$cut_off, $data->id]);
+    if ($stmt->rowCount() > 0) {
             if ($cut_off == 1) {
                 $message = "Employee " . $employee['username'] . " is cut off";
             } else {
@@ -446,15 +499,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "cut_off" => $cut_off,
                 "message" => $message
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     } else if ($method == "employees-add") {
         if (!isset($data->username) || !isset($data->password) || !isset($data->email) || !isset($data->role_type)) {
@@ -462,8 +515,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input username, password, email and role type!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $username = $data->username;
         $password = $data->password;
@@ -471,62 +524,57 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $role_type = $data->role_type;
         $active = $data->active ?? 1;
 
-        $sql_cmd = "SELECT e.id
-                    FROM employees e
-                    WHERE e.username = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows > 0) {
+    $sql_cmd = "SELECT e.id
+            FROM employees e
+            WHERE e.username = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$username]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($employee) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Username or Email already exists"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $hash_password = password_hash($password, PASSWORD_DEFAULT);
-        $sql_cmd = "INSERT INTO employees (username, password, email, role_type, active) VALUES (?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("sssss", $username, $hash_password, $email, $role_type, $active);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    $sql_cmd = "INSERT INTO employees (username, password, email, role_type, active) VALUES (?, ?, ?, ?, ?)";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$username, $hash_password, $email, $role_type, $active]);
+    if ($stmt->rowCount() > 0) {
             // Activate the employee
             if (isset($data->active) && $data->active == 1) {
                 $sql_cmd = "UPDATE employees
                             SET active = 1
                             WHERE username = ?";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("s", $username);
-                $stmt->execute();
-                $stmt->close();
+                $stmt = $conn->pdo->prepare($sql_cmd);
+                $stmt->execute([$username]);
+                
             }
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Employee registered successfully"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        exit;
+        
     } else if ($method == "employees-update") {
         if (!isset($data->id) || !isset($data->username) || !isset($data->password) || !isset($data->email) || !isset($data->role_type) || !isset($data->active)) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Input id, username, email and role type!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $id = $data->id;
@@ -537,42 +585,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $active = $data->active;
 
         // Check if the username is already exists
-        $sql_cmd = "SELECT e.id
-                    FROM employees e
-                    WHERE e.username = ? AND e.id != ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $username, $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows > 0) {
+    $sql_cmd = "SELECT e.id
+            FROM employees e
+            WHERE e.username = ? AND e.id != ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$username, $id]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($employee) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Username already exists"
             ));
-            $conn->close();
-            exit;
+            http_response_code(409);
+            return;
         }
 
         // Check if the email is already exists
-        $sql_cmd = "SELECT e.id
-                    FROM employees e
-                    WHERE e.email = ? AND e.id != ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $email, $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+    $sql_cmd = "SELECT e.id
+            FROM employees e
+            WHERE e.email = ? AND e.id != ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$email, $id]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows > 0) {
+    if (count($employee) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Email already exists"
             ));
-            $conn->close();
-            exit;
+            http_response_code(409);
+            return;
+            
         }
 
         // Check role_type
@@ -582,8 +625,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please select the role type"
             ));
-            $conn->close();
-            exit;
+            http_response_code(409);
+            return;
         }
 
         // Check active
@@ -593,8 +636,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Invalid active status"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // Update the employee
@@ -627,109 +670,160 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $types .= "sss";
         $sql_cmd = rtrim($sql_cmd, ",");
 
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param($types, ...$params);
-
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute($params);
+    if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Employee updated successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+    } else if ($stmt->rowCount() == 0) {
+            // If no rows were affected, check whether the current DB row already matches
+            // the requested values or if there was a parameter mismatch.
+            try {
+                $sql_cmd = "SELECT id, username, password, email, role_type, active FROM employees WHERE id = ?";
+                $checkStmt = $conn->pdo->prepare($sql_cmd);
+                $checkStmt->execute([$id]);
+                $current = $checkStmt->fetch(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                $current = null;
+            }
+
+            // Build a helpful debug message when the update reports 0 rows affected.
+            $debugMsg = 'No changes made';
+            if ($current) {
+                $differences = [];
+                if (isset($username) && $current['username'] !== $username) $differences[] = 'username';
+                // Note: password is hashed in DB; we only report if a new password was provided
+                if (isset($password) && strlen($password) > 0) {
+                    $differences[] = 'password';
+                }
+                if (isset($email) && $current['email'] !== $email) $differences[] = 'email';
+                if (isset($role_type) && $current['role_type'] !== $role_type) $differences[] = 'role_type';
+                if (isset($active) && (int)$current['active'] !== (int)$active) $differences[] = 'active';
+
+                if (count($differences) > 0) {
+                    $debugMsg = 'Update executed but 0 rows affected. Fields that differ from DB: ' . implode(', ', $differences);
+                    // include limited debug info for troubleshooting (non-sensitive)
+                    $debugExtra = [
+                        'current' => [
+                            'username' => $current['username'],
+                            'email' => $current['email'],
+                            'role_type' => $current['role_type'],
+                            'active' => (int)$current['active']
+                        ],
+                        'attempt' => [
+                            'username' => $username,
+                            'email' => $email,
+                            'role_type' => $role_type,
+                            'active' => (int)$active
+                        ]
+                    ];
+
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => $debugMsg,
+                        "debug" => $debugExtra
+                    ));
+                    http_response_code(409);
+                    return;
+                }
+            }
+
+            // Fallback generic response
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            $conn->close();
-            exit;
+            http_response_code(409);
+            return;
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            http_response_code(500);
+            return;
+            
         }
-        exit;
+        
     } else if ($method == "employees-delete") {
         if (!isset($data->id)) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Input id!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $id = $data->id;
-        $sql_cmd = "DELETE FROM employees WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $id);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    $sql_cmd = "DELETE FROM employees WHERE id = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$id]);
+    if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Employee deleted successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee is not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        $conn->close();
-        exit;
+        
+        
     } else if ($method == "employees-reset") {
         if (!isset($data->id)) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Input id!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $id = $data->id;
-        $sql_cmd = "UPDATE employees SET password = ? WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", password_hash("password", PASSWORD_DEFAULT), $id);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    $sql_cmd = "UPDATE employees SET password = ? WHERE id = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([password_hash("password", PASSWORD_DEFAULT), $id]);
+    if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Employee password reset successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        $conn->close();
-        exit;
+        
+        
     
     // COUNTERS
     } else if ($method == "counter-add") {
@@ -738,89 +832,81 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input counter number and employee id!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        // check if only counterNumber is exist
+            // check if only counterNumber is exist
         $sql_cmd = "SELECT * FROM counters WHERE counterNumber = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->counterNumber);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        if ($result->num_rows > 0) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Counter number already assigned"
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->counterNumber]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Counter number already assigned"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // check if only idemployee is exist
         $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        if ($result->num_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->idemployee]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee already assigned to another counter"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // check if exists in both
         $sql_cmd = "SELECT * FROM counters WHERE counterNumber = ? AND idemployee = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $data->counterNumber, $data->idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->counterNumber, $data->idemployee]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter number already registered"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         // Employee checking
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        if ($result->num_rows == 0) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Employee not found"
-            ));
-            $conn->close();
-            exit;
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->idemployee]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) == 0) {
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Employee not found"
+                ));
+                
+            
         }
         // Insert counter
         $sql_cmd = "INSERT INTO counters (idemployee, counterNumber, counter_priority) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("sss", $data->idemployee, $data->counterNumber, $data->counter_priority);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$data->idemployee, $data->counterNumber, $data->counter_priority]);
+        if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Counter registered successfully"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     } else if ($method == "counters-update") {
         if (!isset($data->id) || !isset($data->counterNumber) || !isset($data->idemployee)) {
@@ -828,91 +914,85 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id, counter number and employee id!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $id = $data->id;                        // idcounter
         $counterNumber = $data->counterNumber;  // counterNumber
         $employee_id = $data->idemployee;       // idemployee
-        $priority = $data->counter_priority; // counter_priority
+    // accept either counter_priority or counter_pwd (some clients send counter_pwd)
+    $priority = isset($data->counter_priority) ? $data->counter_priority : (isset($data->counter_pwd) ? $data->counter_pwd : 'N'); // counter_priority
         // check if exists about idemployee
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $employee_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        if ($result->num_rows == 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$employee_id]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // however how about for counter's table
         $sql_cmd = "SELECT * FROM counters WHERE idemployee = ? AND idcounter != ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $employee_id, $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        if ($result->num_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$employee_id, $id]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee already assigned to another counter"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
 
         // check if the counterNumber was existed in the table
         $sql_cmd = "SELECT * FROM counters WHERE counterNumber = ? AND idcounter != ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $counterNumber, $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        if ($result->num_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$counterNumber, $id]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter number already registered"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
-        // Update the counter
-        $sql_cmd = "UPDATE counters SET idemployee = ?, counterNumber = ? WHERE idcounter = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("sss", $employee_id, $counterNumber, $id);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    // Update the counter (also update priority)
+    $sql_cmd = "UPDATE counters SET idemployee = ?, counterNumber = ?, counter_priority = ? WHERE idcounter = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$employee_id, $counterNumber, $priority, $id]);
+        if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Counter updated successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+        } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Error: " . $conn->error
+                "message" => "Error: " . ($conn->pdo->errorInfo()[2] ?? 'unknown')
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        $conn->close();
-        exit;
+        
+        
     
     } else if ($method == "counters-delete") {
         if (!isset($data->id)) {
@@ -920,45 +1000,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input id!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // Checking for transaction history if theres assigned will be nulll and panding
-        $sql_cmd = "UPDATE transactions t
-                    SET t.idcounter = NULL, t.idemployee = NULL, t.status = 'pending'
-                    WHERE t.idcounter = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $data->id);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE transactions t
+            SET t.idcounter = NULL, t.idemployee = NULL, t.status = 'pending'
+            WHERE t.idcounter = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$data->id]);
 
-        $id = $data->id;
-        $sql_cmd = "DELETE FROM counters WHERE idcounter = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $id);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    $id = $data->id;
+    $sql_cmd = "DELETE FROM counters WHERE idcounter = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$id]);
+    if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Counter deleted successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter is not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     } else if ($method == "refresh-count") {
         // Employee Section
@@ -1012,83 +1089,59 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             WHERE DATE(t.transaction_time) = CURDATE() AND t.status = 'served') AS transaction_today_served_total
         ";
 
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stats = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute();
+    $stats = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
 
         // UPDATE STATS
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_total'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['employees_total']);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_total'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['employees_total']]);
 
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transactions_total'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['transactions_total']);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transactions_total'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['transactions_total']]);
 
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_active_total'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['employees_active_total']);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_active_total'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['employees_active_total']]);
 
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_not_active_total'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['employees_not_active_total']);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_not_active_total'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['employees_not_active_total']]);
 
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_admin_total'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['employees_admin_total']);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_admin_total'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['employees_admin_total']]);
 
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_employees_total'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['employees_employees_total']);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'employees_employees_total'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['employees_employees_total']]);
 
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_total'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['transaction_today_total']);
-        $stmt->execute();
-        $stmt->close();
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_pending'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['transaction_today_pending']);
-        $stmt->execute();
-        $stmt->close();
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_completed'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['transaction_today_completed']);
-        $stmt->execute();
-        $stmt->close();
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_cancelled'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['transaction_today_cancelled']);
-        $stmt->execute();
-        $stmt->close();
-        $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_serve'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $stats[0]['transaction_today_serve']);
-        $stmt->execute();
-        $stmt->close();
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_total'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['transaction_today_total']]);
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_pending'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['transaction_today_pending']]);
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_completed'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['transaction_today_completed']]);
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_cancelled'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['transaction_today_cancelled']]);
+    $sql_cmd = "UPDATE setup_system SET setup_value_int = ? WHERE setup_key = 'transaction_today_serve'";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$stats[0]['transaction_today_serve']]);
 
         echo json_encode(array(
             "status" => "success",
             "message" => "Refresh count successfully",
             "data" => $stats[0]
         ));
-        $conn->close();
-        exit;
+        
+        
     // REQUESTER: PUSH SUCCESS
     } else if ($method == "cashier-success") {
         // counterNumber
@@ -1100,26 +1153,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input idemployee!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $idemployee = $data->idemployee;
 
         // check if the employee is exist
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$idemployee]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($employee) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // echo json_encode(array(
@@ -1129,19 +1180,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // ));
 
         // Check if the employee was assigned in counter
-        $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counter = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
+    $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$idemployee]);
+    $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($counter) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not assigned in counter"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // echo json_encode(array(
@@ -1149,52 +1198,46 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         //     "message" => "Employee found",
         //     "data" => $counter
         // ));
-        // exit;
+        // 
 
         // Get the 'serve' by 'idcounter' and 'idemployee'
-        $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
-        $stmt = $conn->prepare($sql_cmd);   
-        $stmt->bind_param("ss", $counter[0]['idcounter'], $idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
+    $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
+    $stmt = $conn->pdo->prepare($sql_cmd);   
+    $stmt->execute([$counter[0]['idcounter'], $idemployee]);
+    $transaction = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($transaction) == 0) {
             // echo json_encode(array(
             //     "status" => "error",
             //     "message" => "No transaction found"
             // ));
-            // $conn->close();
-            // exit;
+            // 
+            // 
         } else {
             // echo json_encode(array(
             //     "status" => "success",
             //     "message" => "Transaction found",
             //     "data" => $transaction
             // ));
-            // $conn->close();
-            // exit;
+            // 
+            // 
         }
 
         // Commit as 'serve' to 'completed'
-        $sql_cmd = "UPDATE transactions SET status = 'completed' WHERE idtransaction = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction[0]['idtransaction']);
-        $stmt->execute();
+    $sql_cmd = "UPDATE transactions SET status = 'completed' WHERE idtransaction = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$transaction[0]['idtransaction']]);
 
         
-        if ($stmt->affected_rows > 0) {
+    if ($stmt->rowCount() > 0) {
             // queue remain notify
 
             // Fetch
             $sql_cmd = "SELECT queue_remain
                         FROM counters c
                         WHERE c.idemployee = ?";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $idemployee);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $counter = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$idemployee]);
+            $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $queue_remain_get = $counter[0]['queue_remain'];
 
             if ($queue_remain_get !== null) {
@@ -1204,44 +1247,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $sql_cmd = "UPDATE employees e
                                 SET cut_off_state = 1
                                 WHERE e.id = ?";
-                    $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("s", $idemployee);
-                    $stmt->execute();
-                    $stmt->close();
+                    $stmt = $conn->pdo->prepare($sql_cmd);
+                    $stmt->execute([$idemployee]);
                 } else {
                     $sql_cmd = "UPDATE counters c
                                 SET c.queue_remain = ?
                                 WHERE c.idemployee = ?";
-                    $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("ss", $queue_remain_set, $idemployee);
-                    $stmt->execute();
-                    $stmt->close();
+                    $stmt = $conn->pdo->prepare($sql_cmd);
+                    $stmt->execute([$queue_remain_set, $idemployee]);
                 }
             }
 
-        } else if ($stmt->affected_rows == 0) {
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No transaction was assigned"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows > 0) {
+            
+            
+    } else if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction success successfully"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        exit;
+        
     } else if ($method == "cashier-missed") {
         // counterNumber
         // method: cashier
@@ -1252,26 +1291,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Input idemployee!"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $idemployee = $data->idemployee;
 
         // check if the employee is exist
         $sql_cmd = "SELECT * FROM employees WHERE id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$idemployee]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($employee) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // echo json_encode(array(
@@ -1282,18 +1319,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         // Check if the employee was assigned in counter
         $sql_cmd = "SELECT * FROM counters WHERE idemployee = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counter = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$idemployee]);
+    $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($counter) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not assigned in counter"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         // echo json_encode(array(
@@ -1301,50 +1336,44 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         //     "message" => "Employee found",
         //     "data" => $counter
         // ));
-        // exit;
+        // 
 
         // Get the 'serve' by 'idcounter' and 'idemployee'
-        $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
-        $stmt = $conn->prepare($sql_cmd);   
-        $stmt->bind_param("ss", $counter[0]['idcounter'], $idemployee);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
+    $sql_cmd = "SELECT * FROM transactions WHERE idcounter = ? AND idemployee = ? AND status = 'serve'";
+    $stmt = $conn->pdo->prepare($sql_cmd);   
+    $stmt->execute([$counter[0]['idcounter'], $idemployee]);
+    $transaction = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($transaction) == 0) {
             // echo json_encode(array(
             //     "status" => "error",
             //     "message" => "No transaction found"
             // ));
-            // $conn->close();
-            // exit;
+            // 
+            // 
         } else {
             // echo json_encode(array(
             //     "status" => "success",
             //     "message" => "Transaction found",
             //     "data" => $transaction
             // ));
-            // $conn->close();
-            // exit;
+            // 
+            // 
         }
 
         // Commit as 'serve' to 'missed'
-        $sql_cmd = "UPDATE transactions SET status = 'missed' WHERE idtransaction = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction[0]['idtransaction']);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+    $sql_cmd = "UPDATE transactions SET status = 'missed' WHERE idtransaction = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$transaction[0]['idtransaction']]);
+    if ($stmt->rowCount() > 0) {
             // queue remain notify
 
             // Fetch
             $sql_cmd = "SELECT queue_remain
                         FROM counters c
                         WHERE c.idemployee = ?";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $idemployee);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $counter = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$idemployee]);
+            $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $queue_remain_get = $counter[0]['queue_remain'];
 
             if ($queue_remain_get !== null) {
@@ -1354,18 +1383,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $sql_cmd = "UPDATE employees e
                                 SET cut_off_state = 1
                                 WHERE e.id = ?";
-                    $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("s", $idemployee);
-                    $stmt->execute();
-                    $stmt->close();
+                    $stmt = $conn->pdo->prepare($sql_cmd);
+                    $stmt->execute([$idemployee]);
                 } else {
                     $sql_cmd = "UPDATE counters c
                                 SET c.queue_remain = ?
                                 WHERE c.idemployee = ?";
-                    $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("ss", $queue_remain_set, $idemployee);
-                    $stmt->execute();
-                    $stmt->close();
+                    $stmt = $conn->pdo->prepare($sql_cmd);
+                    $stmt->execute([$queue_remain_set, $idemployee]);
                 }
             }
 
@@ -1373,24 +1398,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Missed Transaction updated successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No transaction was assigned"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Error: " . $conn->error
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        exit;
+        
     
     // Requester's cancel function
     } else if ($method == "requester-form-cancel") {
@@ -1399,8 +1424,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please input token number."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         $token_number = $data->token_number;
 
@@ -1408,87 +1433,76 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $sql_cmd = "SELECT *
                     FROM transactions t 
                     WHERE t.token_number = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $token_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows == 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$token_number]);
+        $transaction = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($transaction) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Transaction was not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-
         // Check if the transaction was cancelled
         $sql_cmd = "SELECT *
                     FROM transactions t 
                     WHERE t.token_number = ? AND t.status = 'missed'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $token_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$token_number]);
+        $transaction = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($transaction) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Transaction was already cancelled"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-
         // Complete
         $sql_cmd = "SELECT *
                     FROM transactions t 
-                    WHERE t.token_number = ? AND t.status = 'completed'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $token_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows > 0) {
+                    WHERE t.token_number = ?
+                    AND t.status = 'completed'
+                    AND DATE(t.transaction_time) = CURDATE()";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$token_number]);
+        $transaction = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($transaction) > 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Transaction was already completed"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-
         // Cancel it 
         $sql_cmd = "UPDATE transactions
                     SET status = 'cancelled'
                     WHERE token_number = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $token_number);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$token_number]);
+        if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction cancelled successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+        } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Already cancelled this transaction"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Error: " . $conn->error
+                "message" => "Error: " . ($stmt->errorInfo()[2] ?? 'unknown')
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
 
@@ -1500,8 +1514,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     
         $name = $data->name;
@@ -1516,21 +1530,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         try {
             // Commit the request transaction
             $sql_cmd = "INSERT INTO requesters (name, email, payment, priority, is_student) VALUES (?, ?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("sssss", $name, $email, $payment, $priority, $student);
-            $stmt->execute();
-            $requester_id = $stmt->insert_id;
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$name, $email, $payment, $priority, $student]);
+            $requester_id = $conn->pdo->lastInsertId();
     
             // Count the transactions during day
             $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
                         FROM transactions t
                         WHERE DATE(t.transaction_time) = CURDATE()";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transaction_count = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transaction_count = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $queue_count_int =  $transaction_count[0]['total_transactions'] + 1;
 
@@ -1539,11 +1549,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
             // Commit the transaction after the requester is inserted
             $sql_cmd = "INSERT INTO transactions (idrequester, token_number, queue_number, email_sent) VALUES (?, ?, ?, 1)";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("sss", $requester_id, $token_number, $queue_count_int);
-            $stmt->execute();
-            $transaction_id = $stmt->insert_id;
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$requester_id, $token_number, $queue_count_int]);
+            $transaction_id = $conn->pdo->lastInsertId();
     
             $conn->commit();
     
@@ -1575,9 +1583,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "queue_count_int" => $queue_count_int
             );
 
-            // Send the email
-            include "./email_content.php";
-            send_email_request_submit($request_data);
+            // Send the emailrequester_form_submit
+            if ($email_feature == true) {
+                include "./email_content.php";
+                send_email_request_submit($request_data);
+            }
+            return;
+
         } catch (Exception $e) {
             $conn->rollback();
             echo json_encode(array(
@@ -1585,26 +1597,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "message" => "An error occurred. Please try again.",
                 "error" => $e->getMessage()
             ));
-            exit;
+            
         }
-        $conn->close();
-        exit;
+        
+        return;
+
     } else if ($method == "counter_queue_remain") {
         if (!isset($data->counter_number)) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter Number is required"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
         // if (!isset($data->queue_remain)) {
         //     echo json_encode(array(
         //         "status" => "error",
         //         "message" => "Queue Reamin is required"
         //     ));
-        //     $conn->close();
-        //     exit;
+        //     
+        //     
         // }
         $counter_number = $data->counter_number;
         $queue_remain = $data->queue_remain;
@@ -1613,52 +1626,47 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $sql_cmd = "SELECT *
                     FROM counters c
                     WHERE c.counterNumber = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $counter_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counter = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$counter_number]);
+        $counter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($counter) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter number not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        $stmt->close();
-
         $sql_cmd = "UPDATE counters
                     SET queue_remain = ?
                     WHERE counterNumber = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $queue_remain, $counter_number);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$queue_remain, $counter_number]);
+        if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Queue remain updated successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+        } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Error: " . $conn->error
+                "message" => "Error: " . ($stmt->errorInfo()[2] ?? 'unknown')
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
-        $conn->close();
-        exit;
+        
+        
     // Schedule
     } else if ($method == "schedule-create") {
         if (!isset($data->enable) || !isset($data->schedule_type) || !isset($data->schedule_key)) {
@@ -1666,8 +1674,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information for schedule."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $date_start = $data->date_start ?? null;
@@ -1675,6 +1683,72 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $time_start = $data->time_start ?? null;
         $time_end = $data->time_end ?? null;
         $enable = $data->enable;
+
+        // Ensure scheduler table/columns match expected DDL from reference.
+        // Best-effort: create table if missing and add/modify minimal columns when possible.
+        try {
+            $tblsql_cmd = "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler'";
+            $tblStmt = $conn->pdo->prepare($tblsql_cmd);
+            $tblStmt->execute();
+            $tblExists = (int) $tblStmt->fetchColumn();
+
+            if ($tblExists === 0) {
+                $createSql = "CREATE TABLE `scheduler` (
+                    `schedule_id` int NOT NULL AUTO_INCREMENT,
+                    `enable` tinyint NOT NULL DEFAULT 0,
+                    `schedule_key` varchar(50) NOT NULL DEFAULT '0',
+                    `date_start` date DEFAULT NULL,
+                    `date_end` date DEFAULT NULL,
+                    `time_start` time DEFAULT NULL,
+                    `time_end` time DEFAULT NULL,
+                    `comment` text,
+                    `repeat` enum('daily','weekly','month','Sun','Mon','Tue','Wed','Thu','Fri','Sat') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                    `everyday` text,
+                    `schedule_type` enum('requester','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                    `managed_by` int DEFAULT NULL,
+                    PRIMARY KEY (`schedule_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Schedule for whole operation'";
+                $conn->pdo->exec($createSql);
+            } else {
+                // ensure `everyday` exists
+                $colsql_cmd = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'everyday'";
+                $colStmt = $conn->pdo->prepare($colsql_cmd);
+                $colStmt->execute();
+                $everydayExists = (int) $colStmt->fetchColumn();
+                if ($everydayExists === 0) {
+                    try {
+                        $conn->pdo->exec("ALTER TABLE scheduler ADD COLUMN everyday TEXT NULL");
+                    } catch (PDOException $ignore) {
+                        // ignore
+                    }
+                }
+
+                // try to align `repeat` enum
+                try {
+                    $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `repeat` ENUM('daily','weekly','month','Sun','Mon','Tue','Wed','Thu','Fri','Sat') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL");
+                } catch (PDOException $ignore) {
+                }
+
+                // ensure other minimal defs
+                try { $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `enable` TINYINT NOT NULL DEFAULT 0"); } catch (PDOException $ignore) {}
+                try { $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `schedule_key` VARCHAR(50) NOT NULL DEFAULT '0'"); } catch (PDOException $ignore) {}
+                try { $conn->pdo->exec("ALTER TABLE scheduler MODIFY COLUMN `schedule_type` ENUM('requester','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL"); } catch (PDOException $ignore) {}
+
+                // ensure managed_by exists
+                $colsql_cmd2 = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduler' AND COLUMN_NAME = 'managed_by'";
+                $colStmt2 = $conn->pdo->prepare($colsql_cmd2);
+                $colStmt2->execute();
+                $managedExists = (int) $colStmt2->fetchColumn();
+                if ($managedExists === 0) {
+                    try {
+                        $conn->pdo->exec("ALTER TABLE scheduler ADD COLUMN managed_by INT DEFAULT NULL");
+                    } catch (PDOException $ignore) {
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // ignore schema changes if not permitted
+        }
         $schedule_type = $data->schedule_type;
         $schedule_key = $data->schedule_key;
         $repeat = $data->repeat ?? null;
@@ -1682,30 +1756,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $sql_cmd = "INSERT INTO scheduler (date_start, date_end, enable, schedule_type, schedule_key, `repeat`, time_start,  time_end, everyday) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("sssssssss", $date_start, $date_end, $enable, $schedule_type, $schedule_key, $repeat, $time_start, $time_end, $everyday);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$date_start, $date_end, $enable, $schedule_type, $schedule_key, $repeat, $time_start, $time_end, $everyday]);
+        if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Schedule created successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+    } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Error: " . $conn->error
+                "message" => "Error: " . ($stmt->errorInfo()[2] ?? 'unknown')
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     } else if ($method == "schedule-update-requester_form") {
         if (!isset($data->time_start) || !isset($data->time_end) || !isset($data->enable)) {
@@ -1713,31 +1786,41 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information for schedule."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $time_start = $data->time_start ?? null;
         $time_end = $data->time_end ?? null;
         $enable = $data->enable;
-        $repeat = $data->repeat ?? null;
-        $everyday = $data->everyday ?? null;
-
-        // Checking schedule_key was exist
         $sql_cmd = "SELECT *
                     FROM scheduler
                     WHERE schedule_key = 'requester_form'";
-        $stmt = $conn->prepare($sql_cmd);
+        $stmt = $conn->pdo->prepare($sql_cmd);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $schedule = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+        $schedule = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows == 0) {
+        // Normalize repeat/everyday values: prefer incoming payload, otherwise keep existing DB values
+        $repeat = $data->repeat ?? null;
+        $everyday = $data->everyday ?? null;
+        if (count($schedule) === 1) {
+            $existing = $schedule[0];
+            if ($repeat === null) {
+                $repeat = $existing['repeat'] ?? null;
+            }
+            if ($everyday === null) {
+                $everyday = $existing['everyday'] ?? null;
+            }
+            // capture schedule_type/key in case other branches rely on them
+            $schedule_type = $existing['schedule_type'] ?? $schedule_type ?? null;
+            $schedule_key = $existing['schedule_key'] ?? $schedule_key ?? null;
+        }
+
+        if (count($schedule) == 0) {
 
             $sql_cmd = "INSERT INTO scheduler (time_start, time_end, enable, schedule_type, schedule_key, `repeat`, everyday) 
                         VALUES (?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
 
             // You can update this part to set the default value
             $time_start = "8:00:00";
@@ -1747,25 +1830,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $schedule_key = "requester_form";
             $repeat = "daily";
             $everyday = "mon;true;wed;thu;fri";
-            $stmt->bind_param("sssssss", $time_start, $time_end, $enable, $schedule_type, $schedule_key, $repeat, $everyday);
-            $stmt->execute();
+            $stmt->execute([$time_start, $time_end, $enable, $schedule_type, $schedule_key, $repeat, $everyday]);
 
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Schedule not found, however the schedule will reset to default."
             ));
-            $conn->close();
-            exit;
-        } else if ($result->num_rows > 1) {
+            
+            
+        } else if (count($schedule) > 1) {
             // Delete all requester_form schedule_key related
             $sql_cmd = "DELETE FROM scheduler
                         WHERE schedule_key = 'requester_form'";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            if ($stmt->affected_rows > 0) {
+            if ($stmt->rowCount() > 0) {
                 $sql_cmd = "INSERT INTO scheduler (time_start, time_end, enable, schedule_type, schedule_key, `repeat`, everyday) 
                             VALUES (?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $conn->prepare($sql_cmd);
+                $stmt = $conn->pdo->prepare($sql_cmd);
 
                 // You can update this part to set the default value
                 $time_start = "8:00:00";
@@ -1775,8 +1857,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $schedule_key = "requester_form";
                 $repeat = "daily";
                 $everyday = "mon;true;wed;thu;fri";
-                $stmt->bind_param("sssssss", $time_start, $time_end, $enable, $schedule_type, $schedule_key, $repeat, $everyday);
-                $stmt->execute();
+                $stmt->execute([$time_start, $time_end, $enable, $schedule_type, $schedule_key, $repeat, $everyday]);
             }
         }
 
@@ -1784,32 +1865,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $sql_cmd = "UPDATE scheduler
                     SET time_start = ?, time_end = ?, enable = ?, `repeat` = ?, everyday = ?
                     WHERE schedule_key = 'requester_form'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("sssss", $time_start, $time_end, $enable, $repeat, $everyday);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$time_start, $time_end, $enable, $repeat, $everyday]);
+        if ($stmt->rowCount() > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Schedule updated successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+        } else if ($stmt->rowCount() == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
-                "message" => "Error: " . $conn->error
+                "message" => "Error: " . ($stmt->errorInfo()[2] ?? 'unknown')
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        exit;
     
     // Transaction limit
     } else if ($method == "transaction_limiter") {
@@ -1818,115 +1897,113 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please fill up the information for transaction limit."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
-        $transaction_limit = $data->transaction_limit;
+        /*
+            {
+                "method": "transaction_limiter",
+                "transaction_limit": 100,
+                "enable": 1
+            }
+        */
 
-        // Check if the transaction limit is exist
+        // Accept either `enable` or `transaction_limit_enable` from the client
+        $transaction_limit_enable = isset($data->enable)
+            ? (int)$data->enable
+            : (isset($data->transaction_limit_enable) ? (int)$data->transaction_limit_enable : 0);
+        $transaction_limit = isset($data->transaction_limit) ? (int)$data->transaction_limit : 0;
 
+        // Check if the transaction_limit_enable is exist
+        $sql_cmd = "SELECT *
+                    FROM setup_system
+                    WHERE setup_key = 'transaction_limit_enable'";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute();
+        $transaction_limit_enable_check = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (count($transaction_limit_enable_check) == 0) { 
+            // Insert enable flag using provided value (default 0)
+            $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value_int)
+                        VALUES ('transaction_limit_enable', ?)";
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$transaction_limit_enable]);
+        }
+
+        // Check if the transaction_limit is exist
         $sql_cmd = "SELECT *
                     FROM setup_system
                     WHERE setup_key = 'transaction_limit'";
-        $stmt = $conn->prepare($sql_cmd);
+        $stmt = $conn->pdo->prepare($sql_cmd);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_limit_check = $result->fetch_all(MYSQLI_ASSOC);
-        if ($result->num_rows == 0) {
-            // Insert the transaction limit
+        $transaction_limit_check = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (count($transaction_limit_check) == 0) {            
             $sql_cmd = "INSERT INTO setup_system (setup_key, setup_value_int)
                         VALUES ('transaction_limit', ?)";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $transaction_limit);
-            $stmt->execute();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$transaction_limit]);
         }
-        $stmt->close();
 
-        // Update the transaction limit
-        $sql_cmd = "UPDATE setup_system
-                    SET setup_value_int = ?
-                    WHERE setup_key = 'transaction_limit'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $transaction_limit);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
+        // Update the transaction_limit and transaction_limit_enable values separately
+        $updatedRows = 0;
+
+        try {
+            $sql_cmd = "UPDATE setup_system
+                        SET setup_value_int = ?
+                        WHERE setup_key = 'transaction_limit'";
+            $stmt1 = $conn->pdo->prepare($sql_cmd);
+            $stmt1->execute([$transaction_limit]);
+            $updatedRows += $stmt1->rowCount();
+
+            // Persist the enable flag as an integer in setup_value_int
+            $sql_cmd2 = "UPDATE setup_system
+                         SET setup_value_int = ?
+                         WHERE setup_key = 'transaction_limit_enable'";
+            $stmt2 = $conn->pdo->prepare($sql_cmd2);
+            $stmt2->execute([$transaction_limit_enable]);
+            $updatedRows += $stmt2->rowCount();
+        } catch (PDOException $e) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Error: " . ($e->getMessage() ?? 'unknown')
+            ));
+            
+            
+        }
+
+        if ($updatedRows > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction limit updated successfully"
             ));
-            $conn->close();
-            exit;
-        } else if ($stmt->affected_rows == 0) {
+            
+            
+        } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No changes made"
             ));
-            $conn->close();
-            exit;
-        } else {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Error: " . $conn->error
-            ));
-            $conn->close();
-            exit;
+            
+            
         }
     }
 
 } else if ($_SERVER["REQUEST_METHOD"] === "GET") {
-    if (isset($_GET['dashboard_stats'])) {
-
-        // Version 1
-        // $sql_cmd = "SELECT
-
-        //                 -- TRANSACTIONS FOR TODAY
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE()) as transaction_total_today,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'pending')  as transaction_total_pending,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'completed') as transaction_total_completed,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() AND status = 'cancelled')  as transaction_total_cancelled,
-
-        //                 -- TRANSACTION HISTORY STATS
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE DATE(transaction_time) = CURDATE() - INTERVAL 1 DAY)  as transaction_yesterday,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE WEEK(transaction_time) = WEEK(CURDATE()) AND YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_week,
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE MONTH(transaction_time) = MONTH(CURDATE()) AND YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_month,   
-        //                 (SELECT COUNT(idtransaction) FROM transactions WHERE YEAR(transaction_time) = YEAR(CURDATE())) as transaction_total_this_year,
-        //                 (SELECT COUNT(*) FROM transactions) as transaction_total_all  
-        //             ";
-
-        // Version 2
-        $sql_cmd = "SELECT setup_key, setup_value_int
-                    FROM setup_system
-                    WHERE setup_key LIKE 'transactions%';
-        ";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stats = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        echo json_encode(array(
-            "status" => "success",
-            "message" => "Dashboard stats successfully retrieved",
-            "data" => $stats
-        ));
-        $conn->close();
-        exit;
-
-    // GENERATE REPORT
-    } else if (isset($_GET['generate-report'])) {
+    
+    // Generate PDF Report
+    if (isset($_GET['generate-report'])) {
         include_once __DIR__ . '/../includes/fpdf186/fpdf.php';
         if (!isset($_GET['year']) || !isset($_GET['month'])) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Please provide the tentative year and month."
             ));
-            $conn->close();
-            exit;
-            }
+            return;
+        }
 
-        
-            
-            // parse start and end datetime
+        // parse start and end datetime
         $date = new DateTime();
 
         $year = $_GET['year'];
@@ -2024,12 +2101,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $sql_cmd = "SELECT * FROM requesters
                     WHERE (YEAR(created_at) = ? AND MONTH(created_at) = ?)";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $year, $month);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        foreach ($result as $row) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$year, $month]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $row) {
             $d = new DateTime($row['created_at']);
             $created_at = $d->format('Y-m-d h:i:s A');
             $pdf->Cell(50,10,$created_at,1,0,'C');
@@ -2059,12 +2134,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $sql_cmd = "SELECT * FROM requesters
                     WHERE (YEAR(created_at) = ? AND MONTH(created_at) = ?) AND payment = 'registrar'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $year, $month);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        foreach ($result as $row) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$year, $month]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $row) {
             $d = new DateTime($row['created_at']);
             $created_at = $d->format('Y-m-d h:i:s A');
             $pdf->Cell(50,10,$row['created_at'],1,0,'C');
@@ -2093,12 +2166,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $sql_cmd = "SELECT * FROM requesters
                     WHERE (YEAR(created_at) = ? AND MONTH(created_at) = ?) AND payment = 'assessment'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("ss", $year, $month);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        foreach ($result as $row) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$year, $month]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $row) {
             $d = new DateTime($row['created_at']);
             $created_at = $d->format('Y-m-d h:i:s A');
             $pdf->Cell(50,10,$created_at,1,0,'C');
@@ -2109,8 +2180,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         $pdf->Output();
-        $conn->close();
-        exit;
+        
+        
     }
         
     // EMPLOYEES
@@ -2144,65 +2215,108 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if (isset($_GET['role_type'])) {
             if ($_GET['role_type'] != 'none') {
+                // validate role_type
+                $allowed_roles = array('admin', 'employee');
+                if (!in_array($_GET['role_type'], $allowed_roles)) {
+                    http_response_code(400);
+                    echo json_encode(array(
+                        "status" => "error",
+                        "message" => "Bad request. Check filters and try again."
+                    ));
+                    
+                    
+                }
+
                 $sql_cmd .= "AND e.role_type = ? ";
                 $params[] = $_GET['role_type'];
                 $types .= "s";
             }
         }
 
+        // Validate active filter if present
+        if (isset($_GET['active'])) {
+            if ($_GET['active'] !== '0' && $_GET['active'] !== '1') {
+                http_response_code(400);
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Bad request. Check filters and try again."
+                ));
+                
+                
+            }
+        }
+
+        // Validate and apply pagination parameters if provided
         if (isset($_GET['page']) && isset($_GET['paginate'])) {
-            $limit = $_GET['paginate'];
-            $offset = ($_GET['page'] - 1) * $limit;
-            $sql_cmd .= " LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-            $types .= "ss";
+            if (!is_numeric($_GET['page']) || !is_numeric($_GET['paginate'])) {
+                http_response_code(400);
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Bad request. Check filters and try again."
+                ));
+                
+                
+            }
+
+            // LIMIT and OFFSET must be positive integers. Cast to int to avoid quoted values in SQL.
+            $limit = (int) $_GET['paginate'];
+            $page_val = (int) $_GET['page'];
+            if ($limit < 1 || $page_val < 1) {
+                http_response_code(400);
+                echo json_encode(array(
+                    "status" => "error",
+                    "message" => "Bad request. Check filters and try again."
+                ));
+                
+                
+            }
+
+            $offset = (int) (($page_val - 1) * $limit);
+            $sql_cmd .= " LIMIT " . $limit . " OFFSET " . $offset;
         }
 
-        $stmt = $conn->prepare($sql_cmd);
-        
-        if ($types) {
-            $stmt->bind_param($types, ...$params);
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        if (!empty($params)) {
+            $stmt->execute($params);
+        } else {
+            $stmt->execute();
         }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employees = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+        $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (isset($_GET['total'])) {
             echo json_encode(array(
                 "status" => "success",
                 "total_employees" => $employees[0]['total_employees']
             ));
-            $conn->close();
-            exit;
-        } else if ($result->num_rows > 0) {
+            
+            
+        } else if (count($employees) > 0) {
             if (isset($_GET['id'])) {
                 echo json_encode(array(
                     "status" => "success",
                     "employee" => $employees[0],
                     "message" => "Employee found",
                 ));
-                $conn->close();
-                exit;
+                return;
             }
+
             echo json_encode(array(
                 "status" => "success",
                 "employees" => $employees,
                 "message" => "Employees found",
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
+            http_response_code(200);
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No employees found",
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        exit;
+        
     
     // COUNTERS
     } else if (isset($_GET['counters'])) {
@@ -2266,60 +2380,139 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         }
         if (isset($_GET['page']) && isset($_GET['paginate'])) {
-            $limit = $_GET['paginate'];
-            $offset = ($_GET['page'] - 1) * $limit;
-            $sql_cmd .= " LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-            $types .= "ss";
+            // cast to integers to avoid SQL quoting issues with LIMIT/OFFSET
+            $limit = (int) $_GET['paginate'];
+            $page = (int) $_GET['page'];
+            if ($limit < 1) $limit = 10;
+            if ($page < 1) $page = 1;
+            $offset = ($page - 1) * $limit;
+            // append integer literals (PDO does not accept placeholders for LIMIT/OFFSET in MySQL)
+            $sql_cmd .= " LIMIT " . $limit . " OFFSET " . $offset;
         }
 
 
-        $stmt = $conn->prepare($sql_cmd);
-
-        if ($types) {
-            $stmt->bind_param($types, ...$params);
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        if (!empty($params)) {
+            $stmt->execute($params);
+        } else {
+            $stmt->execute();
         }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counters = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+        $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (isset($_GET['total'])) {
             echo json_encode(array(
                 "status" => "success",
                 "total_counters" => $counters[0]['total_counters']
             ));
-            $conn->close();
-            exit;
-        } else if ($result->num_rows > 0) {
+            
+            
+        } else if (count($counters) > 0) {
             if (isset($_GET['id'])) {
                 echo json_encode(array(
                     "status" => "success",
                     "counter" => $counters[0],
                     "message" => "Counter found",
                 ));
-                $conn->close();
-                exit;
+                
+                
             }
             echo json_encode(array(
                 "status" => "success",
                 "counters" => $counters,
                 "message" => "Counters found",
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No counters found",
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        $conn->close();
-        exit;
+
+
+    // TRANSACTIONS COUNTER
+    } else if (isset($_GET['transactions_counter'])) {
+        /*
+            To count the transaction for the following:
+            - Total transactions today
+            - Total pending transactions today
+            - Total completed transactions today
+            - Total cancelled transactions today
+            - Total student transactions today
+            - Total transactions overall
+            - Total transactions yesterday
+            - Total transactions this week
+            - Total transactions this month
+            - Total transactions this year
+        */
+    
+        $sql_cmd = "
+                    SELECT
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                        ) as transaction_today_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.`status` = 'pending'
+                        ) as transaction_today_pending,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.`status` = 'completed'
+                        ) as transaction_today_completed,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.`status` = 'cancelled'
+                        ) as transaction_today_cancelled,
+                        (
+                            SELECT COUNT(r.id)
+                            FROM requesters r
+                            WHERE r.is_student = 1
+                        ) as transaction_today_student,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                        ) as transaction_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE DATE(t.transaction_time) = CURDATE() - INTERVAL 1 DAY   
+                        ) as transction_yesterday_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE YEARWEEK(t.transaction_time) = YEARWEEK(CURDATE(), 1)
+                        ) as transaction_week_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE YEAR(t.transaction_time) = YEAR(CURDATE())
+                            AND MONTH(t.transaction_time) = MONTH(CURDATE())
+                        ) as transaction_month_total,
+                        (
+                            SELECT COUNT(t.idtransaction)
+                            FROM transactions t
+                            WHERE YEAR(t.transaction_time) = YEAR(CURDATE())
+                        ) as transaction_year_total
+                    ";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute();
+        $transaction_counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(array(
+            "status" => "success",
+            "message" => "Transaction counters retrieved successfully",
+            "data" => $transaction_counters[0]
+        ));
 
 
     // TRANSACTIONS HISTORY
@@ -2434,413 +2627,583 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         if (isset($_GET['page']) && isset($_GET['paginate'])) {
-            $limit = $_GET['paginate'];
-            $offset = ($_GET['page'] - 1) * $limit;
-            $sql_cmd .= " LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-            $types .= "ss";
+            // cast to integers to avoid SQL quoting issues with LIMIT/OFFSET
+            $limit = (int) $_GET['paginate'];
+            $page = (int) $_GET['page'];
+            if ($limit < 1) $limit = 10;
+            if ($page < 1) $page = 1;
+            $offset = ($page - 1) * $limit;
+            
+            $sql_cmd .= " LIMIT " . $limit . " OFFSET " . $offset;
         }
-
-        // echo json_encode(array(
-        //     "sql_cmd" => $sql_cmd
-        // ));
-        // exit;
         
-        $stmt = $conn->prepare($sql_cmd);
-
-        if ($types) {
-            $stmt->bind_param($types, ...$params);
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        if (!empty($params)) {
+            $stmt->execute($params);
+        } else {
+            $stmt->execute();
         }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $transactions = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (isset($_GET['total'])) {
             echo json_encode(array(
                 "status" => "success",
                 "total_transactions" => $transactions[0]['total_transactions']
             ));
-            $conn->close();
-            exit;
-        } else if ($result->num_rows > 0) {
+            
+            
+        } else if (count($transactions) > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "transactions" => $transactions,
                 "message" => "Transactions found",
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No transactions found",
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-    exit;
+    
 
     // CASHIER
     } else if (isset($_GET['cashier'])) {
-        // This part will get the free queue transaction
-        // after you transaction session
-        if (isset($_GET['employee_id'])) {
-            // Checking if that employee is exists
-            $sql_cmd = "SELECT *
-                        FROM employees e
-                        WHERE e.id = ? AND e.role_type = 'employee'";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $_GET['employee_id']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $employee = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-            if ($result->num_rows == 0) {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "Employee not found"
-                ));
-                $conn->close();
-                exit;
+        
+        /*
+            As you login as a cashier use this API
+        */
+        
+        // Decrypt token when logged in
+        if (!isset($_COOKIE['token'])) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Unauthorized access. Please login."
+            ));
+            return;
+        }
+
+        // Decode token and guard against malformed or missing fields
+        $token = json_decode(json_encode(decryptToken($_COOKIE['token'], $master_key)), true);
+
+        if (!is_array($token)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Unauthorized access. Invalid token."
+            ));
+            return;
+        }
+
+        // fetch json_encode to queryable array with safe defaults
+        $user_id = isset($token['id']) ? (int)$token['id'] : null;
+        $username = isset($token['username']) ? $token['username'] : '';
+        // support legacy 'role' key if present
+        $role_type = isset($token['role_type']) ? $token['role_type'] : (isset($token['role']) ? $token['role'] : '');
+        $email = isset($token['email']) ? $token['email'] : '';
+        // support different naming conventions
+        $counterNumber = isset($token['counterNumber']) ? $token['counterNumber'] : (isset($token['counter_number']) ? $token['counter_number'] : null);
+        $priority = isset($token['priority']) ? $token['priority'] : 'N';
+
+        if (empty($user_id)) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Unauthorized access. Please login."
+            ));
+            return;
+        }
+        
+        // Checking if that employee is exists
+        $sql_cmd = "SELECT e.id, e.username, e.role_type
+                    FROM employees e
+                    WHERE e.id = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$user_id]);
+        $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($employee) == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Employee not found"
+            ));
+            return;
+        }
+
+        if ($employee[0]['role_type'] != 'employee') {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Only employees are allowed."
+            ));
+            return;
+        }
+
+        // Checking if the employee was assigned as a cashier
+        $sql_cmd = "SELECT e.id, c.counterNumber, c.counter_priority
+                    FROM employees e
+                    INNER JOIN counters c ON c.idemployee = e.id
+                    WHERE e.id = ?";
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute([$user_id]);
+        $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($counters) == 0) {
+            echo json_encode(array(
+                "status" => "error",
+                "message" => "Cashier not assigned to any counter"
+            ));
+            return;
+        } else {
+            // DEBUG PURPOSE
+            // echo json_encode([
+            //     "status" => "success",
+            //     "message" => "Cashier found",
+            //     "data" => $counters[0]
+            // ]);
+            // exit;
+        }
+
+        ///////// START COUNTER //////////
+        
+        $priority_flag = $counters[0]['counter_priority'];
+        
+        function getTransaction() {
+            global $conn, $priority_flag, $counters;
+
+            $sql_cmd = "
+                        SELECT 
+                            *
+                            FROM transactions t
+                            INNER JOIN requesters r ON t.idtransaction = r.id
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.idcounter = ?
+                            AND t.status = 'serve'
+                        ";
+            
+            if ($priority_flag == 'N') {
+                $sql_cmd .= "AND r.priority = 'none' ";
+            } else {
+                $sql_cmd .= "AND
+                            (
+                                r.priority = 'pregnant' OR
+                                r.priority = 'elderly' OR
+                                r.priority = 'disability'
+                            ) ";
+            }
+            $sql_cmd .= "
+                            ORDER BY t.idtransaction ASC
+                            LIMIT 1
+                        ";
+            
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$counters[0]['idcounter']]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (count($transactions) > 0) {
+                echo json_encode([
+                    "status" => "success",
+                    "message" => "Transaction found for this counter",
+                    "data" => $transactions
+                ]);
+            } else {
+                return null;
             }
 
-            // Checking if the counter was already assigned
-            $sql_cmd = "SELECT *
-                        FROM counters c
-                        LEFT JOIN employees e ON c.idemployee = e.id
-                        WHERE e.id = ? AND e.role_type = 'employee'";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $_GET['employee_id']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $counters = $result->fetch_all(MYSQLI_ASSOC);
-            // echo json_encode(array(
+        }
+
+        getTransaction();
+
+        // Checking if this counter is not assigned to the counters
+        if ($priority_flag === 'N') {
+            $sql_cmd = "
+                        SELECT 
+                            *
+                            FROM transactions t
+                            INNER JOIN requesters r ON t.idtransaction = r.id
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.idcounter IS NULL
+                            AND r.priority = 'none'
+                            ORDER BY t.idtransaction ASC
+                            LIMIT 1
+                        ";
+        } else {
+            $sql_cmd = "
+                        SELECT 
+                            *
+                            FROM transactions t
+                            INNER JOIN requesters r ON t.idtransaction = r.id
+                            WHERE DATE(t.transaction_time) = CURDATE()
+                            AND t.idcounter IS NULL
+                            AND
+                            (
+                                r.priority = 'pregnant' OR
+                                r.priority = 'elderly' OR
+                                r.priority = 'disability'
+                            )
+                            ORDER BY t.idtransaction ASC
+                            LIMIT 1
+                        ";  
+        }
+
+    
+        $stmt = $conn->pdo->prepare($sql_cmd);
+        $stmt->execute();
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($transactions) > 0) {
+            $idtransaction = $transactions[0]['idtransaction'];
+
+            // DEBUG
+            // echo json_encode([
+            //     "status" => "success",
+            //     "message" => "Transaction assigned to counter",
+            //     "data" => $transactions[0]['idtransaction']
+            // ]);
+            // exit;
+            
+            // However you need a idcounter using counterNumber
+            $sql_cmd = "
+                        SELECT idcounter
+                        FROM counters
+                        WHERE counterNumber = ?
+                        LIMIT 1
+                    ";
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$counters[0]['counterNumber']]);
+            $idcounter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // DEBUG
+            // echo json_encode([
             //     "status" => "success",
             //     "message" => "Counter found",
-            //     "data" => $counters
-            // ));
+            //     "data" => $idcounter[0]                
+            // ]);
             // exit;
-            $stmt->close();
-            if ($result->num_rows == 0) {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "Counter not found"
-                ));
-                $conn->close();
-                exit;
-            }
 
-            // Counting if theres transaction today was recorded in current day
-            // $queue_count = 0;
-            $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
-                        FROM transactions t
-                        WHERE DATE(t.transaction_time) = CURDATE()";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-            if ($result->num_rows > 0) {
-                $queue_count = $transactions[0]['total_transactions'];
-            }
+            $sql_cmd = "
+                        UPDATE transactions
+                        SET idcounter = ?,
+                            idemployee = ?,
+                            status = 'serve'
+                        WHERE idtransaction = ?
+                    ";
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([
+                $idcounter[0]['idcounter'],
+                $user_id,
+                $transactions[0]['idtransaction']
+            ]); 
 
-            // Checking if the transaction was already assigned
-            $sql_cmd = "SELECT *
-                        FROM
-                            transactions t
-                        LEFT JOIN requesters r ON t.idrequester = r.id
-                        WHERE
-                            t.idcounter = ? AND
-                            t.idemployee = ? AND
-                            DATE(t.transaction_time) = DATE(CURDATE()) AND
-                            t.status = 'serve' AND
-                            (
-                                r.priority = 'none'  
-                            ) 
-                            ";
-            if (isset($this_priority) && $this_priority == "Y") {
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            LEFT JOIN requesters r ON t.idrequester = r.id
-                            WHERE 
-                                t.idcounter = ? AND
-                                idemployee = ? AND
-                                status = 'serve' AND
-                                DATE(t.transaction_time) = DATE(CURDATE()) AND
-                                (
-                                    r.priority = 'pregnant' OR
-                                    r.priority = 'elderly' OR
-                                    r.priority = 'disability'  
-                                ) 
-                            ";
-            }
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("ss", $counters[0]['idcounter'], $_GET['employee_id']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-            if ($result->num_rows == 1) {
-                echo json_encode(array(
-                    "status" => "success",
-                    "message" => "Transaction already assigned",
-                    "data" => $transactions[0]
-                ));
-                $conn->close();
-                exit;
-            }
-            $sql_cmd  = "SELECT *
-                        FROM transactions t
-                        LEFT JOIN requesters r ON t.idrequester = r.id
-                        WHERE
-                            t.status = 'pending' AND
-                            t.idcounter IS NULL AND
-                            t.idemployee IS NULL AND
-                            DATE(t.transaction_time) = DATE(CURDATE()) AND
-                            (
-                                r.priority = 'none'  
-                            )
-                        ORDER BY t.transaction_time ASC
-                        LIMIT 1";
-            if (isset($this_priority) && $this_priority == "Y") {
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            LEFT JOIN requesters r ON t.idrequester = r.id
-                            WHERE
-                                t.status = 'pending' AND
-                                t.idcounter IS NULL AND
-                                t.idemployee IS NULL AND
-                                DATE(t.transaction_time) = DATE(CURDATE()) AND
-                                (
-                                    r.priority = 'pregnant' OR
-                                    r.priority = 'elderly' OR
-                                    r.priority = 'disability'    
-                                )
-                            ORDER BY t.transaction_time ASC
-                            LIMIT 1";
-            }
-
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-            if ($result->num_rows == 0) {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "No transaction available for today"
-                ));
-                $conn->close();
-                exit;
-            }
-            // Or get the transaction where can still available for today
-            $sql_cmd = "SELECT *
-                        FROM transactions t
-                        LEFT JOIN requesters r ON t.idrequester = r.id
-                        WHERE 
-                            t.status = 'pending' AND
-                            t.idcounter IS NULL AND
-                            t.idemployee IS NULL AND
-                            DATE(t.transaction_time) = DATE(CURDATE()) AND
-                            (
-                                r.priority = 'none'  
-                            )
-                        ORDER BY t.transaction_time ASC
-                        LIMIT 1";
-            if (isset($this_priority) && $this_priority == "Y") {
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            LEFT JOIN requesters r ON t.idrequester = r.id
-                            WHERE
-                                t.status = 'pending' AND
-                                t.idcounter IS NULL AND
-                                t.idemployee IS NULL AND
-                                DATE(t.transaction_time) = DATE(CURDATE()) AND
-                                (
-                                    r.priority = 'pregnant' OR
-                                    r.priority = 'elderly' OR
-                                    r.priority = 'disability'    
-                                )
-                            ORDER BY t.transaction_time ASC
-                            LIMIT 1";
-            }
-            $stmt= $conn->prepare($sql_cmd);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-
-            
-            if ($result->num_rows > 0) {
-
-                $sql_cmd = "UPDATE transactions
-                            SET idcounter = ?, idemployee = ?,  status = 'serve'
-                            WHERE idtransaction = ?";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("sss", $counters[0]['idcounter'], $_GET['employee_id'], $transactions[0]['idtransaction']);
-                $stmt->execute();
-
-                // This feature is optional for sending email
-                echo json_encode(array(
-                    "status" => "success",
-                    "message" => "Transaction found!",
-                    "data" => $transactions[0]
-                ));
-
-                // Reminder before next 5
-
-                $sql_cmd = "SELECT *
-                        FROM transactions t
-                        WHERE
-                            t.transaction_time > ? AND
-                            DATE(t.transaction_time) = DATE(CURDATE())
-                        ORDER BY t.transaction_time ASC
-                        LIMIT 4, 1";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("s", $transactions[0]['transaction_time']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $transaction_f = $result->fetch_all(MYSQLI_ASSOC);
-                $stmt->close();
-                // echo json_encode(array(
-                //     "status" => "success",
-                //     "message" => "Transaction found",
-                //     "data" => $transaction_f
-                // ));
-                // exit;
-                // if ($result->num_rows == 0) {
-                //     exit;
-                // }
-
-                // Get information from using idrequester
-                $sql_cmd = "SELECT * 
-                        FROM requesters r
-                        WHERE r.id = ?";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("s", $transaction_f[0]['idrequester']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $requester = $result->fetch_all(MYSQLI_ASSOC);
-                $stmt->close();
-                
-                include "./email_content.php";
-
-                if ($result->num_rows > 0) {
-                    // echo json_encode(array(
-                    //     "status" => "success",
-                    //     "message" => "Requester found",
-                    //     "data" => $requester
-                    // ));
-                    // exit;
-                    $requester = $requester[0];
-                    $requester_name = $requester['name'];
-                    $requester_email = $requester['email'];
-                    $requester_payment = $requester['payment'];
-                    $requester_token = $transaction_f[0]['token_number'];
-                    $request_data = array(
-                        "name" => $requester_name,
-                        "email" => $requester_email,
-                        "payment" => $requester_payment,
-                        "transaction_id" => $transaction_f[0]['idtransaction'],
-                        "queue_count_int" => $transaction_f[0]['queue_number'],
-                        "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
-                    );
-                    // echo json_encode($request_data);
-                    send_email_notify_before_5($request_data);
-                    exit;
-                }
-
-
-
-                //////////////////////////////////////////////
-                // Cancel the past 3
-
-                $sql_cmd = "SELECT *
-                            FROM transactions t
-                            WHERE t.transaction_time < ? AND
-                            DATE(t.transaction_time) = CURDATE() AND
-                            t.status = 'missed'
-                            ORDER BY t.transaction_time DESC
-                            LIMIT 2, 1";
-                $stmt = $conn->prepare($sql_cmd);
-                $stmt->bind_param("s", $transactions[0]['transaction_time']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $transaction_p = $result->fetch_all(MYSQLI_ASSOC);
-                $stmt->close();
-                if ($result->num_rows > 0) {
-                    // Didnt optimize yet..
-            
-                    // Then update it 'missed' to 'cancelled'
-                    $sql_cmd = "UPDATE transactions
-                                SET status = 'cancelled'
-                                WHERE idtransaction = ?";
-                    $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("s", $transaction_p[0]['idtransaction']);
-                    $stmt->execute();
-                    $stmt->close();
-    
-                    // echo json_encode(array(
-                    //     "status" => "success",
-                    //     "message" => "Transaction found",
-                    //     "data" => $transaction_f
-                    // ));
-                    // exit;
-                    // if ($result->num_rows == 0) {
-                    //     exit;
-                    // }
-    
-                    // Get information from using idrequester
-                    $sql_cmd = "SELECT * 
-                            FROM requesters r
-                            WHERE r.id = ?";
-                    $stmt = $conn->prepare($sql_cmd);
-                    $stmt->bind_param("s", $transaction_p[0]['idrequester']);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-                    $requester = $result->fetch_all(MYSQLI_ASSOC);
-                    $stmt->close();
-                    // if ($result->num_rows > 0) {
-                    //     echo json_encode(array(
-                    //         "status" => "success",
-                    //         "message" => "Requester found",
-                    //         "data" => $requester
-                    //     ));
-                    //     exit;
-                    // }
-    
-    
-                    $requester = $requester[0];
-                    $requester_name = $requester['name'];
-                    $requester_email = $requester['email'];
-                    $requester_payment = $requester['payment'];
-                    $requester_token = $transaction_p[0]['token_number'];
-                    $request_data = array(
-                        "name" => $requester_name,
-                        "email" => $requester_email,
-                        "payment" => $requester_payment,
-                        "transaction_id" => $transaction_p[0]['idtransaction'],
-                        "queue_count_int" => $transaction_p[0]['queue_number'],
-                        "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
-                    );
-                    echo json_encode($request_data);
-                    send_email_notify_after_3($request_data);
-
-                }
-            } else {
-                echo json_encode(array(
-                    "status" => "error",
-                    "message" => "No transactions available for today"
-                ));
-                $conn->close();
-                exit;
-            }
         }
-        $conn->close();
-        exit;
+
+        // Query again
+
+
+
+
+
+
+        ///////// END COUNTER ///////////
+
+        // // Checking if the counter was already assigned
+        //     $sql_cmd = "SELECT *
+        //                 FROM counters c
+        //                 LEFT JOIN employees e ON c.idemployee = e.id
+        //                 WHERE e.id = ? AND e.role_type = 'employee'";
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute([$_GET['employee_id']]);
+        //     $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($counters) == 0) {
+        //         echo json_encode(array(
+        //             "status" => "error",
+        //             "message" => "Counter not found"
+        //         ));
+                
+                
+        //     }
+
+        //     // Counting if theres transaction today was recorded in current day
+        //     // $queue_count = 0;
+        //     $sql_cmd = "SELECT COUNT(t.idtransaction) as total_transactions
+        //                 FROM transactions t
+        //                 WHERE DATE(t.transaction_time) = CURDATE()";
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute();
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($transactions) > 0) {
+        //         $queue_count = $transactions[0]['total_transactions'];
+        //     }
+
+        //     // Checking if the transaction was already assigned
+        //     $sql_cmd = "SELECT *
+        //                 FROM
+        //                     transactions t
+        //                 LEFT JOIN requesters r ON t.idrequester = r.id
+        //                 WHERE
+        //                     t.idcounter = ? AND
+        //                     t.idemployee = ? AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                     t.status = 'serve' AND
+        //                     (
+        //                         r.priority = 'none'  
+        //                     ) 
+        //                     ";
+        //     if (isset($this_priority) && $this_priority == "Y") {
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     LEFT JOIN requesters r ON t.idrequester = r.id
+        //                     WHERE 
+        //                         t.idcounter = ? AND
+        //                         idemployee = ? AND
+        //                         status = 'serve' AND
+        //                         DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                         (
+        //                             r.priority = 'pregnant' OR
+        //                             r.priority = 'elderly' OR
+        //                             r.priority = 'disability'  
+        //                         ) 
+        //                     ";
+        //     }
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute([$counters[0]['idcounter'], $_GET['employee_id']]);
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($transactions) == 1) {
+        //         echo json_encode(array(
+        //             "status" => "success",
+        //             "message" => "Transaction already assigned",
+        //             "data" => $transactions[0]
+        //         ));
+                
+                
+        //     }
+        //     $sql_cmd  = "SELECT *
+        //                 FROM transactions t
+        //                 LEFT JOIN requesters r ON t.idrequester = r.id
+        //                 WHERE
+        //                     t.status = 'pending' AND
+        //                     t.idcounter IS NULL AND
+        //                     t.idemployee IS NULL AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                     (
+        //                         r.priority = 'none'  
+        //                     )
+        //                 ORDER BY t.transaction_time ASC
+        //                 LIMIT 1";
+        //     if (isset($this_priority) && $this_priority == "Y") {
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     LEFT JOIN requesters r ON t.idrequester = r.id
+        //                     WHERE
+        //                         t.status = 'pending' AND
+        //                         t.idcounter IS NULL AND
+        //                         t.idemployee IS NULL AND
+        //                         DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                         (
+        //                             r.priority = 'pregnant' OR
+        //                             r.priority = 'elderly' OR
+        //                             r.priority = 'disability'    
+        //                         )
+        //                     ORDER BY t.transaction_time ASC
+        //                     LIMIT 1";
+        //     }
+
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute();
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     if (count($transactions) == 0) {
+        //         echo json_encode(array(
+        //             "status" => "error",
+        //             "message" => "No transaction available for today"
+        //         ));
+                
+                
+        //     }
+        //     // Or get the transaction where can still available for today
+        //     $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 LEFT JOIN requesters r ON t.idrequester = r.id
+        //                 WHERE 
+        //                     t.status = 'pending' AND
+        //                     t.idcounter IS NULL AND
+        //                     t.idemployee IS NULL AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                     (
+        //                         r.priority = 'none'  
+        //                     )
+        //                 ORDER BY t.transaction_time ASC
+        //                 LIMIT 1";
+        //     if (isset($this_priority) && $this_priority == "Y") {
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     LEFT JOIN requesters r ON t.idrequester = r.id
+        //                     WHERE
+        //                         t.status = 'pending' AND
+        //                         t.idcounter IS NULL AND
+        //                         t.idemployee IS NULL AND
+        //                         DATE(t.transaction_time) = DATE(CURDATE()) AND
+        //                         (
+        //                             r.priority = 'pregnant' OR
+        //                             r.priority = 'elderly' OR
+        //                             r.priority = 'disability'    
+        //                         )
+        //                     ORDER BY t.transaction_time ASC
+        //                     LIMIT 1";
+        //     }
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute();
+        //     $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        //     if (count($transactions) > 0) {
+
+        //         $sql_cmd = "UPDATE transactions
+        //                     SET idcounter = ?, idemployee = ?,  status = 'serve'
+        //                     WHERE idtransaction = ?";
+        //         $stmt = $conn->pdo->prepare($sql_cmd);
+        //         $stmt->execute([$counters[0]['idcounter'], $_GET['employee_id'], $transactions[0]['idtransaction']]);
+
+        //         // This feature is optional for sending email
+        //         echo json_encode(array(
+        //             "status" => "success",
+        //             "message" => "Transaction found!",
+        //             "data" => $transactions[0]
+        //         ));
+
+        //         // Reminder before next 5
+
+        //         $sql_cmd = "SELECT *
+        //                 FROM transactions t
+        //                 WHERE
+        //                     t.transaction_time > ? AND
+        //                     DATE(t.transaction_time) = DATE(CURDATE())
+        //                 ORDER BY t.transaction_time ASC
+        //                 LIMIT 4, 1";
+        //         $stmt = $conn->pdo->prepare($sql_cmd);
+        //         $stmt->execute([$transactions[0]['transaction_time']]);
+        //         $transaction_f = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //         // echo json_encode(array(
+        //         //     "status" => "success",
+        //         //     "message" => "Transaction found",
+        //         //     "data" => $transaction_f
+        //         // ));
+        //         // 
+        //         // if ($result->num_rows == 0) {
+        //         //     
+        //         // }
+
+        //         // Get information from using idrequester
+        // $sql_cmd = "SELECT * 
+        //     FROM requesters r
+        //     WHERE r.id = ?";
+        // $stmt = $conn->pdo->prepare($sql_cmd);
+        // $stmt->execute([$transaction_f[0]['idrequester']]);
+        // $requester = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+        //         include "./email_content.php";
+
+        //         if ($result->num_rows > 0) {
+        //             // echo json_encode(array(
+        //             //     "status" => "success",
+        //             //     "message" => "Requester found",
+        //             //     "data" => $requester
+        //             // ));
+        //             // 
+        //             $requester = $requester[0];
+        //             $requester_name = $requester['name'];
+        //             $requester_email = $requester['email'];
+        //             $requester_payment = $requester['payment'];
+        //             $requester_token = $transaction_f[0]['token_number'];
+        //             $request_data = array(
+        //                 "name" => $requester_name,
+        //                 "email" => $requester_email,
+        //                 "payment" => $requester_payment,
+        //                 "transaction_id" => $transaction_f[0]['idtransaction'],
+        //                 "queue_count_int" => $transaction_f[0]['queue_number'],
+        //                 "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
+        //             );
+        //             // echo json_encode($request_data);
+        //             send_email_notify_before_5($request_data);
+                    
+        //         }
+
+
+
+        //         //////////////////////////////////////////////
+        //         // Cancel the past 3
+
+        //         $sql_cmd = "SELECT *
+        //                     FROM transactions t
+        //                     WHERE t.transaction_time < ? AND
+        //                     DATE(t.transaction_time) = CURDATE() AND
+        //                     t.status = 'missed'
+        //                     ORDER BY t.transaction_time DESC
+        //                     LIMIT 2, 1";
+        //         $stmt = $conn->pdo->prepare($sql_cmd);
+        //         $stmt->execute([$transactions[0]['transaction_time']]);
+        //         $transaction_p = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //         if (count($transaction_p) > 0) {
+        //             // Didnt optimize yet..
+            
+        //             // Then update it 'missed' to 'cancelled'
+        //             $sql_cmd = "UPDATE transactions
+        //                         SET status = 'cancelled'
+        //                         WHERE idtransaction = ?";
+        //             $stmt = $conn->pdo->prepare($sql_cmd);
+        //             $stmt->execute([$transaction_p[0]['idtransaction']]);
+    
+        //             // echo json_encode(array(
+        //             //     "status" => "success",
+        //             //     "message" => "Transaction found",
+        //             //     "data" => $transaction_f
+        //             // ));
+        //             // 
+        //             // if ($result->num_rows == 0) {
+        //             //     
+        //             // }
+    
+        //             // Get information from using idrequester
+        //     $sql_cmd = "SELECT * 
+        //         FROM requesters r
+        //         WHERE r.id = ?";
+        //     $stmt = $conn->pdo->prepare($sql_cmd);
+        //     $stmt->execute([$transaction_p[0]['idrequester']]);
+        //     $requester = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //             // if ($result->num_rows > 0) {
+        //             //     echo json_encode(array(
+        //             //         "status" => "success",
+        //             //         "message" => "Requester found",
+        //             //         "data" => $requester
+        //             //     ));
+        //             //     
+        //             // }
+    
+    
+        //             $requester = $requester[0];
+        //             $requester_name = $requester['name'];
+        //             $requester_email = $requester['email'];
+        //             $requester_payment = $requester['payment'];
+        //             $requester_token = $transaction_p[0]['token_number'];
+        //             $request_data = array(
+        //                 "name" => $requester_name,
+        //                 "email" => $requester_email,
+        //                 "payment" => $requester_payment,
+        //                 "transaction_id" => $transaction_p[0]['idtransaction'],
+        //                 "queue_count_int" => $transaction_p[0]['queue_number'],
+        //                 "website_check" => $serverName . '/public/requester/requester_number.php?requester_token=' . $requester_token
+        //             );
+        //             echo json_encode($request_data);
+        //             send_email_notify_after_3($request_data);
+
+        //         }
+        //     } else {
+        //         echo json_encode(array(
+        //             "status" => "error",
+        //             "message" => "No transactions available for today"
+        //         ));
+                
+                
+        //     }
+        // }
+        
+        
 
     }  else if (isset($_GET['requester_priority'])) {
         // Reserved
@@ -2854,27 +3217,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         FROM transactions t
                         LEFT JOIN requesters r ON t.idrequester = r.id
                         WHERE t.token_number = ?";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $_GET['token_number']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $requesters = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
-            if ($result->num_rows > 0) {
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$_GET['token_number']]);
+            $requesters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (count($requesters) > 0) {
                 echo json_encode(array(
                     "status" => "success",
                     "message" => "Requester found",
                     "data" => $requesters[0]
                 ));
-                $conn->close();
-                exit;
+                
+                
             } else {
                 echo json_encode(array(
                     "status" => "error",
                     "message" => "Requester not found"
                 ));
-                $conn->close();
-                exit;
+                
+                
             }
         }
     } else if (isset($_GET['dashboard_admin'])) {
@@ -2907,12 +3267,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             LIMIT 1
                         );
             ";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counters = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows > 0) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute();
+    $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($counters) > 0) {
             $sql_cmd = "SELECT t.queue_number
                         FROM transactions t
                         WHERE
@@ -2922,28 +3280,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             t.transaction_time DESC
                         LIMIT 1;
                         ";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result_1 = $stmt->get_result();
-            $requester_latest = $result_1->fetch_all(MYSQLI_ASSOC);
+            $requester_latest = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "counters" => $counters,
                 "requester" => $requester_latest[0]['queue_number'] ?? "No queue",
                 "message" => "Counters found",
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "No counters found",
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        $conn->close();
-        exit;
+        
+        
 
     
     // Requester Number Monitor
@@ -2955,8 +3312,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "error",
                 "message" => "Please provide the requester token that you submitted."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     
         // 
@@ -2965,31 +3322,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         //     "status" => "success",
         //     "requester_token" => $requester_token
         // ));
-        // exit;
+        // 
     
         // Get your counter number based from token
-        $stmt = $conn->prepare("SELECT t.queue_number, c.counterNumber, t.idcounter, t.status
-                                FROM transactions t
-                                LEFT JOIN counters c ON t.idcounter = c.idcounter
-                                WHERE t.token_number = ?
-                                ORDER BY t.transaction_time DESC LIMIT 1");
-        $stmt->bind_param("s", $requester_token);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        $stmt->close();
+    $stmt = $conn->pdo->prepare("SELECT t.queue_number, c.counterNumber, t.idcounter, t.status
+                FROM transactions t
+                LEFT JOIN counters c ON t.idcounter = c.idcounter
+                WHERE t.token_number = ?
+                ORDER BY t.transaction_time DESC LIMIT 1");
+    $stmt->execute([$requester_token]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Get the highest queue_count from transaction where who are served
         $sql_cmd = "SELECT MAX(t.queue_number) AS queue_number
                     FROM transactions t
                     WHERE DATE(t.transaction_time) = CURDATE() AND t.status = 'serve'
                     ORDER BY t.transaction_time DESC";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $setup_row = $result->fetch_assoc();
-        $stmt->close();
-        $queue_count_int = $setup_row['queue_number'];
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute();
+    $setup_row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $queue_count_int = $setup_row['queue_number'];
     
         // echo json_encode(array(
         //     "status" => "success",
@@ -3005,16 +3357,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "currentQueueNumber" => $queue_count_int ?? "N/A",
             "requester_status" => $row['status'] ?? "N/A"
         ));
-        $conn->close();
-        exit;
+        
+        
     } else if (isset($_GET['transaction_reminder'])) {
         if (!isset($_GET['idtransaction'])) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Please provide the transaction id."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $reminder_future = true;
@@ -3024,12 +3376,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         WHERE r.created_at > ?
                         ORDER BY r.created_at ASC
                         LIMIT 4,1";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $_GET['idtransaction']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $request_get = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$_GET['idtransaction']]);
+            $request_get = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $requester = $request_get[0];
 
@@ -3037,12 +3386,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql_cmd = "SELECT *
                         FROM transactions
                         WHERE idrequester = ? AND status = 'pending'";
-            $stmt = $conn->prepare($sql_cmd);
-            $stmt->bind_param("s", $requester['id']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $transaction_get = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $stmt = $conn->pdo->prepare($sql_cmd);
+            $stmt->execute([$requester['id']]);
+            $transaction_get = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $transaction_get = $transaction_get[0];
             // echo json_encode(array(
@@ -3050,13 +3396,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             //     "data" => $transaction_get,
             //     "message" => "Request's transaction found."
             // ));
-            // exit;
+            // 
             // echo json_encode(array(
             //     "status" => "success",
             //     "data" => $request_get,
             //     "message" => "Transaction found."
             // ));
-            // exit;
+            // 
             include "./email_content.php";
 
             // $requester = $requester[0];
@@ -3074,78 +3420,68 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
             send_email_notify_before_5($request_data); 
         }
-        $conn->close();
-        exit;
+        
+        
     } else if (isset($_GET['employeeCutOff'])) {
         if (!isset($_GET['id'])) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Please provide the employee id."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
-        $sql_cmd = "SELECT e.cut_off_state
-                    FROM employees e
-                    WHERE e.id = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $_GET['id']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $employee = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+    $sql_cmd = "SELECT e.cut_off_state
+            FROM employees e
+            WHERE e.id = ?";
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$_GET['id']]);
+    $employee = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows == 0) {
+    if (count($employee) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Employee not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "success",
                 "cut_off_state" => $employee[0]['cut_off_state'],
                 "message" => "Employee found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     
-    // Transaction Stats
+    // Transaction Stats (Chart Data)
     } else if (isset($_GET['transactionStats'])) {
-        // too lazy to sort :>
-        if (!isset($_GET['data_range'])) {
-            echo json_encode(array(
-                "status" => "error",
-                "message" => "Please provide the data range."
-            ));
-            $conn->close();
-            exit;
-        }
-        $data_range = $_GET['data_range'];
+
+        $data_range = $_GET['data_range'] ?? "day";
+        
         // CURRENT DAY
         if ($data_range === "day") {
             // Get the current day and group by hour
-            $sql_cmd = "SELECT HOUR(transaction_time) as `hour` , COUNT(idtransaction) as total_transactions
+            $sql_cmd = "SELECT
+                            HOUR(transaction_time)+8 as `hour`,
+                            COUNT(idtransaction) as total_transactions
                         FROM transactions
                         WHERE DATE(transaction_time) = CURDATE()
                         GROUP BY hour
-                        -- ORDER BY `hour` ASC; -- On working
+                        ORDER BY `hour` ASC -- On working
                         ";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
 
         // CURRENT WEEK
         } else if ($data_range === "week") {
@@ -3156,18 +3492,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         AND DATE(transaction_time) <= CURDATE() AND YEAR(transaction_time) = YEAR(CURDATE())
                         GROUP BY DATE(transaction_time)
                         ORDER BY date ASC;";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
         // LAST WEEK
         } else if ($data_range === "last-week") {
             $sql_cmd = "SELECT DATE(transaction_time) as date, COUNT(idtransaction) as total_transactions
@@ -3177,18 +3511,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         GROUP BY DATE(transaction_time)
                         ORDER BY date ASC
                         ";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
 
         // This Month
         } else if ($data_range === "month") {
@@ -3199,18 +3531,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE(transaction_time)
                         ORDER BY date ASC";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
 
         // Last 30 days
         } else if ($data_range === "last-30-days") {
@@ -3220,18 +3550,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE(transaction_time)
                         ORDER BY date ASC";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
 
         // LAST 3 MONTHS
         } else if ($data_range === "last-3-months") {
@@ -3241,18 +3569,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
                         ORDER BY month ASC";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
 
         // LAST 12 MONTHS
         } else if ($data_range === "last-12-months") {
@@ -3262,18 +3588,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             DATE(transaction_time) <= CURDATE()
                         GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
                         ORDER BY month ASC";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
 
         // This year
         } else if (isset($_GET['year'])) {
@@ -3284,127 +3608,128 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             WHERE YEAR(transaction_time) = YEAR(CURDATE())
                             GROUP BY DATE_FORMAT(transaction_time, '%Y-%m')
                             ORDER BY month ASC";
-            $stmt = $conn->prepare($sql_cmd);
+            $stmt = $conn->pdo->prepare($sql_cmd);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $transactions = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+            $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction stats successfully retrieved",
                 "stats" => $transactions
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Invalid request"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        $conn->close();
-        exit;
+        
+        
     } else if (isset($_GET['counter_queue_remain'])) {
         if (!isset($_GET['counter_number'])) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Please provide the counter number."
             ));
-            $conn->close();
-            exit;
+            
+            
         }
 
         $counter_number = $_GET['counter_number'];
         $sql_cmd = "SELECT c.queue_remain
                     FROM counters c
                     WHERE c.counterNumber = ?";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->bind_param("s", $counter_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $counters = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows == 0) {
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute([$counter_number]);
+    $counters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (count($counters) == 0) {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Counter is not assigned"
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "success",
                 "queue_remain" => $counters[0]['queue_remain'],
                 "message" => "Counter found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        exit;
+        
     // Reset the transaction for today
     } else if (isset($_GET['transaction_today_reset'])) {
         $sql_cmd = "UPDATE transactions t
                     SET t.idemployee = NULL, t.idcounter = NULL, t.status = 'pending'
                     WHERE DATE(t.;transaction_time) = DATE(CURDATE())";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->execute();
-        $stmt->close();
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute();
 
     } else if (isset($_GET['schedule-requester_form'])) {
         $sql_cmd = "SELECT s.enable, s.time_start, s.time_end, s.everyday
                     FROM scheduler s
                     WHERE s.schedule_key = 'requester_form'";
-        $stmt = $conn->prepare($sql_cmd);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $schedule = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+    $stmt = $conn->pdo->prepare($sql_cmd);
+    $stmt->execute();
+    $schedule = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows > 0) {
+    if (count($schedule) > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Schedule found",
                 "data" => $schedule[0]
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
             echo json_encode(array(
                 "status" => "error",
                 "message" => "Schedule not found"
             ));
-            $conn->close();
-            exit;
+            
+            
         }
     } else if (isset($_GET['transaction_limiter'])) {
         $sql_cmd = "SELECT *
                     FROM setup_system
                     WHERE setup_key = 'transaction_limit'";
-        $stmt = $conn->prepare($sql_cmd);
+        $stmt = $conn->pdo->prepare($sql_cmd);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $transaction_limiter = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        if ($result->num_rows > 0) {
+        $transaction_limiter = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($transaction_limiter) > 0) {
             echo json_encode(array(
                 "status" => "success",
                 "message" => "Transaction limiter found",
                 "data" => $transaction_limiter[0]
             ));
-            $conn->close();
-            exit;
+            
+            
         } else {
+            // Return a sensible default instead of error so UI can load without a DB row.
+            $default = array(
+                'setup_key' => 'transaction_limit',
+                'setup_value_int' => 10
+            );
             echo json_encode(array(
-                "status" => "error",
-                "message" => "Transaction limiter not found"
+                "status" => "success",
+                "message" => "Transaction limiter not found, using default",
+                "data" => $default
             ));
-            $conn->close();
-            exit;
+            
+            
         }
+
     } else if (isset($_GET['refresh_data'])) {
-        // Incase for issue
+        /*
+        
+            Refresh data for incase scheduler has problem
+            
+        */
         $conn->begin_transaction();
         try {
             $conn->query("CALL `employeeMonitor`()");
@@ -3416,18 +3741,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "status" => "success",
                 "message" => "Data refreshed successfully"
             ));
-            $conn->close();
-            exit;
+            
+            
         } catch (Exception $e) {
             $conn->rollback();
             echo json_encode(array(
                 "status" => "error",
                 "message" => $e->getMessage()
             ));
-            $conn->close();
-            exit;
+            
+            
         }
-        exit;
+        
     }
     
     else 
@@ -3437,7 +3762,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "status" => "error",
             "message" => "Invalid request"
         ));
-        $conn->close();
-        exit;
+        
+        
     }
 };

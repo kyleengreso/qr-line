@@ -1,30 +1,36 @@
 <?php
 include "./../base.php";
+@include_once __DIR__ . '/../includes/config.php';
+@include_once __DIR__ . '/../includes/api_client.php';
 
-$sql_cmd = "SELECT * FROM scheduler WHERE schedule_key = 'requester_form'";
-$stmt = $conn->prepare($sql_cmd);
-$stmt->execute();
-$result = $stmt->get_result();
-
-$schedule = $result->fetch_assoc();
-if (!$schedule) {
-
+try {
+    $api = get_api_client();
+    $response = $api->get('/api/schedule/requester_form');
+    $schedule = isset($response['data']) ? $response['data'] : null;
+} catch (Exception $e) {
+    error_log("API Error in requester_form_priority.php: " . $e->getMessage());
+    $schedule = null;
 }
 
-$schedule_present = $schedule['enable'];
-$time_start = date("H:i:s", strtotime($schedule['time_start']));
-$time_end = date("H:i:s", strtotime($schedule['time_end']));
-$time_now = date("H:i:s");
-$everyday = explode(";", $schedule['everyday']);
-$day_of_week = strtolower(date("D"));
+// Initialize default values
 $schedule_present = false;
-foreach ($everyday as $day) {
-    if ($day == $day_of_week) {
-        $schedule_present = true;
-        $schedule_day_announcment = "Come back later at";
-        break;
-    } else {
-        $schedule_day_announcment = "Schedule is closed for today";
+$schedule_day_announcment = "Schedule is closed for today";
+$time_start = 'N/A';
+$time_end = 'N/A';
+$time_now = date("H:i:s");
+
+if ($schedule) {
+    $time_start = date("H:i:s", strtotime($schedule['time_start']));
+    $time_end = date("H:i:s", strtotime($schedule['time_end']));
+    $everyday = explode(";", $schedule['everyday']);
+    $day_of_week = strtolower(date("D"));
+    $schedule_present = false;
+    foreach ($everyday as $day) {
+        if ($day == $day_of_week) {
+            $schedule_present = true;
+            $schedule_day_announcment = "Come back later at";
+            break;
+        }
     }
 }
 
@@ -89,6 +95,11 @@ foreach ($everyday as $day) {
                     </div>
                 </div>
 
+                <p class="text-muted small mb-2">
+                    Not a priority customer? Please use the
+                    <a href="./requester_form.php" class="text-decoration-none fw-semibold">Standard Form</a>.
+                </p>
+
                 <button type="submit" class="btn btn-primary w-100">Next</button>
             </form>
             <?php else :?>
@@ -115,28 +126,35 @@ foreach ($everyday as $day) {
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
+    var endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
         function sumbitUserForm(user) {
             var form = $('#frmUserForm');
             message_info(form, 'Processing...');
+            // ONLY use Flask API via endpointHost; no PHP fallback
+            if (!(endpointHost && endpointHost.length > 0)) {
+                message_error(form, 'Service is unavailable. Please try again later.');
+                return;
+            }
             $.ajax({
-                url: '/public/api/api_endpoint.php',
+                url: endpointHost.replace(/\/$/, '') + '/api/requester',
                 type: 'POST',
+                contentType: 'application/json',
                 data: JSON.stringify(user),
+                xhrFields: { withCredentials: true },
                 success: function(response) {
-                    console.log(response.data);
-                    if (response.status === 'success') {
-                        message_success(form, response.message);
+                    if (response && response.status === 'success') {
+                        message_success(form, response.message || 'Success');
                         localStorage.setItem('requester_token', response.token_number);
                         var requester_token = localStorage.getItem('requester_token');
                         setTimeout(function() {
-                            window.location.href = "./requester_number_pwd.php?requester_token=" + requester_token;
-                        }, 1000);
+                            window.location.href = "./requester_number_priority.php?requester_token=" + requester_token;
+                        }, 800);
                     } else {
-                        message_error(form, response.message);
+                        message_error(form, (response && response.message) || 'Submission failed');
                     }
                 },
                 error: function() {
-                    $('#user_number').text('0');
+                    message_error(form, 'Network error. Please try again.');
                 }
             });
         }
@@ -167,12 +185,11 @@ foreach ($everyday as $day) {
                 return;
             }
             var user = {
-                method : "requester_form",
                 name: $('#name').val(),
                 email: $('#email').val(),
                 payment: payment,
                 priority: priority,
-                website: `${realHost}/public/requester/requester_number.php`
+                website: `${realHost}/public/requester/requester_number_priority.php`
             };
             console.log(user);
             sumbitUserForm(user);

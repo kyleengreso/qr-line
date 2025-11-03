@@ -1,7 +1,7 @@
 <?php
 require('fpdf.php');
-include_once './../../includes/db_conn.php';
-include_once './../../base.php';
+@include_once './../../base.php';
+@include_once './../../includes/api_client.php';
 class PDF extends FPDF
 {
 // Page header
@@ -73,11 +73,17 @@ $pdf->Ln(10);
 $start_date_str = '2025-03-14 00:00:00 AM';
 $end_date_str = '2025-03-15 00:00:00 AM';
 
-$sql_cmd = "SELECT * FROM requesters WHERE created_at BETWEEN '$start_date_str' AND '$end_date_str'";
-$stmt = $conn->prepare($sql_cmd);
-$stmt->execute();
-$result = $stmt->get_result();
-$stmt->close();
+try {
+    $api = get_api_client();
+    $response = $api->get('/api/requesters', [
+        'created_at_start' => $start_date_str,
+        'created_at_end' => $end_date_str
+    ]);
+    $result = isset($response['data']) ? $response['data'] : [];
+} catch (Exception $e) {
+    error_log("API Error in fpdf186/test.php (total): " . $e->getMessage());
+    $result = [];
+}
 foreach ($result as $row) {
     $pdf->Cell(50,10,$row['created_at'],1,0,'C');
     $pdf->Cell(60,10,$row['name'],1,0,'C');
@@ -103,11 +109,18 @@ $pdf->Cell(30,10,'Payment',1,0,'C');
 $pdf->SetFont('Arial','',10);
 $pdf->Ln(10);
 
-$sql_cmd = "SELECT * FROM requesters WHERE created_at BETWEEN '$start_date_str' AND '$end_date_str' AND payment = 'registrar'";
-$stmt = $conn->prepare($sql_cmd);
-$stmt->execute();
-$result = $stmt->get_result();
-$stmt->close();
+try {
+    $api = get_api_client();
+    $response = $api->get('/api/requesters', [
+        'created_at_start' => $start_date_str,
+        'created_at_end' => $end_date_str,
+        'payment' => 'registrar'
+    ]);
+    $result = isset($response['data']) ? $response['data'] : [];
+} catch (Exception $e) {
+    error_log("API Error in fpdf186/test.php (registrar): " . $e->getMessage());
+    $result = [];
+}
 foreach ($result as $row) {
     $pdf->Cell(50,10,$row['created_at'],1,0,'C');
     $pdf->Cell(60,10,$row['name'],1,0,'C');
@@ -131,11 +144,18 @@ $pdf->Cell(50,10,'Email',1,0,'C');
 $pdf->Cell(30,10,'Payment',1,0,'C');
 $pdf->SetFont('Arial','',10);
 $pdf->Ln(10);
-$sql_cmd = "SELECT * FROM requesters WHERE created_at BETWEEN '$start_date_str' AND '$end_date_str' AND payment = 'assessment'";
-$stmt = $conn->prepare($sql_cmd);
-$stmt->execute();
-$result = $stmt->get_result();
-$stmt->close();
+try {
+    $api = get_api_client();
+    $response = $api->get('/api/requesters', [
+        'created_at_start' => $start_date_str,
+        'created_at_end' => $end_date_str,
+        'payment' => 'assessment'
+    ]);
+    $result = isset($response['data']) ? $response['data'] : [];
+} catch (Exception $e) {
+    error_log("API Error in fpdf186/test.php (assessment): " . $e->getMessage());
+    $result = [];
+}
 foreach ($result as $row) {
     $pdf->Cell(50,10,$row['created_at'],1,0,'C');
     $pdf->Cell(60,10,$row['name'],1,0,'C');

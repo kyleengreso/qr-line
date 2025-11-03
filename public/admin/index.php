@@ -1,18 +1,19 @@
 <?php
 include_once __DIR__ . "/../base.php";
-
-restrictAdminMode();
-
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
-
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
+// API endpoint host (Flask) config
+// Load optional endpoint host/server from includes/config.php if present
+@include_once __DIR__ . '/../includes/config.php';
+// Require admin access for this dashboard
+requireAdmin();
+// Ensure $token and $username are populated for templates (some pages rely on $username)
+$token = $_COOKIE['token'] ?? null;
+if ($token) {
+    $token = decryptToken($token, $master_key ?? '');
+    // normalize to object as other pages do
+    $token = json_encode($token);
+    $token = json_decode($token);
+}
+$username = isset($token->username) ? $token->username : null;
 ?>
 
 <!DOCTYPE html>
@@ -53,131 +54,78 @@ $counterNumber = $token->counterNumber;
                         </div>
                     </div>
                 </div>
-                <div class="row p-0 m-0 text-center">
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #27548A;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-uppercase text-secondary small fw-semibold">Today</div>
+                                    <div class="display-6 fw-bold mb-0" id="transactions-today"></div>
+                                </div>
+                                <div class="rounded-3 bg-light p-3 text-primary"><i class="bi bi-people-fill fs-4"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-uppercase text-secondary small fw-semibold">Pending</div>
+                                    <div class="display-6 fw-bold mb-0" id="transactions-pending"></div>
+                                </div>
+                                <div class="rounded-3 bg-light p-3 text-warning"><i class="bi bi-hourglass-split fs-4"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-uppercase text-secondary small fw-semibold">Completed</div>
+                                    <div class="display-6 fw-bold mb-0" id="transactions-completed"></div>
+                                </div>
+                                <div class="rounded-3 bg-light p-3 text-success"><i class="bi bi-check-lg fs-4"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-uppercase text-secondary small fw-semibold">Cancelled</div>
+                                    <div class="display-6 fw-bold mb-0" id="transactions-cancelled"></div>
+                                </div>
+                                <div class="rounded-3 bg-light p-3 text-danger"><i class="bi bi-x-lg fs-4"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <div class="row row-cols-1 row-cols-lg-2 g-3 mt-1">
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border text-center">
                                 <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #27548A">
-                                                Today
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <span class="fs-1 fw-bold" id="transactions-today"></span>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto fs-1">
-                                            <i class="bi bi-people-fill"></i>
-                                        </div>
-                                    </div>
+                                    <div class="text-uppercase text-secondary small fw-semibold">Student Transactions Today</div>
+                                    <div class="display-6 fw-bold mb-0" id="transactions-student-today"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #DDA853;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border text-center">
                                 <div class="card-body">
-                                    <div class="row align-items-center">
-                                        <div class="col">
-                                            <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #DDA853">
-                                                Pending
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <span class="fs-1 fw-bold" id="transactions-pending"></span>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto fs-1">
-                                            <i class="bi bi-hourglass-split"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #328E6E;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
-                                <div class="card-body">
-                                    <div class="row align-items-center">
-                                        <div class="col">
-                                            <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #328E6E">
-                                                Completed
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <span class="fs-1 fw-bold" id="transactions-completed"></span>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto fs-1">
-                                            <i class="bi bi-check-lg"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #F16767;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
-                                <div class="card-body">
-                                    <div class="row align-items-center">
-                                        <div class="col">
-                                            <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #F16767">
-                                                Cancelled
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <span class="fs-1 fw-bold" id="transactions-cancelled"></span>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto fs-1">
-                                            <i class="bi bi-x-lg"></i>
-                                        </div>
-                                    </div>
+                                    <div class="text-uppercase text-secondary small fw-semibold">Total Transactions</div>
+                                    <div class="display-6 fw-bold mb-0" id="transactions-total"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row p-0 m-0">
-                    <div class="col-12 m-0 mb-4">
-                        <div class="d-flex justify-content-center align-items-center card border border-2 text-center bg-white p-4 shadow rounded">
-                            <table style="max-width: 250px">
-                                <tr>
-                                    <td class="d-none pr-4 text-center text-muted">
-                                        <i class="fs-1 bi bi-graph-up"></i>                   
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="text-muted text-uppercase mb-0">
-                                            Student Transactions today
-                                            <h3 class="fs-2 fw-bold"><span id="transactions-student-today"></span></h3>
-                                        </span>               
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="row p-0 m-0">
-                        <div class="col-12 m-0 mb-4">
-                            <div class="d-flex justify-content-center align-items-center card border border-2 text-center bg-white p-4 shadow rounded">
-                                <table style="max-width: 250px">
-                                    <tr>
-                                        <td class="d-none pr-4 text-center text-muted">
-                                            <i class="fs-1 bi bi-graph-up"></i>                   
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="text-muted text-uppercase mb-0">
-                                                Total Transactions
-                                                <h3 class="fs-2 fw-bold"><span id="transactions-total"></span></h3>
-                                            </span>               
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="row p-0 m-0">
-                            <div class="col-xl-3 col-md-6 mb-4 p-0">
-                                <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #7C4585;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mt-1">
+                            <div class="col">
+                                <div class="card h-100 shadow-sm border">
                                     <div class="card-body text-center">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #7C4585">
-                                                    Yesterday</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                    <span class="fs-1 fw-bold" id="transactions-yesterday"></span>
-                                                </div>
+                                                <div class="text-uppercase text-secondary small fw-semibold">Yesterday</div>
+                                                <div class="display-6 fw-bold mb-0" id="transactions-yesterday"></div>
                                             </div>
                                             <div class="col-auto fs-1">
                                                 <i class="bi bi-people"></i>
@@ -186,14 +134,13 @@ $counterNumber = $token->counterNumber;
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-xl-3 col-md-6 mb-4 p-0">
-                                <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #F8B55F;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                            <div class="col">
+                                <div class="card h-100 shadow-sm border">
                                     <div class="card-body text-center">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #F8B55F">
-                                                    This Week</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-week"></span></div>
+                                                <div class="text-uppercase text-secondary small fw-semibold">This Week</div>
+                                                <div class="display-6 fw-bold mb-0" id="transactions-week"></div>
                                             </div>
                                             <div class="col-auto fs-1">
                                                 <i class="bi bi-people"></i>
@@ -202,14 +149,13 @@ $counterNumber = $token->counterNumber;
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-xl-3 col-md-6 mb-4 p-0">
-                                <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #FFCBCB;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                            <div class="col">
+                                <div class="card h-100 shadow-sm border">
                                     <div class="card-body text-center">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #FFCBCB">
-                                                    This Month</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-month"></span></div>
+                                                <div class="text-uppercase text-secondary small fw-semibold">This Month</div>
+                                                <div class="display-6 fw-bold mb-0" id="transactions-month"></div>
                                             </div>
                                             <div class="col-auto fs-1">
                                                 <i class="bi bi-calendar-fill"></i>
@@ -218,14 +164,13 @@ $counterNumber = $token->counterNumber;
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-xl-3 col-md-6 mb-4 p-0">
-                                <div class="card border-left-primary shadow h-100 py-2 m-2" style="border:5px solid #0A97B0;border-radius:5px;border-right:0;border-bottom:0;border-top:0">
+                            <div class="col">
+                                <div class="card h-100 shadow-sm border">
                                     <div class="card-body text-center">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-uppercase mb-1" style="color:#0A97B0">
-                                                    This Year</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800"><span class="fs-1 fw-bold" id="transactions-year"></span></div>
+                                                <div class="text-uppercase text-secondary small fw-semibold">This Year</div>
+                                                <div class="display-6 fw-bold mb-0" id="transactions-year"></div>
                                             </div>
                                             <div class="col-auto fs-1">
                                                 <i class="bi bi-calendar"></i>
@@ -238,75 +183,109 @@ $counterNumber = $token->counterNumber;
                     </div>
 
                     <!-- Transactions Chart -->
-                    <div class="row p-0 m-0">
-                        <div class="col-12 p-0 m-0">
-                            <div class="card shadow m-2" id="transaction-chart-area">
-                                <div class="card-header">
-                                    Transactions Overview
+                    <div class="card shadow-sm border mt-2 px-0" id="transaction-chart-area">
+                        <div class="card-header py-2">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="d-inline-flex align-items-center justify-content-center bg-white text-primary border border-primary rounded-circle" style="width:28px;height:28px;">
+                                        <i class="bi bi-graph-up"></i>
+                                    </span>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-semibold">Transactions Overview</span>
+                                        <small class="text-white-50 d-none d-sm-inline">Auto-refresh 5s • Range: <span id="dateRange-badge" class="badge bg-white text-primary border border-primary">Today</span></small>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-12 col-md-6">
-                                            <div class="row">
-                                                <div class="col-12">
-                                                    <div class="form-floating">
-                                                        <select class="form-select" name="dateRange" id="dateRange-select">
-                                                            <option value="day">Today</option>
-                                                            <option value="week">This Week</option>
-                                                            <option value="last-week">Last Week</option>
-                                                            <option value="month">This Month</option>
-                                                            <option value="last-30-days">Last 30 Days</option>
-                                                            <option value="last-3-months">Last 3 months</option>
-                                                            <option value="last-12-months">Last 12 months</option>
-                                                        </select>
-                                                        <label for="dateRange-select" class="form-label`">Date Range</label>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                <div class="d-none d-md-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-1 p-1 bg-white rounded-3 border border-primary">
+                                        <div class="btn-group btn-group-sm" id="dateRange-buttons" role="group" aria-label="Date range (quick)">
+                                            <button type="button" class="btn btn-outline-primary" data-range="day">Today</button>
+                                            <button type="button" class="btn btn-outline-primary" data-range="week">Week</button>
+                                            <button type="button" class="btn btn-outline-primary" data-range="month">Month</button>
+                                            <button type="button" class="btn btn-outline-primary" data-range="last-12-months">12m</button>
+                                        </div>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">More</button>
+                                            <ul class="dropdown-menu dropdown-menu-end" id="dateRange-more">
+                                                <li><a class="dropdown-item" href="#" data-range="last-week">Last Week</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="last-30-days">Last 30 Days</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="last-3-months">Last 3 months</a></li>
+                                            </ul>
                                         </div>
                                     </div>
-                                    <div class="w-100 h-auto">
-                                        <canvas id="transaction-chart" class="w-100" style="height: 300px;"></canvas>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Chart actions">
+                                        <button type="button" class="btn btn-outline-light text-white border-white" id="btnRefreshChart" title="Refresh">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-light text-white border-white" id="btnExportChart" title="Download PNG">
+                                            <i class="bi bi-download"></i>
+                                        </button>
                                     </div>
                                 </div>
+                                <div class="d-md-none w-100">
+                                    <select class="form-select" name="dateRange" id="dateRange-select">
+                                        <option value="day">Today</option>
+                                        <option value="week">This Week</option>
+                                        <option value="last-week">Last Week</option>
+                                        <option value="month">This Month</option>
+                                        <option value="last-30-days">Last 30 Days</option>
+                                        <option value="last-3-months">Last 3 months</option>
+                                        <option value="last-12-months">Last 12 months</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="w-100">
+                                <canvas id="transaction-chart" class="w-100" style="height: 360px;"></canvas>
                             </div>
                         </div>
                     </div>
 
-                                                        <!-- Generate Report -->
-                                                        <div class="card shadow m-2">
-                                        <div class="card-header">
-                                            Generate Report
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="alert alert-danger d-none" id="generateReportNotify">
-                                                <span>Specify the month and year to generate</span>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-6 col-md-4 mb-2">
-                                                    <div class="form-floating">
-                                                        <select class="form-select" name="month" id="month">
-                                                            <option value="">--</option>
-                                                        </select>
-                                                        <label for="month" class="form-label">Month</label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 col-md-4 mb-2">
-                                                    <div class="form-floating">
-                                                        <select class="form-select" name="year" id="year">
-                                                            <option value="">----</option>
-                                                        </select>
-                                                        <label for="year" class="form-label">Year</label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-md-4 mb-2">
-                                                    <div class="form-floating align-stretch">
-                                                        <button class="btn btn-primary btn-lg btn-lg w-100" type="button" id="btnGenerateReport">Generate</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <!-- Generate Report -->
+                    <div class="card shadow-sm border mt-3 px-0">
+                        <div class="card-header py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-white text-primary border border-primary rounded-circle" style="width:28px;height:28px;">
+                                    <i class="bi bi-filetype-pdf"></i>
+                                </span>
+                                <span class="fw-semibold">Generate Report</span>
+                            </div>
+                            <div class="d-none d-md-flex align-items-center gap-2">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Quick select">
+                                    <button type="button" class="btn btn-outline-primary" id="btnQuickThisMonth">This month</button>
+                                    <button type="button" class="btn btn-outline-primary" id="btnQuickLastMonth">Last month</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-danger d-none" id="generateReportNotify">
+                                <span>Specify the month and year to generate</span>
+                            </div>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-12 col-md-4">
+                                    <label for="month" class="form-label">Month</label>
+                                    <select class="form-select" name="month" id="month">
+                                        <option value="">--</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="year" class="form-label">Year</label>
+                                    <select class="form-select" name="year" id="year">
+                                        <option value="">----</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <button class="btn btn-primary btn-lg w-100" type="button" id="btnGenerateReport">Generate</button>
+                                </div>
+                            </div>
+                            <div class="d-md-none mt-3">
+                                <div class="btn-group w-100" role="group" aria-label="Quick select (mobile)">
+                                    <button type="button" class="btn btn-outline-primary" id="btnQuickThisMonthMobile">This month</button>
+                                    <button type="button" class="btn btn-outline-primary" id="btnQuickLastMonthMobile">Last month</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -314,28 +293,8 @@ $counterNumber = $token->counterNumber;
 
     <?php after_js()?>
     <script>
-        let transactions_student_today = document.getElementById('transactions-student-today');
-        function fetchStudentTransaction() {
-            let params = new URLSearchParams({
-                transactions: true,
-                date_range: "today",
-                students: true,
-                desc: true
-            });
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    let transactions = response.transactions;
-                    let transactionsCount = transactions.length;
-                    transactions_student_today.textContent = transactionsCount;
-                },
-                error: function(response) {
-                    // console.log(response);
-                }
-            });
-        }
-
+    var endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    var currentUsername = "<?php echo isset($username) ? htmlentities($username) : ''; ?>";
         var page_counter = 1;
         var page_transaction = 1;
         var page_employee = 1;
@@ -389,21 +348,21 @@ $counterNumber = $token->counterNumber;
                 page: page_counter,
                 paginate: paginate,
             });
+            if (!(endpointHost && endpointHost.length > 0)) {
+                console.warn('Counters service unavailable: endpointHost not set');
+                return;
+            }
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/counters?' + params.toString(),
                 type: 'GET',
-                success: function(response) {
-                    displayCounters(response);
-                },
-                error: function(response) {
-                    console.log(response);
-                }
+                xhrFields: { withCredentials: true },
+                success: function(response) { displayCounters(response); },
+                error: function(err) { console.error('Counters fetch failed', err); }
             });
         }
 
         function getTransactions() {
             let params = new URLSearchParams({
-                transactions: true,
                 today: true,
                 desc: true,
                 page: page_transaction,
@@ -411,14 +370,16 @@ $counterNumber = $token->counterNumber;
                 email: transaction_corporate,
                 payment: transaction_payment,
             });
-            console.log(params.toString());
+            if (!(endpointHost && endpointHost.length > 0)) {
+                console.warn('Transactions service unavailable: endpointHost not set');
+                return;
+            }
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/transactions?' + params.toString(),
                 type: 'GET',
-                success: function(response) {
-                    displayTransactions(response);
-                },
-
+                xhrFields: { withCredentials: true },
+                success: function(response) { displayTransactions(response); },
+                error: function(err) { console.error('Transactions fetch failed', err); }
             });
         }
 
@@ -444,13 +405,14 @@ $counterNumber = $token->counterNumber;
         });
 
         // Generate Report :>
-        var year = 2025;
-        var month = 1;
+    var year = 2025;
+    var month = 1;
         var months = ['January', 'February', 'March',
                         'April', 'May', 'June',
                         'July', 'August', 'September',
                         'October', 'November', 'December'];
         var dd_year = $('#year');
+        var now = new Date();
         for (var y = 2020; y <= (new Date().getFullYear()) + 5; y++) {
             dd_year.append('<option value="' + y + '">' + y + '</option>');
         }
@@ -469,6 +431,41 @@ $counterNumber = $token->counterNumber;
             // console.log("Selected value: " + month);
         });
 
+        // Set defaults to current month/year
+        (function setDefaultMonthYear(){
+            var currentMonth = now.getMonth() + 1; // 1..12
+            var currentYear = now.getFullYear();
+            dd_month.val(String(currentMonth));
+            dd_year.val(String(currentYear));
+            month = currentMonth;
+            year = currentYear;
+        })();
+
+        // Quick preset helpers
+        function applyThisMonth(){
+            var d = new Date();
+            var m = d.getMonth() + 1;
+            var y = d.getFullYear();
+            dd_month.val(String(m)).trigger('change');
+            dd_year.val(String(y)).trigger('change');
+        }
+        function applyLastMonth(){
+            var d = new Date();
+            var m = d.getMonth(); // 0..11 last month index
+            var y = d.getFullYear();
+            if (m === 0) { // Jan -> last month is Dec prev year
+                m = 12;
+                y = y - 1;
+            }
+            // else m is 1..11 representing last month number already
+            dd_month.val(String(m)).trigger('change');
+            dd_year.val(String(y)).trigger('change');
+        }
+
+        // Wire quick preset buttons (desktop & mobile)
+        $('#btnQuickThisMonth, #btnQuickThisMonthMobile').on('click', applyThisMonth);
+        $('#btnQuickLastMonth, #btnQuickLastMonthMobile').on('click', applyLastMonth);
+
         $('#btnGenerateReport').click(function() {
             let generateReportNotify = document.getElementById('generateReportNotify');
             let month = $('#month').val();
@@ -480,54 +477,44 @@ $counterNumber = $token->counterNumber;
                     generateReportNotify.classList.add('d-none');
                 }, 5000);
             } else {
-                var url = './../api/api_endpoint.php?generate-report&year=' + year + '&month=' + month;
-                window.open(url, '_blank');
+                if (!(endpointHost && endpointHost.length > 0)) {
+                    generateReportNotify.classList.remove('d-none');
+                    generateReportNotify.innerHTML = '<span>Report service unavailable. Please try again later.</span>';
+                    setTimeout(() => { generateReportNotify.classList.add('d-none'); }, 5000);
+                    return;
+                }
+                var pdfUrl = endpointHost.replace(/\/$/, '') + '/api/report/monthly?year=' + year + '&month=' + month;
+                if (currentUsername && currentUsername.length > 0) {
+                    pdfUrl += '&user=' + encodeURIComponent(currentUsername);
+                }
+                window.open(pdfUrl, '_blank');
             }
 
         });
 
-        // Monitor
+        // Monitor transaction
         function rtTransaction() {
+            if (!(endpointHost && endpointHost.length > 0)) { return; }
             $.ajax({
-                url: './../api/api_endpoint.php?dashboard_stats',
+                url: endpointHost.replace(/\/$/, '') + '/api/dashboard/admin',
                 type: 'GET',
+                xhrFields: { withCredentials: true },
                 success: function(response) {
-                    let stat = response.data;
-                    console.log(stat);
-                    if (response.status === 'success') {
-
-                        // For transaction for today
-                        let transactionsToday = stat.find(item => item.setup_key === 'transactions_today');
-                        let transactionsPending = stat.find(item => item.setup_key === 'transactions_today_pending');
-                        let transactionsCompleted = stat.find(item => item.setup_key === 'transactions_today_completed');
-                        let transactionsCancelled = stat.find(item => item.setup_key === 'transactions_today_cancelled');
-
-                        $('#transactions-today').text(transactionsToday ? transactionsToday.setup_value_int : 'N/A');
-                        $('#transactions-pending').text(transactionsPending ? transactionsPending.setup_value_int : 'N/A');
-                        $('#transactions-completed').text(transactionsCompleted ? transactionsCompleted.setup_value_int : 'N/A');
-                        $('#transactions-cancelled').text(transactionsCancelled ? transactionsCancelled.setup_value_int : 'N/A');
-
-                        // Transaction Total
-                        let transactionsTotal = stat.find(item => item.setup_key === 'transactions_total');
-                        $('#transactions-total').text(transactionsTotal ? transactionsTotal.setup_value_int : 'N/A');
-
-                        // Transaction History for pasts
-                        let transactionsYesterday = stat.find(item => item.setup_key === 'transactions_yesterday');
-                        let transactionsThisWeek = stat.find(item => item.setup_key === 'transactions_this_week');
-                        let transactionsThisMonth = stat.find(item => item.setup_key === 'transactions_this_month');
-                        let transactionsThisYear = stat.find(item => item.setup_key === 'transactions_this_year');
-
-                        $('#transactions-yesterday').text(transactionsYesterday ? transactionsYesterday.setup_value_int : 'N/A');
-                        $('#transactions-week').text(transactionsThisWeek ? transactionsThisWeek.setup_value_int : 'N/A');
-                        $('#transactions-month').text(transactionsThisMonth ? transactionsThisMonth.setup_value_int : 'N/A');
-                        $('#transactions-year').text(transactionsThisYear ? transactionsThisYear.setup_value_int : 'N/A');
-                    } else {
-                        // Reserved
+                    let stat = (response && response.data) ? response.data : {};
+                    if (response && response.status === 'success') {
+                        $('#transactions-today').text(stat.transaction_today_total ?? 0);
+                        $('#transactions-pending').text(stat.transaction_today_pending ?? 0);
+                        $('#transactions-completed').text(stat.transaction_today_completed ?? 0);
+                        $('#transactions-cancelled').text(stat.transaction_today_cancelled ?? 0);
+                        $('#transactions-student-today').text(stat.transaction_today_student ?? 0);
+                        $('#transactions-total').text(stat.transaction_total ?? 'N/A');
+                        $('#transactions-yesterday').text(stat.transction_yesterday_total ?? 0);
+                        $('#transactions-week').text(stat.transaction_week_total ?? 0);
+                        $('#transactions-month').text(stat.transaction_month_total ?? 0);
+                        $('#transactions-year').text(stat.transaction_year_total ?? 0);
                     }
                 },
-                error: function(response) {
-                    console.log(response);
-                }
+                error: function(err) { console.error('Dashboard stats fetch failed', err); }
             });
         }
 
@@ -579,11 +566,11 @@ $counterNumber = $token->counterNumber;
                 console.log("No data available");
             }
 
-            // Create gradient for the fill effect
+            // Create gradient for the fill effect (match theme orange)
             var ctx = transaction_chart.getContext('2d');
             var gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
-            gradientFill.addColorStop(0, "rgba(255, 110, 55, 0.4)"); // Start color (semi-transparent)
-            gradientFill.addColorStop(1, "rgba(255, 110, 55, 0)");   // End color (fully transparent)
+            gradientFill.addColorStop(0, "rgba(255, 110, 55, 0.25)");
+            gradientFill.addColorStop(1, "rgba(255, 110, 55, 0.0)");
 
             transactionChart = new Chart(transaction_chart, {
                 type: 'line',
@@ -591,13 +578,13 @@ $counterNumber = $token->counterNumber;
                     labels: chart_labels,
                     datasets: [{
                         label: "Transactions",
-                        lineTension: 0.3,
+                        tension: 0.35,
                         backgroundColor: gradientFill,
                         borderColor: "rgba(255, 110, 55, 1)",
-                        pointRadius: 3,
+                        pointRadius: 0,
                         pointBackgroundColor: "rgba(255, 110, 55, 1)",
                         pointBorderColor: "rgba(255, 110, 55, 1)",
-                        pointHoverRadius: 3,
+                        pointHoverRadius: 4,
                         pointHoverBackgroundColor: "rgba(255, 110, 55, 1)",
                         pointHoverBorderColor: "rgba(255, 110, 55, 1)",
                         pointHitRadius: 10,
@@ -616,70 +603,70 @@ $counterNumber = $token->counterNumber;
                             bottom: 0
                         }
                     },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     scales: {
-                        xAxes: [{
-                            time: {
-                                unit: 'date'
-                            },
-                            gridLines: {
+                        x: {
+                            grid: {
                                 display: false,
                                 drawBorder: false
                             },
                             ticks: {
                                 maxTicksLimit: 7
                             }
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true // Ensure the y-axis starts at 0
-                            },
-                            gridLines: {
-                                color: "rgb(234, 236, 244)",
-                                zeroLineColor: "rgb(234, 236, 244)",
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "#eef1f5",
                                 drawBorder: false,
-                                borderDash: [2],
-                                zeroLineBorderDash: [2]
+                                borderDash: [2]
                             }
-                        }],
+                        }
                     },
-                    legend: {
-                        display: true
-                    },
-                    tooltips: {
-                        backgroundColor: "rgb(255,255,255)",
-                        bodyFontColor: "#858796",
-                        titleMarginBottom: 10,
-                        titleFontColor: '#6e707e',
-                        titleFontSize: 14,
-                        borderColor: '#dddfeb',
-                        borderWidth: 1,
-                        xPadding: 15,
-                        yPadding: 15,
-                        displayColors: false,
-                        intersect: false,
-                        mode: 'index',
-                        caretPadding: 10,
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyColor: "#858796",
+                            titleColor: '#6e707e',
+                            titleFont: { size: 14 },
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            padding: 15,
+                            displayColors: false,
+                            caretPadding: 10
+                        }
                     }
                 }
             });
         }
         var transaction_stat_data_range = 'day';
         function getTransactionChart() {
-            let resp = null;
-            let params = new URLSearchParams({
-                transactionStats: true,
-                data_range: transaction_stat_data_range,
-            });
+            // ONLY Flask endpoint via endpointHost; no PHP fallback
+            let resp = { stats: [] };
+            let params = new URLSearchParams({ data_range: transaction_stat_data_range });
+            if (!(endpointHost && endpointHost.length > 0)) {
+                console.warn('Transaction stats service unavailable: endpointHost not set');
+                return resp;
+            }
             $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
+                url: endpointHost.replace(/\/$/, '') + '/api/transaction_stats?' + params.toString(),
                 type: 'GET',
                 async: false,
+                xhrFields: { withCredentials: true },
                 success: function(response) {
-                    console.log(response);
-                    if (response.status === 'success') {
+                    if (response && response.status === 'success') {
                         resp = response;
                     }
                 },
+                error: function() {
+                    console.error('Failed to load transaction stats');
+                }
             });
             return resp;
         }
@@ -714,11 +701,93 @@ $counterNumber = $token->counterNumber;
             var dataRange = $(this).val();
             transaction_stat_data_range = dataRange;
             // updateTransactionChart(getTransactionChart());
+            setActiveRange(dataRange);
         });
+
+        // Desktop quick filter buttons for date range
+        function setActiveRange(range) {
+            var group = document.getElementById('dateRange-buttons');
+            if (!group) return;
+            group.querySelectorAll('[data-range]').forEach(function(btn) {
+                var isActive = btn.getAttribute('data-range') === range;
+                btn.classList.toggle('btn-primary', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('btn-outline-primary', !isActive);
+            });
+            // Sync mobile select if different
+            var sel = document.getElementById('dateRange-select');
+            if (sel && sel.value !== range) sel.value = range;
+            // Update badge label in header
+            var badge = document.getElementById('dateRange-badge');
+            if (badge) badge.textContent = rangeLabel(range);
+            // Update dropdown active item
+            var more = document.getElementById('dateRange-more');
+            if (more) {
+                more.querySelectorAll('[data-range]').forEach(function(a){
+                    a.classList.toggle('active', a.getAttribute('data-range') === range);
+                });
+            }
+        }
+
+        document.querySelectorAll('#dateRange-buttons [data-range]')?.forEach(function(btn){
+            btn.addEventListener('click', function(){
+                var val = this.getAttribute('data-range');
+                transaction_stat_data_range = val;
+                setActiveRange(val);
+                updateTransactionChart(getTransactionChart());
+            });
+        });
+
+        // More dropdown range options
+        document.querySelectorAll('#dateRange-more [data-range]')?.forEach(function(a){
+            a.addEventListener('click', function(e){
+                e.preventDefault();
+                var val = this.getAttribute('data-range');
+                transaction_stat_data_range = val;
+                setActiveRange(val);
+                updateTransactionChart(getTransactionChart());
+            });
+        });
+
+        // Initialize active range button state
+        setActiveRange(transaction_stat_data_range);
+
+        // Map internal range value to human-readable label for header badge
+        function rangeLabel(val) {
+            switch (val) {
+                case 'day': return 'Today';
+                case 'week': return 'This Week';
+                case 'last-week': return 'Last Week';
+                case 'month': return 'This Month';
+                case 'last-30-days': return 'Last 30 Days';
+                case 'last-3-months': return 'Last 3 months';
+                case 'last-12-months': return 'Last 12 months';
+                default: return val;
+            }
+        }
+
+        // Chart actions: refresh and export
+        var btnRefresh = document.getElementById('btnRefreshChart');
+        if (btnRefresh) {
+            btnRefresh.addEventListener('click', function(){
+                updateTransactionChart(getTransactionChart());
+            });
+        }
+        var btnExport = document.getElementById('btnExportChart');
+        if (btnExport) {
+            btnExport.addEventListener('click', function(){
+                try {
+                    var canvas = document.getElementById('transaction-chart');
+                    var link = document.createElement('a');
+                    link.download = 'transactions-' + (transaction_stat_data_range || 'range') + '.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (e) { console.error('Export failed', e); }
+            });
+        }
 
         setInterval(function() {
             if (operational) {
-                fetchStudentTransaction();
                 updateTransactionChart(getTransactionChart());
                 rtTransaction();
             }
@@ -736,7 +805,7 @@ $counterNumber = $token->counterNumber;
         });
 
         $.ajax({
-            url: '/public/api/api_endpoint.php?' + params,
+            url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php?' + params,
             type: 'GET',
             success: function(response) {
                 console.log(response);
@@ -775,7 +844,7 @@ $counterNumber = $token->counterNumber;
             e.preventDefault();
             if (operational) {
                 $.ajax({
-                    url: '/public/api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
@@ -802,7 +871,7 @@ $counterNumber = $token->counterNumber;
                 });
             } else {
                 $.ajax({
-                    url: `${realHost}/public/api/api_endpoint.php`,
+                    url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',

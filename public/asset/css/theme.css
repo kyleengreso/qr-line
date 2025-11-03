@@ -318,3 +318,64 @@
     outline: none;
     box-shadow: 0 0 8px rgba(255, 110, 55, 0.75); /* Stronger glow effect on focus */
 }
+/* Styles moved from public/employees/index.php <style> block */
+/* Align toolbar and table visuals with transaction history page */
+.transactions-toolbar {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.transactions-toolbar .flex-fill { min-width: 220px; }
+.transactions-card { border-radius: 18px; }
+.transactions-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bs-white, #fff);
+    z-index: 2;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+.transactions-toolbar .form-floating { min-width: 160px; }
+.transactions-toolbar .form-floating.flex-fill { min-width: 120px; }
+.td-truncate { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 768px) { .transactions-toolbar { gap:.5rem; } .td-truncate { max-width: 120px; } }
+/* Ensure update modal body is scrollable when content exceeds viewport height */
+#updateEmployeeModal .modal-body {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    /* leave space for the sticky footer so content is not hidden */
+    padding-bottom: 84px; /* adjust if footer height changes */
+}
+
+/* Keep the modal footer visible and above the scrolling body content */
+#updateEmployeeModal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: var(--bs-white, #fff);
+    /* ensure footer visually separates from body */
+    box-shadow: 0 -6px 12px rgba(0,0,0,0.04);
+}
+
+/* Page-specific utility classes extracted from inline styles in employees/index.php */
+/* top spacing for the employees page container */
+.page-top-spacing {
+    margin-top: 100px;
+    min-height: 500px;
+}
+
+/* max width helper used for the centered inner column */
+.max-w-900 {
+    max-width: 900px;
+}
+
+/* card variant matching existing inline border-radius:30px */
+.card-rounded-30 {
+    border-radius: 30px !important;
+}
+
+/* per-page select width used in the toolbar */
+.per-page-select {
+    width: 88px;
+}
