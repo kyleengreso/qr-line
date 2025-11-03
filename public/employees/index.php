@@ -38,6 +38,23 @@ $adminsCount = 0;
     <?php head_css()?>
     <?php before_js()?>
     <!-- moved local styles to /public/asset/css/theme.css -->
+    <style>
+        /* Allow dropdown menus to overflow table-responsive container */
+        .table-responsive {
+            overflow: visible !important;
+        }
+        
+        /* Ensure dropdown stays on top and not clipped */
+        .table-responsive .dropdown {
+            position: relative;
+        }
+        
+        .table-responsive .dropdown-menu {
+            position: absolute !important;
+            overflow: visible;
+            z-index: 1050;
+        }
+    </style>
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
