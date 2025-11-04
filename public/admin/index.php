@@ -542,6 +542,67 @@ $username = isset($token->username) ? $token->username : null;
             const fH = hourInt % 12 || 12;
             return `${fH} ${p}`;
         }
+
+        function fmtDate(dateStr) {
+            try {
+                if (!dateStr) {
+                    return dateStr;
+                }
+                // Handle GMT format: "Sun, 02 Nov 2025 00:00:00 GMT"
+                if (dateStr.includes('GMT')) {
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) {
+                        return dateStr;
+                    }
+                    const opts = { month: 'short', day: 'numeric' };
+                    return d.toLocaleDateString('en-US', opts);
+                }
+                // Handle YYYY-MM-DD format
+                if (dateStr.toString().length === 10 && dateStr.includes('-')) {
+                    const d = new Date(dateStr + 'T00:00:00');
+                    if (isNaN(d.getTime())) {
+                        return dateStr;
+                    }
+                    const opts = { month: 'short', day: 'numeric' };
+                    return d.toLocaleDateString('en-US', opts);
+                }
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        function fmtMonth(monthStr) {
+            try {
+                if (!monthStr) {
+                    return monthStr;
+                }
+                // Handle GMT format: "Sun, 02 Nov 2025 00:00:00 GMT"
+                if (monthStr.includes('GMT')) {
+                    const d = new Date(monthStr);
+                    if (isNaN(d.getTime())) {
+                        return monthStr;
+                    }
+                    return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                }
+                // Handle YYYY-MM format
+                if (monthStr.toString().length === 7 && monthStr.includes('-')) {
+                    const [year, month] = monthStr.split('-');
+                    if (!year || !month) {
+                        return monthStr;
+                    }
+                    const d = new Date(parseInt(year), parseInt(month) - 1);
+                    if (isNaN(d.getTime())) {
+                        return monthStr;
+                    }
+                    return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                }
+                return monthStr;
+            } catch (e) {
+                return monthStr;
+            }
+        }
+
         console.log(Chart.version);
 
         let transaction_chart = document.getElementById('transaction-chart');
@@ -552,19 +613,19 @@ $username = isset($token->username) ? $token->username : null;
             var chart_transaction_total = [];
 
             if (data && data.stats && data.stats.length > 0) {
-                // Current today
+                // Current today - hourly data with AM/PM
                 if (data.stats[0].hour) {
                     chart_labels = data.stats.map(stats => fmtHr(stats.hour));
                     chart_transaction_total = data.stats.map(stat => stat.total_transactions);
                     console.log('Hour present');
-                // Current week
+                // Week/Days - date data
                 } else if (data.stats[0].date) {
-                    chart_labels = data.stats.map(stats => stats.date);
+                    chart_labels = data.stats.map(stats => fmtDate(stats.date));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
                     console.log('Date present');
-                // Current month
+                // Month/Year - monthly data
                 } else if (data.stats[0].month) {
-                    chart_labels = data.stats.map(stats => stats.month);
+                    chart_labels = data.stats.map(stats => fmtMonth(stats.month));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
                     console.log('Month present');
                 }
@@ -655,8 +716,8 @@ $username = isset($token->username) ? $token->username : null;
             });
         }
         var transaction_stat_data_range = 'day';
+        var chartRefreshInterval = null;
         function getTransactionChart() {
-            // ONLY Flask endpoint via endpointHost; no PHP fallback
             let resp = { stats: [] };
             let params = new URLSearchParams({ data_range: transaction_stat_data_range });
             if (!(endpointHost && endpointHost.length > 0)) {
@@ -678,8 +739,8 @@ $username = isset($token->username) ? $token->username : null;
                         resp = response;
                     }
                 },
-                error: function() {
-                    console.error('Failed to load transaction stats');
+                error: function(err) {
+                    console.error('Failed to load transaction stats', err);
                 }
             });
             return resp;
@@ -697,11 +758,11 @@ $username = isset($token->username) ? $token->username : null;
                     chart_transaction_total = data.stats.map(stat => stat.total_transactions);
                     console.log('Hour present');
                 } else if (data.stats[0].date) {
-                    chart_labels = data.stats.map(stats => stats.date);
+                    chart_labels = data.stats.map(stats => fmtDate(stats.date));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
                     console.log('Date present');
                 } else if (data.stats[0].month) {
-                    chart_labels = data.stats.map(stats => stats.month);
+                    chart_labels = data.stats.map(stats => fmtMonth(stats.month));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
                     console.log('Month present');
                 } 
@@ -913,7 +974,18 @@ $username = isset($token->username) ? $token->username : null;
                     }
                 })
             }
-        }); 
+        });
+
+        function autoRefreshChart() {
+            updateTransactionChart(getTransactionChart());
+        }
+
+        rtTransaction();
+        chartRefreshInterval = setInterval(autoRefreshChart, 5000);
+
+        window.addEventListener('beforeunload', function() {
+            if (chartRefreshInterval) clearInterval(chartRefreshInterval);
+        });
     </script>
     <?php include_once "./../includes/footer.php"; ?>
 </body>
