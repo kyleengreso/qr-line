@@ -131,10 +131,10 @@ function before_js() {
 function after_js() {
     echo '
     <script src="./../asset/js/base.js"></script>
-    <script src="./../asset/js/jquery-3.7.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="./../asset/js/message.js"></script>
     
-    ';    
+    ';
     return;
 }
 

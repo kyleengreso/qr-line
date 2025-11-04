@@ -880,7 +880,7 @@ $username = isset($token->username) ? $token->username : null;
         });
 
         $.ajax({
-            url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php?' + params,
+            url: endpointHost.replace(/\/$/, '') + '/api/cashier?' + params,
             type: 'GET',
             success: function(response) {
                 //console.log(response);
@@ -919,7 +919,7 @@ $username = isset($token->username) ? $token->username : null;
             e.preventDefault();
             if (operational) {
                 $.ajax({
-                    url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/api/cashier',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
@@ -946,7 +946,7 @@ $username = isset($token->username) ? $token->username : null;
                 });
             } else {
                 $.ajax({
-                    url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php',
+                    url: endpointHost.replace(/\/$/, '') + '/api/cashier',
                     type: 'POST',
                     data: JSON.stringify({
                         method: 'employee-cut-off',
