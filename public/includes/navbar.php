@@ -72,113 +72,114 @@ $token_username = token_prop($token, 'username');
         <h5 class="offcanvas-title fs-3" id="sidebarLabel"><?php echo $project_name?></h5>
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
-        <div class="d-flex align-items-center mb-3">
-            <img src="./../asset/images/user_icon.png" alt="User" class="me-2" width="75" height="75" style="border: 1px #111 solid">
-            <div class="text-white">
-                <h6 class="mb-0 fs-4"><?php echo htmlentities($token->username); ?></h6>
+    <div class="offcanvas-body d-flex flex-column p-0">
+        <!-- User Profile Section -->
+        <div class="p-4" style="background: linear-gradient(135deg, rgba(0,0,0,.1) 0%, rgba(0,0,0,.05) 100%); border-bottom: 1px solid rgba(255,255,255,.1);">
+            <div class="d-flex align-items-center">
+                <div class="position-relative me-3">
+                    <img src="./../asset/images/user_icon.png" alt="User" width="60" height="60" class="rounded-circle" style="object-fit: cover; border: 2px solid rgba(255,255,255,.3);">
+                    <span class="position-absolute bottom-0 end-0 p-1 bg-success rounded-circle" style="border: 2px solid white; width: 14px; height: 14px;"></span>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 text-white fw-bold"><?php echo htmlentities($token->username); ?></h6>
+                    <small class="text-white-50">Administrator</small>
+                </div>
             </div>
         </div>
-        <ul class="list-unstyled">
-            <li>
-            <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false): ?>
-                <div class="py-3 px-2">
-                    <div class="row">
-                        <a class="btn btn-danger ms-auto" id="employee-cut-off">
-                            <span><i class="bi bi-power shadow-sm"></i></span>
-                            CUT OFF
-                        </a>
-                    </div>
-                </div>
-            <?php endif; ?>
-            </li>
+
+        <!-- Cut Off Button (Admin Page Only) -->
+        <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false): ?>
+        <div class="p-3" style="border-bottom: 1px solid rgba(255,255,255,.1);">
+            <button class="btn btn-outline-light w-100 btn-sm" id="employee-cut-off">
+                <i class="bi bi-power me-2"></i>
+                <span>Cut Off</span>
+            </button>
+        </div>
+        <?php endif; ?>
+
+        <!-- Menu Items -->
+        <ul class="list-unstyled flex-grow-1 mb-0 mt-2">
             <?php if ($is_admin) : ?>
-            <li>
-                <div class="py-3 px-2">
-                    <a href="/public/admin" class="w-100 fs-5 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-house-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Home</span>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a href="/public/admin" class="d-flex align-items-center px-4 py-3 text-white text-decoration-none transition-all" style="border-left: 3px solid transparent;">
+                    <i class="bi bi-house-door-fill fs-5 me-3" style="width: 24px; text-align: center;"></i>
+                    <span class="fs-6">Dashboard</span>
+                </a>
             </li>
-            <li>
-                <div class="py-3 px-2">
-                    <a href="/public/employees" class="w-100 fs-5 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-people-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Employees</span>    
-                            </div>
-                        </div>
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a href="/public/employees" class="d-flex align-items-center px-4 py-3 text-white text-decoration-none transition-all" style="border-left: 3px solid transparent;">
+                    <i class="bi bi-people-fill fs-5 me-3" style="width: 24px; text-align: center;"></i>
+                    <span class="fs-6">Employees</span>
+                </a>
             </li>
-            <li>
-                <div class="py-3 px-2">
-                        <a href="/public/counters" class="w-100 fs-5 text-white text-decoration-none"> 
-                            <div class="row">
-                                <div class="col-2">
-                                    <i class="bi bi-arrow-down-up"></i>
-                                </div>
-                                <div class="col-10">
-                                    <span>Counters</span>
-                                </div>
-                            </div>                 
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a href="/public/counters" class="d-flex align-items-center px-4 py-3 text-white text-decoration-none transition-all" style="border-left: 3px solid transparent;">
+                    <i class="bi bi-diagram-3-fill fs-5 me-3" style="width: 24px; text-align: center;"></i>
+                    <span class="fs-6">Counters</span>
+                </a>
             </li>
-            <li>
-                <div class="py-3 px-2">
-                    <a href="/public/transaction_history" class="fs-5 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-person-lines-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Transaction History</span>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a href="/public/transaction_history" class="d-flex align-items-center px-4 py-3 text-white text-decoration-none transition-all" style="border-left: 3px solid transparent;">
+                    <i class="bi bi-clock-history fs-5 me-3" style="width: 24px; text-align: center;"></i>
+                    <span class="fs-6">Transactions</span>
+                </a>
             </li>
-            <li>
-                <div class="py-3 px-2">
-                    <a href="/public/schedule" class="w-100 fs-5 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-gear-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Settings</span>    
-                            </div>
-                        </div>
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a href="/public/schedule" class="d-flex align-items-center px-4 py-3 text-white text-decoration-none transition-all" style="border-left: 3px solid transparent;">
+                    <i class="bi bi-calendar-check-fill fs-5 me-3" style="width: 24px; text-align: center;"></i>
+                    <span class="fs-6">Schedule</span>
+                </a>
             </li>
             <?php endif; ?>
-            <li>
-                <div class="py-3 px-2">
-                    <button class="btn btn-link text-white w-100 text-start" id="btn-logout-2">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-box-arrow-right me-3"></i>
-                            <span>Logout</span>
-                        </div>
-                    </button>
-                </div>
-            </li>
         </ul>
+
+        <!-- Divider -->
+        <div style="border-top: 1px solid rgba(255,255,255,.1); margin: 0;"></div>
+
+        <!-- Logout Button -->
+        <div class="p-3">
+            <button class="btn btn-outline-light w-100" id="btn-logout-2">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center py-2 text-white-50 px-3" style="border-top: 1px solid rgba(255,255,255,.1); font-size: 0.85rem;">
+            <small>&copy; <?php echo project_year()?> <?php echo $project_name?></small>
+        </div>
     </div>
-    <div class="offcanvas-footer text-center py-3" style="background-color: rgb(255, 110, 55);">
-        <span>&copy <?php echo project_year()?> <?php echo $project_name?>, All Rights Reserved.</span>
-    </div>
+
+    <style>
+        .nav-item a {
+            transition: all 0.3s ease;
+        }
+        .nav-item a:hover {
+            background-color: rgba(255,255,255,.08);
+            border-left-color: rgb(255, 110, 55) !important;
+        }
+        .nav-item a.active {
+            background-color: rgba(255, 110, 55, .15);
+            border-left-color: rgb(255, 110, 55) !important;
+        }
+        .transition-all {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUrl = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-item a');
+            
+            navLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && currentUrl.includes(href)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
 </div>
 <?php endif; ?>
 
