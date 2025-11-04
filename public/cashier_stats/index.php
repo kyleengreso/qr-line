@@ -67,7 +67,7 @@ include "./../base.php"
             return;
         }
         $.ajax({
-            url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php?' + params,
+            url: endpointHost.replace(/\/$/, '') + '/api/counter_current_number',
             type: 'GET',
             success: function(response) {
                 counters_list.innerHTML = "";
