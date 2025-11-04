@@ -315,7 +315,7 @@ $username = isset($token->username) ? $token->username : null;
             let data = response;
             let table_counters = $('#table-counters');
             table_counters.empty();
-            console.log(data);
+            //console.log(data);
             let pagePrevCounters = document.getElementById('pagePrevCounters');
             let pageNextCounters = document.getElementById('pageNextCounters');
             if (data.status === 'success' && data.counters) {
@@ -391,7 +391,7 @@ $username = isset($token->username) ? $token->username : null;
 
         $('#transaction-select').change(function() {
             var transaction = $(this).val();
-            console.log(transaction);
+            //console.log(transaction);
             if (transaction === "none") {
                 transaction_corporate = "none";
                 transaction_payment = "none";
@@ -423,7 +423,7 @@ $username = isset($token->username) ? $token->username : null;
 
         dd_year.change(function() {
             year = $(this).val();
-            // console.log("Selected value: " + year);
+            // //console.log("Selected value: " + year);
         });
 
         var dd_month = $('#month');
@@ -432,7 +432,7 @@ $username = isset($token->username) ? $token->username : null;
         }
         dd_month.change(function() {
             month = $(this).val();
-            // console.log("Selected value: " + month);
+            // //console.log("Selected value: " + month);
         });
 
         // Set defaults to current month/year
@@ -474,7 +474,7 @@ $username = isset($token->username) ? $token->username : null;
             let generateReportNotify = document.getElementById('generateReportNotify');
             let month = $('#month').val();
             let year = $('#year').val();
-            // console.log(month, year);
+            // //console.log(month, year);
             if (!month || !year) {
                 generateReportNotify.classList.remove('d-none');
                 setTimeout(() => {
@@ -603,12 +603,12 @@ $username = isset($token->username) ? $token->username : null;
             }
         }
 
-        console.log(Chart.version);
+        //console.log(Chart.version);
 
         let transaction_chart = document.getElementById('transaction-chart');
         var transactionChart = null;
         function initTransactionChart(data) {
-            console.log(data);
+            //console.log(data);
             var chart_labels = [];
             var chart_transaction_total = [];
 
@@ -617,23 +617,23 @@ $username = isset($token->username) ? $token->username : null;
                 if (data.stats[0].hour) {
                     chart_labels = data.stats.map(stats => fmtHr(stats.hour));
                     chart_transaction_total = data.stats.map(stat => stat.total_transactions);
-                    console.log('Hour present');
+                    //console.log('Hour present');
                 // Week/Days - date data
                 } else if (data.stats[0].date) {
                     chart_labels = data.stats.map(stats => fmtDate(stats.date));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
-                    console.log('Date present');
+                    //console.log('Date present');
                 // Month/Year - monthly data
                 } else if (data.stats[0].month) {
                     chart_labels = data.stats.map(stats => fmtMonth(stats.month));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
-                    console.log('Month present');
+                    //console.log('Month present');
                 }
             } else {
                 // No data available
                 chart_labels = ["No Data"];
                 chart_transaction_total = [0];
-                console.log("No data available");
+                //console.log("No data available");
             }
 
             // Create gradient for the fill effect (match theme orange)
@@ -749,22 +749,22 @@ $username = isset($token->username) ? $token->username : null;
         initTransactionChart(getTransactionChart());
 
         function updateTransactionChart(data) {
-            console.log(data);
+            //console.log(data);
             var chart_labels = [];
             var chart_transaction_total = [];
             if (data && data.stats && data.stats.length > 0) {
                 if (data.stats[0].hour) {
                     chart_labels = data.stats.map(stats => fmtHr(stats.hour));
                     chart_transaction_total = data.stats.map(stat => stat.total_transactions);
-                    console.log('Hour present');
+                    //console.log('Hour present');
                 } else if (data.stats[0].date) {
                     chart_labels = data.stats.map(stats => fmtDate(stats.date));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
-                    console.log('Date present');
+                    //console.log('Date present');
                 } else if (data.stats[0].month) {
                     chart_labels = data.stats.map(stats => fmtMonth(stats.month));
                     chart_transaction_total = data.stats.map(stats => stats.total_transactions);
-                    console.log('Month present');
+                    //console.log('Month present');
                 } 
             }
             transactionChart.data.labels = chart_labels;
@@ -883,9 +883,9 @@ $username = isset($token->username) ? $token->username : null;
             url: endpointHost.replace(/\/$/, '') + '/public/api/api_endpoint.php?' + params,
             type: 'GET',
             success: function(response) {
-                console.log(response);
+                //console.log(response);
                 if (response.status == "success") {
-                    console.log(response.cut_off);
+                    //console.log(response.cut_off);
                     if (response.cut_off_state == 1) {
                         operational = false;
                         cutOffNotification.classList.remove('alert-success');
@@ -966,7 +966,7 @@ $username = isset($token->username) ? $token->username : null;
                                 cutOffNotification.classList.add('d-none');
                             }, 5000);
                         } else {
-                            console.log('Error:', response.message);
+                            //console.log('Error:', response.message);
                         }
                     },
                     error: function(xhr, status, error) {
