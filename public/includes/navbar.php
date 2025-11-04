@@ -52,11 +52,6 @@ $token_username = token_prop($token, 'username');
                 <i class="bi bi-clock me-2"></i>
                 <span id="current-time" class="fw-semibold"></span>
             </span>
-            <button class="btn text-white p-2 rounded-3 position-relative" id="btn-notifications" aria-label="Notifications"
-                    style="background-color: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25)">
-                <i class="bi bi-bell fs-5"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notification-count">0</span>
-            </button>
             <button class="btn text-white p-2 rounded-3" id="btn-logout-1" aria-label="Logout"
                     style="background-color: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25)">
                 <i class="bi bi-box-arrow-right fs-5"></i>
