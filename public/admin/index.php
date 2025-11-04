@@ -26,6 +26,10 @@ $username = isset($token->username) ? $token->username : null;
     <?php head_css()?>
     <?php before_js()?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Expose raw JWT token from PHP cookie for Authorization header in AJAX calls
+        window.phpToken = <?php echo isset($_COOKIE['token']) ? "'" . addslashes($_COOKIE['token']) . "'" : "null"; ?>;
+    </script>
 </head>
 <body class="bg-non">
     <?php include "./../includes/navbar.php"; ?>
@@ -495,10 +499,15 @@ $username = isset($token->username) ? $token->username : null;
         // Monitor transaction
         function rtTransaction() {
             if (!(endpointHost && endpointHost.length > 0)) { return; }
+            let headers = {};
+            if (window.phpToken) {
+                headers['Authorization'] = 'Bearer ' + window.phpToken;
+            }
             $.ajax({
                 url: endpointHost.replace(/\/$/, '') + '/api/dashboard/admin',
                 type: 'GET',
                 xhrFields: { withCredentials: true },
+                headers: headers,
                 success: function(response) {
                     let stat = (response && response.data) ? response.data : {};
                     if (response && response.status === 'success') {
@@ -654,11 +663,16 @@ $username = isset($token->username) ? $token->username : null;
                 console.warn('Transaction stats service unavailable: endpointHost not set');
                 return resp;
             }
+            let headers = {};
+            if (window.phpToken) {
+                headers['Authorization'] = 'Bearer ' + window.phpToken;
+            }
             $.ajax({
                 url: endpointHost.replace(/\/$/, '') + '/api/transaction_stats?' + params.toString(),
                 type: 'GET',
                 async: false,
                 xhrFields: { withCredentials: true },
+                headers: headers,
                 success: function(response) {
                     if (response && response.status === 'success') {
                         resp = response;
