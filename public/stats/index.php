@@ -77,52 +77,39 @@ include "./../base.php"
 
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
-    <script src="./../asset/js/user_form.js"></script>
     <!-- <script src="./../asset/js/counters.js"></script> -->
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 <script>
     // Monitor
-function rtTransaction() {
-    if (!(typeof endpointHost !== 'undefined' && endpointHost && endpointHost.length > 0)) {
+    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    function rtTransaction() {
+        if (!(typeof endpointHost !== 'undefined' && endpointHost && endpointHost.length > 0)) {
         console.warn('API host not configured; stats unavailable');
         return;
     }
     $.ajax({
-        url: endpointHost.replace(/\/$/, '') + '/api/dashboard_stats',
+        url: endpointHost.replace(/\/$/, '') + '/api/dashboard/admin/public',
         type: 'GET',
+        dataType: 'json',
+        xhrFields: { withCredentials: true },
+        crossDomain: true,
+        beforeSend: function(xhr) {
+            <?php if (isset($_COOKIE['token']) && $_COOKIE['token']): ?>
+            try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch (ex) { console.error(ex); }
+            <?php endif; ?>
+        },
         success: function(response) {
-            let stat = response.data;
-            console.log(stat);
+            const d = response && response.data ? response.data : {};
             if (response.status === 'success') {
-
-                // For transaction for today
-                let transactionsToday = stat.find(item => item.setup_key === 'transactions_today');
-                let transactionsPending = stat.find(item => item.setup_key === 'transactions_today_pending');
-                let transactionsCompleted = stat.find(item => item.setup_key === 'transactions_today_completed');
-                let transactionsCancelled = stat.find(item => item.setup_key === 'transactions_today_cancelled');
-
-                $('#transactions-today').text(transactionsToday ? transactionsToday.setup_value_int : 'N/A');
-                $('#transactions-pending').text(transactionsPending ? transactionsPending.setup_value_int : 'N/A');
-                $('#transactions-completed').text(transactionsCompleted ? transactionsCompleted.setup_value_int : 'N/A');
-                $('#transactions-cancelled').text(transactionsCancelled ? transactionsCancelled.setup_value_int : 'N/A');
-
-                // Transaction Total
-                let transactionsTotal = stat.find(item => item.setup_key === 'transactions_total');
-                $('#transactions-total').text(transactionsTotal ? transactionsTotal.setup_value_int : 'N/A');
-
-                // Transaction History for pasts
-                let transactionsYesterday = stat.find(item => item.setup_key === 'transactions_yesterday');
-                let transactionsThisWeek = stat.find(item => item.setup_key === 'transactions_this_week');
-                let transactionsThisMonth = stat.find(item => item.setup_key === 'transactions_this_month');
-                let transactionsThisYear = stat.find(item => item.setup_key === 'transactions_this_year');
-
-                $('#transactions-yesterday').text(transactionsYesterday ? transactionsYesterday.setup_value_int : 'N/A');
-                $('#transactions-week').text(transactionsThisWeek ? transactionsThisWeek.setup_value_int : 'N/A');
-                $('#transactions-month').text(transactionsThisMonth ? transactionsThisMonth.setup_value_int : 'N/A');
-                $('#transactions-year').text(transactionsThisYear ? transactionsThisYear.setup_value_int : 'N/A');
-            } else {
-                // Reserved
+                $('#transactions-today').text(typeof d.transaction_today_total !== 'undefined' ? d.transaction_today_total : 'N/A');
+                $('#transactions-total').text(typeof d.transaction_total !== 'undefined' ? d.transaction_total : 'N/A');
+                $('#transactions-yesterday').text(typeof d.transction_yesterday_total !== 'undefined' ? d.transction_yesterday_total : 'N/A');
+                $('#transactions-week').text(typeof d.transaction_week_total !== 'undefined' ? d.transaction_week_total : 'N/A');
+                $('#transactions-month').text(typeof d.transaction_month_total !== 'undefined' ? d.transaction_month_total : 'N/A');
+                $('#transactions-year').text(typeof d.transaction_year_total !== 'undefined' ? d.transaction_year_total : 'N/A');
+                // optional breakdowns (if you add UI elements later)
+                // d.transaction_today_pending, d.transaction_today_completed, d.transaction_today_cancelled, d.transaction_today_student
             }
         },
         error: function(response) {
