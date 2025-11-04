@@ -1,7 +1,5 @@
 {
     "require": {
-        "chillerlan/php-qrcode": "^5.0",
-        "phpmailer/phpmailer": "^6.9",
-        "dompdf/dompdf": "^3.1"
+        "chillerlan/php-qrcode": "^5.0"
     }
 }
