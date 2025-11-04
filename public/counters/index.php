@@ -1,23 +1,17 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
-
 $token = $_COOKIE['token'];
 $token = decryptToken($token, $master_key);
 $token = json_encode($token);
 $token = json_decode($token);
-
-// Safely extract token properties to avoid PHP notices when fields are missing
 $id = (is_object($token) && property_exists($token, 'id')) ? $token->id : null;
 $username = (is_object($token) && property_exists($token, 'username')) ? $token->username : null;
 $role_type = (is_object($token) && property_exists($token, 'role_type')) ? $token->role_type : null;
 $email = (is_object($token) && property_exists($token, 'email')) ? $token->email : null;
 $counterNumber = (is_object($token) && property_exists($token, 'counterNumber')) ? $token->counterNumber : null;
-// Server-side fetch counters to render the table initially (fallback to client-side AJAX)
-// Note: The Flask API server is called client-side via buildApiUrl() in JavaScript
 $counters = [];
 $totalCounters = 0;
-
 function phpUserStatusIcon($username, $role_type, $active) {
     if ($role_type === 'admin') {
         if ((int)$active === 1) {
@@ -34,7 +28,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,7 +38,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
     <?php head_css()?>
     <?php before_js()?>
     <style>
-        /* Reuse transactions card/table styles for counters to match sizing and spacing */
+
         .transactions-toolbar {
             display: flex;
             gap: .75rem;
@@ -90,7 +83,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
-
     <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:900px">
         <div class="col-md-10" style="min-width:400px;">
             <div class="alert text-start alert-success d-none" id="logOutNotify">
@@ -126,9 +118,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
                             <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
                         </div>
-
                         <div class="d-flex gap-2 flex-wrap flex-fill w-100">
-                            <!-- Role filter removed: counters only show registered employees, so role filter unnecessary -->
+
                             <div class="form-floating flex-fill">
                                 <select class="form-select" id="counter-filter-availability">
                                     <option value="none">Any Availability</option>
@@ -147,7 +138,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 <label for="counter-filter-priority">Priority</label>
                             </div>
                         </div>
-
                         <div class="ms-auto d-flex gap-2">
                             <a href="#" class="btn btn-success text-white px-3" id="btn-add-counter"><span class="fw-bold">+</span> Add</a>
                             <button id="btnExportCountersCsv" class="btn btn-outline-secondary btn-sm">Export CSV</button>
@@ -155,7 +145,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         </div>
                     </div>
                     <div id="cards-counters-registered" class="w-100">
-                        <!-- Modern table layout for counters (client-side JS will populate tbody) -->
+
                         <div class="table-responsive">
                             <table class="table table-hover table-sm align-middle" id="table-counters">
                                 <thead class="table-light">
@@ -206,7 +196,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
         </div>
     </div>
 
-    <!-- VIEW COUNTER -->
     <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
@@ -214,7 +203,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Modal title</h5>
                 </div>
                 <div class="modal-body py-4 px-6" id="viewEmployeeBody">
-                
+
                 </div>
                 <div class="modal-footer col" id="viewEmployeeFooter">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -223,7 +212,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
         </div>
     </div>
 
-    <!-- ADD COUNTER (redesigned to match Update/Delete) -->
     <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
@@ -241,9 +229,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         <div class="alert alert-danger w-100 d-none" id="addCounterAlert">
                             <span id="addCounterAlertMsg"></span>
                         </div>
-
                         <input type="hidden" name="counter_no_add" id="counter_no_add">
-
                         <div class="row g-3 align-items-center mb-3">
                             <div class="col-12">
                                 <div class="row g-2">
@@ -268,7 +254,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 </div>
                             </div>
                         </div>
-
                         <div class="mb-3">
                             <label class="form-label">Employees Available</label>
                             <div class="card">
@@ -286,7 +271,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 </div>
                             </div>
                         </div>
-
                         <div class="modal-footer">
                             <div class="d-flex justify-content-end w-100">
                                 <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
@@ -302,7 +286,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
         </div>
     </div>
 
-    <!-- UPDATE COUNTER (redesigned) -->
     <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
@@ -320,10 +303,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         <div class="alert alert-danger w-100 d-none" id="updateCounterAlert">
                             <span id="updateCounterAlertMsg"></span>
                         </div>
-
                         <input type="hidden" name="update_counter_no" id="update_counter_no">
                         <input type="hidden" name="update_id" id="update_id">
-
                         <div class="row g-3 align-items-center mb-3">
                             <div class="col-12">
                                 <div class="row g-2">
@@ -346,22 +327,21 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                         <input type="number" name="counter_no_update_visible" id="counter_no_update_visible" class="form-control ms-2" placeholder="#" min="1">
                                     </div>
                                 </div>
-                                <!-- keep hidden spans so JS that updates these IDs doesn't break -->
+
                                 <div class="d-none">
                                     <span id="updateCounterUsername">&mdash;</span>
                                     <span id="updateCounterNumber">Counter No: &mdash;</span>
                                 </div>
                             </div>
                             <div class="col-12 col-md-6">
-                                <!-- Controls moved to the left column to improve layout on small screens -->
+
                             </div>
                         </div>
-
                         <div class="mb-3">
                             <label class="form-label">Employees Available</label>
                             <div class="card">
                                 <div class="card-body p-2">
-                                    <!-- employees will be rendered as cards here -->
+
                                     <div class="row" id="cards-update-counter-available"></div>
                                 </div>
                                 <div class="card-footer bg-white">
@@ -375,7 +355,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 </div>
                             </div>
                         </div>
-
                         <div class="modal-footer">
                             <div class="d-flex justify-content-end w-100">
                                 <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
@@ -388,7 +367,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
         </div>
     </div>
 
-    <!-- DELETE COUNTER (redesigned) -->
     <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
             <div class="modal-content">
@@ -430,18 +408,14 @@ function phpUserStatusIcon($username, $role_type, $active) {
             </div>
         </div>
     </div>
-
-
     <?php include_once './../includes/footer.php'; ?>
     <?php after_js()?>
     <script>
         const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
-        
+
         var counter_search = '';
     var counter_page = 1;
     var paginate = 25;
-
-        // small helper to escape HTML inserted via JS
         function escapeHtml(unsafe) {
             if (unsafe === null || unsafe === undefined) return '';
             return String(unsafe)
@@ -451,23 +425,14 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
         }
-
     var counter_page_modal = 1;
     var update_selected_employee = null;
-    // last fetched counters (used for CSV export)
     var lastCounters = [];
-    // filter state
     var counter_filter_availability = 'none';
     var counter_filter_priority = 'none';
-
-    // buildApiUrl provided by base.js
-
-    // Ensure a placeholder exists so callers won't throw if the real implementation
-    // isn't defined yet (helps avoid ReferenceError during incremental loading).
     window.loadUpdateAvailableEmployees = window.loadUpdateAvailableEmployees || function() {
         console.warn('loadUpdateAvailableEmployees placeholder invoked');
     };
-
         function loadCounters() {
             let container = document.getElementById('cards-counters-registered');
                 if (container) {
@@ -479,7 +444,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     availability: counter_filter_availability,
                     priority: counter_filter_priority
                 };
-                // remove unspecified filters to keep query clean
                 Object.keys(paramsObj).forEach(k => {
                     if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) {
                         delete paramsObj[k];
@@ -487,7 +451,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 });
                 const params = new URLSearchParams(paramsObj);
                 $.ajax({
-                    // Call the Flask counters API (compat layer). Include credentials so cookies are sent when available.
                     url: buildApiUrl('/api/counters', params),
                     type: 'GET',
                     timeout: 10000,
@@ -499,13 +462,10 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             } catch (ex) { console.error(ex); }
                         },
                         success: function(response) {
-                            // render as cards
                             try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
                             if (response.status === 'success') {
                                 const counters = response.counters || [];
-                                // keep last result for client-side export/inspection
                                 try { lastCounters = counters.slice(); } catch (ex) { lastCounters = counters; }
-                                // Render pagination: prefer total if provided, otherwise show simple prev/current/next
                                 if (typeof response.total !== 'undefined') {
                                     const total = parseInt(response.total, 10);
                                     const totalPages = Math.max(1, Math.ceil(total / paginate));
@@ -514,7 +474,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                     const hasMore = counters.length === paginate;
                                     renderPaginationUnknown(counter_page, hasMore);
                                 }
-
                                 if (counters.length === 0) {
                                     container.innerHTML = `
                                         <div class="col-12 d-flex justify-content-center">
@@ -573,7 +532,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         },
                         error: function(xhr, status, err) {
                             try {
-                                // treat 404 as empty result (no counters found)
                                 if (xhr && xhr.status === 404) {
                                     container.innerHTML = `
                                         <div class="col-12 d-flex justify-content-center">
@@ -591,66 +549,45 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                     return;
                                 }
                             } catch (ex) { console.error(ex); }
-                            // generic error UI
                             try { container.innerHTML = `<div class="col-12 d-flex justify-content-center"><div class="text-danger">Error loading counters — <button class="btn btn-sm btn-secondary" onclick="loadCounters();">Retry</button></div></div>`; } catch (ex) { console.error(ex); }
                             console.error('Load counters failed', status, err, xhr && xhr.responseText);
                         },
                         complete: function() {
-                            // nothing special; UI is set in success/error
                         }
                 })
             }
         }
-
-        // Render numeric pagination when totalPages is known
         function renderPagination(totalPages, currentPage) {
             const container = document.getElementById('countersPagination');
             if (!container) return;
             let items = '';
-
             const makeItem = (label, page, disabled, active, id) => {
                 return `<li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}"><a href="#" class="page-link" ${id ? `id="${id}"` : ''} data-page="${page}">${label}</a></li>`;
             };
-
-            // First
             items += makeItem('First', 1, currentPage === 1, false, 'pageFirstCounters');
-            // Prev
             items += makeItem('Previous', Math.max(1, currentPage - 1), currentPage === 1, false, 'pagePrevCounters');
-
-            // Page numbers with collapsing
             const CAP = 5;
             let start = Math.max(2, currentPage - 2);
             let end = Math.min(totalPages - 1, currentPage + 2);
             if (currentPage <= 3) { start = 2; end = Math.min(totalPages - 1, CAP); }
             if (currentPage > totalPages - 3) { start = Math.max(2, totalPages - CAP); end = totalPages - 1; }
-
-            // first page
             items += `<li class="page-item ${currentPage === 1 ? 'active' : ''}"><a href="#" class="page-link" data-page="1">1</a></li>`;
             if (start > 2) {
                 items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
             }
-
             for (let p = start; p <= end; p++) {
                 items += `<li class="page-item ${p === currentPage ? 'active' : ''}"><a href="#" class="page-link" data-page="${p}">${p}</a></li>`;
             }
-
             if (end < totalPages - 1) {
                 items += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
             }
-
             if (totalPages > 1) {
                 items += `<li class="page-item ${currentPage === totalPages ? 'active' : ''}"><a href="#" class="page-link" data-page="${totalPages}">${totalPages}</a></li>`;
             }
-
-            // Next
             items += makeItem('Next', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false, 'pageNextCounters');
-            // Last
             items += makeItem('Last', totalPages, currentPage === totalPages, false, 'pageLastCounters');
-
             container.innerHTML = items;
         }
-
-        // Render simple pagination (unknown total) for counters
         function renderPaginationUnknown(currentPage, hasMore) {
             const container = document.getElementById('countersPagination');
             if (!container) return;
@@ -663,8 +600,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             `;
             container.innerHTML = items;
         }
-
-        // Delegated pagination handler for counters list
         const countersPagination = document.getElementById('countersPagination');
         if (countersPagination) {
             countersPagination.addEventListener('click', function (e) {
@@ -681,30 +616,22 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 }
             });
         }
-
         loadCounters();
-
-        // Add Counter
     let btnAddCounterModal = document.getElementById('btn-add-counter');
     if (btnAddCounterModal) btnAddCounterModal.addEventListener('click', function(e) {
             counter_page_modal = 1;
             e.preventDefault();
-
             let form = document.getElementById('frmAddCounter');
             form.reset();
-            // ensure visible counter field cleared
             try { const v = document.getElementById('counter_no_add_visible'); if (v) v.value = ''; } catch (ex) {}
             loadAddEmployees();
-            // show Add modal after preparing form
             const addModalEl = document.getElementById('addCounterModal');
             const addModal = bootstrap.Modal.getOrCreateInstance(addModalEl);
             addModal.show();
         });
-
         function loadAddEmployees() {
             const container = document.getElementById('cards-add-counter-available');
             if (!container) return;
-
             const paramsObj = {
                 counters: true,
                 available: true,
@@ -714,14 +641,12 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 availability: counter_filter_availability,
                 priority: counter_filter_priority
             };
-            // remove unspecified filters
             Object.keys(paramsObj).forEach(k => {
                 if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) {
                     delete paramsObj[k];
                 }
             });
             const params = new URLSearchParams(paramsObj);
-
             $.ajax({
                 url: buildApiUrl('/api/counters', params),
                 type: 'GET',
@@ -742,7 +667,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             renderAddPaginationUnknown(counter_page_modal, false);
                             return;
                         }
-
                         employees.forEach(employee => {
                             const card = document.createElement('div');
                             card.className = 'col-12 mb-2';
@@ -766,8 +690,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             `;
                             container.appendChild(card);
                         });
-
-                        // update pagination UI
                         try {
                             const hasMore = employees.length === paginate;
                             renderAddPaginationUnknown(counter_page_modal, hasMore);
@@ -779,7 +701,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 },
                 error: function (xhr, status, error) {
                     try {
-                        // treat 404 as empty available employees
                         if (xhr && xhr.status === 404) {
                             container.innerHTML = '<div class="text-center fw-bold w-100">No employee available</div>';
                             renderAddPaginationUnknown(counter_page_modal, false);
@@ -789,18 +710,13 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     console.error('Error loading employees for add modal:', error, xhr && xhr.responseText);
                 },
                 complete: function() {
-                    // no-op; content replaced in success/error
                 }
             });
         }
-
-        // Load available employees into the Update Counter modal (pre-checks current assignee)
-        // (Duplicated earlier to ensure the function is defined before it's called from the update flow.)
         window.loadUpdateAvailableEmployees = function() {
             console.log('loadUpdateAvailableEmployees() called; page modal:', counter_page_modal, 'selected:', update_selected_employee);
             const container = document.getElementById('cards-update-counter-available');
             if (!container) { console.warn('cards-update-counter-available container not found'); return; }
-
             const paramsObj = {
                 counters: true,
                 available: true,
@@ -816,7 +732,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 }
             });
             const params = new URLSearchParams(paramsObj);
-
             $.ajax({
                 url: buildApiUrl('/api/counters', params),
                 type: 'GET',
@@ -838,7 +753,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             renderUpdatePaginationUnknown(counter_page_modal, false);
                             return;
                         }
-
                         employees.forEach(employee => {
                             const card = document.createElement('div');
                             card.className = 'col-12 mb-2';
@@ -862,8 +776,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             `;
                             container.appendChild(card);
                         });
-
-                        // If an employee was previously assigned, pre-check their radio
                         try {
                             if (update_selected_employee) {
                                 const r = container.querySelector(`#employee-counter-set-${update_selected_employee}`);
@@ -874,8 +786,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 }
                             }
                         } catch (ex) { console.error(ex); }
-
-                        // update pagination UI
                         try {
                             const hasMore = employees.length === paginate;
                             renderUpdatePaginationUnknown(counter_page_modal, hasMore);
@@ -896,12 +806,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     console.error('Error loading employees for update modal:', error, xhr && xhr.responseText);
                 },
                 complete: function() {
-                    // no-op; content replaced in success/error
                 }
             });
         }
-
-        // Helper: show skeleton rows in counters table while loading
         function showSkeletonRowsCounters(count) {
             const tbody = document.getElementById('counters-tbody');
             if (!tbody) return;
@@ -918,8 +825,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 tbody.appendChild(tr);
             }
         }
-
-    // Delegated pagination handler for add modal
     const addCounterPagination = document.getElementById('addCounterPagination');
     if (addCounterPagination) {
         addCounterPagination.addEventListener('click', function (e) {
@@ -936,7 +841,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             }
         });
     }
-
     let addSearchUsername = document.getElementById('addSearchUsername');
     if (addSearchUsername) addSearchUsername.addEventListener('keyup', function(e) {
             counter_page_modal = 1;
@@ -944,15 +848,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
             counter_search = this.value;
             loadAddEmployees();
         });
-
     let frmAddEmployee = document.getElementById('frmAddCounter');
     if (frmAddEmployee) frmAddEmployee.addEventListener('submit', function(e) {
             e.preventDefault();
-
             let formAlert = document.getElementById('addCounterAlert');
             let formAlertMsg = document.getElementById('addCounterAlertMsg');
-
-            // sync visible counter input into hidden field before building FormData
             try {
                 const visible = document.getElementById('counter_no_add_visible');
                 if (visible) {
@@ -960,7 +860,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     if (hidden) hidden.value = visible.value;
                 }
             } catch (ex) { console.error(ex); }
-
             const formData = new FormData(this);
             const selectedRadio = document.querySelector('input[name="employee-counter-set"]:checked');
             if (!selectedRadio) {
@@ -972,9 +871,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             }
             const employee_id = selectedRadio.value;
             const counter_number = formData.get('counter_no_add');
-            // priority select uses id/name transaction-filter-priority-add
             const priority = formData.get('transaction-filter-priority-add') || 'N';
-
             $.ajax({
                 url: buildApiUrl('/api/counters'),
                 type: 'POST',
@@ -1035,15 +932,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 }
             });
         });
-
-        // Open Update modal after loading counter details
         $(document).on('click', '.btn-update-counter', function (e) {
             e.preventDefault();
             counter_search = '';
             counter_page_modal = 1;
-
             const counterId = this.dataset.id;
-
             const params = new URLSearchParams({
                 counters: true,
                 id: counterId,
@@ -1051,15 +944,12 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 paginate: paginate,
             });
             let frmUpdateCounter = document.getElementById('frmUpdateCounter');
-
             $.ajax({
                 url: buildApiUrl('/api/counters', params),
                 type: 'GET',
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
-                // server sometimes emits multiple JSON objects concatenated which breaks jQuery's parser
-                // request as text and parse the first JSON object manually to be robust
                 dataType: 'text',
                 beforeSend: function() {
                     try { document.body.style.cursor = 'progress'; } catch (ex) { console.error(ex); }
@@ -1069,7 +959,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         try {
                             response = JSON.parse(raw);
                         } catch (e) {
-                            // try to recover when PHP emitted multiple JSON objects back-to-back like: {...}{...}
                             const idx = raw.indexOf('}{');
                             if (idx !== -1) {
                                 const first = raw.substring(0, idx+1);
@@ -1080,21 +969,17 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 }
                             }
                         }
-
                         if (!response) {
                             console.error('Failed to parse JSON from update counter response');
                             console.error('Raw response (first 2k chars):\n', raw && raw.substring ? raw.substring(0, 2000) : raw);
                             return;
                         }
-
                         if (response.status === 'success') {
                         const counter = response.counter;
-                        // Update header display: keep the '#' prefix and bold span
                         const displaySpan = document.querySelector('#updateCounterDisplay .fw-bold');
                         if (displaySpan) {
                             displaySpan.innerText = counter.counterNumber;
                         } else {
-                            // fallback
                             const updateCounterDisplay = document.getElementById('updateCounterDisplay');
                             if (updateCounterDisplay) updateCounterDisplay.innerText = '#' + counter.counterNumber;
                         }
@@ -1104,40 +989,29 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         updateCounterNumber.innerText = 'Counter No: ' + counter.counterNumber;
                         let update_id = document.getElementById('update_id');
                         update_id.value = counter.idcounter;
-
-                        // set the selected employee id so loadUpdateEmployees can pre-check it
                         update_selected_employee = counter.idemployee;
-
                         frmUpdateCounter.reset();
                         frmUpdateCounter.elements['update_id'].value = counter.idcounter;
                         frmUpdateCounter.elements['update_counter_no'].value = counter.counterNumber;
-                        // populate visible counter number input in redesigned modal
                         try {
                             const visibleCounter = document.getElementById('counter_no_update_visible');
                             if (visibleCounter) visibleCounter.value = counter.counterNumber;
                         } catch (ex) { console.error(ex); }
-
-                        // set the priority select value if present
                         try {
                             const prSel = document.getElementById('transaction-filter-priority-update');
                             if (prSel) prSel.value = counter.counter_priority === 'Y' ? 'Y' : 'N';
                         } catch (ex) { console.error(ex); }
-
-                        // load available employees for update (keeps existing behavior)
                         if (typeof loadUpdateAvailableEmployees === 'function') {
                             loadUpdateAvailableEmployees();
                         } else {
                             console.error('loadUpdateAvailableEmployees is not defined at callsite');
                         }
-
-                        // show the modal after fields are populated (loadUpdateEmployees will pre-check the radio)
                         const modalEl = document.getElementById('updateCounterModal');
                         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                         modal.show();
                     }
                 },
                 error: function (xhr, status, err) {
-                    // Improve error logging: show HTTP status and response body to help debug server-side errors
                     try {
                         console.error('Failed to load counter details:', status, err, 'HTTP', xhr.status);
                         console.error('Response text (first 2k chars):\n', xhr.responseText && xhr.responseText.substring ? xhr.responseText.substring(0, 2000) : xhr.responseText);
@@ -1150,8 +1024,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 }
             });
         });
-
-    // Delegated pagination handler for update modal (same pattern as Employees page)
     const updateCounterPagination = document.getElementById('updateCounterPagination');
     if (updateCounterPagination) {
         updateCounterPagination.addEventListener('click', function (e) {
@@ -1168,7 +1040,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             }
         });
     }
-
     let updateSearchUsername = document.getElementById('updateSearchUsername');
     if (updateSearchUsername) updateSearchUsername.addEventListener('keyup', function(e) {
             counter_page_modal = 1;
@@ -1176,9 +1047,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
             counter_search = this.value;
             loadUpdateEmployees();
         });
-
         function loadUpdateEmployees() {
-            // Use the new table body for rendering counters
             let container = document.getElementById('counters-tbody');
             if (container) {
                 const paramsObj = {
@@ -1195,14 +1064,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     }
                 });
                 const params = new URLSearchParams(paramsObj);
-
-                // show overlay
                 const overlay = document.getElementById('countersOverlay');
                 if (overlay) overlay.classList.remove('d-none');
-
-                // show skeleton rows
                 showSkeletonRowsCounters(6);
-
                 $.ajax({
                     url: buildApiUrl('/api/counters', params),
                     type: 'GET',
@@ -1217,13 +1081,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     },
                     success: function(response) {
                         try { container.innerHTML = ''; } catch (ex) { console.error(ex); }
-
                         if (response.status === 'success' && (response.counters && response.counters.length >= 0)) {
                             const counters = response.counters || [];
-                            // cache for export/inspection
                             try { lastCounters = counters.slice(); } catch (ex) { lastCounters = counters; }
-
-                            // pagination
                             if (typeof response.total !== 'undefined') {
                                 const total = parseInt(response.total, 10);
                                 const totalPages = Math.max(1, Math.ceil(total / paginate));
@@ -1236,13 +1096,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 const hasMore = counters.length === paginate;
                                 renderPaginationUnknown(counter_page, hasMore);
                             }
-
                             if (counters.length === 0) {
                                 container.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No counters assigned — <button class=\"btn btn-sm btn-success\" onclick=\"document.getElementById('btn-add-counter').click();\">Add Counter</button></td></tr>`;
                                 if (overlay) overlay.classList.add('d-none');
                                 return;
                             }
-
                             counters.forEach(counter => {
                                 const tr = document.createElement('tr');
                                 tr.innerHTML = `
@@ -1259,17 +1117,14 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 `;
                                 container.appendChild(tr);
                             });
-
                         } else {
                             container.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No counters assigned — <button class=\"btn btn-sm btn-success\" onclick=\"document.getElementById('btn-add-counter').click();\">Add Counter</button></td></tr>`;
                         }
-
                         if (overlay) overlay.classList.add('d-none');
                     },
                     error: function(xhr, status, err) {
                         const overlay = document.getElementById('countersOverlay'); if (overlay) overlay.classList.add('d-none');
                         try {
-                            // If server returned 404, show friendly 'no counters' row
                             if (xhr && xhr.status === 404) {
                                 container.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No counters assigned — <button class="btn btn-sm btn-success" onclick="document.getElementById('btn-add-counter').click();">Add Counter</button></td></tr>`;
                                 const pg = document.getElementById('countersPagination'); if (pg) pg.innerHTML = '';
@@ -1284,13 +1139,10 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     }
                 });
             }
-
-    // Load available employees into the Update Counter modal (pre-checks current assignee)
     window.loadUpdateAvailableEmployees = function() {
         console.log('loadUpdateAvailableEmployees() called; page modal:', counter_page_modal, 'selected:', update_selected_employee);
         const container = document.getElementById('cards-update-counter-available');
         if (!container) { console.warn('cards-update-counter-available container not found'); return; }
-
             const paramsObj = {
                 counters: true,
                 available: true,
@@ -1306,7 +1158,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 }
             });
             const params = new URLSearchParams(paramsObj);
-
             $.ajax({
                 url: buildApiUrl('/api/counters', params),
                 type: 'GET',
@@ -1328,7 +1179,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             renderUpdatePaginationUnknown(counter_page_modal, false);
                             return;
                         }
-
                         employees.forEach(employee => {
                             const card = document.createElement('div');
                             card.className = 'col-12 mb-2';
@@ -1352,8 +1202,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                             `;
                             container.appendChild(card);
                         });
-
-                        // If an employee was previously assigned, pre-check their radio
                         try {
                             if (update_selected_employee) {
                                 const r = container.querySelector(`#employee-counter-set-${update_selected_employee}`);
@@ -1364,8 +1212,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                                 }
                             }
                         } catch (ex) { console.error(ex); }
-
-                        // update pagination UI
                         try {
                             const hasMore = employees.length === paginate;
                             renderUpdatePaginationUnknown(counter_page_modal, hasMore);
@@ -1386,13 +1232,10 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     console.error('Error loading employees for update modal:', error, xhr && xhr.responseText);
                 },
                 complete: function() {
-                    // no-op; content replaced in success/error
                 }
             });
         }
         }
-
-        // Render simple pagination (unknown total) for update modal
         function renderUpdatePaginationUnknown(currentPage, hasMore) {
             const container = document.getElementById('updateCounterPagination');
             if (!container) return;
@@ -1405,8 +1248,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             `;
             container.innerHTML = items;
         }
-
-        // Render simple pagination (unknown total) for add modal
         function renderAddPaginationUnknown(currentPage, hasMore) {
             const container = document.getElementById('addCounterPagination');
             if (!container) return;
@@ -1419,12 +1260,9 @@ function phpUserStatusIcon($username, $role_type, $active) {
             `;
             container.innerHTML = items;
         }
-
-        // Highlight selected employee card for add modal; allow clicking a card to select
         (function setupAddCardSelection() {
             const container = document.getElementById('cards-add-counter-available');
             if (!container) return;
-
             container.addEventListener('change', function(e) {
                 const target = e.target;
                 if (!target || target.name !== 'employee-counter-set') return;
@@ -1432,7 +1270,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 const card = target.closest('.card');
                 if (card) card.classList.add('border','border-primary','bg-light');
             });
-
             container.addEventListener('click', function(e) {
                 const card = e.target.closest('.card');
                 if (!card) return;
@@ -1445,7 +1282,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     }
                 }
             });
-
             const observer = new MutationObserver(function() {
                 const checked = container.querySelector('input[name="employee-counter-set"]:checked');
                 if (checked) {
@@ -1456,23 +1292,16 @@ function phpUserStatusIcon($username, $role_type, $active) {
             });
             observer.observe(container, { childList: true, subtree: true });
         })();
-
-        // Highlight selected employee card when its radio is checked; allow clicking a card to select
         (function setupCardSelection() {
             const container = document.getElementById('cards-update-counter-available');
             if (!container) return;
-
-            // Delegate change events from radios
             container.addEventListener('change', function(e) {
                 const target = e.target;
                 if (!target || target.name !== 'employee-counter-set') return;
-                // remove highlight from all cards
                 container.querySelectorAll('.card').forEach(c => c.classList.remove('border','border-primary','bg-light'));
                 const card = target.closest('.card');
                 if (card) card.classList.add('border','border-primary','bg-light');
             });
-
-            // Clicking a card selects the radio inside it
             container.addEventListener('click', function(e) {
                 const card = e.target.closest('.card');
                 if (!card) return;
@@ -1485,8 +1314,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     }
                 }
             });
-
-            // When cards are rendered, ensure any pre-checked radio highlights its card
             const observer = new MutationObserver(function() {
                 const checked = container.querySelector('input[name="employee-counter-set"]:checked');
                 if (checked) {
@@ -1500,11 +1327,8 @@ function phpUserStatusIcon($username, $role_type, $active) {
     let frmUpdateCounter = document.getElementById('frmUpdateCounter');
     if (frmUpdateCounter) frmUpdateCounter.addEventListener('submit', function(e) {
             e.preventDefault();
-
             let formAlert = document.getElementById('updateCounterAlert');
             let formAlertMsg = document.getElementById('updateCounterAlertMsg');
-
-            // If the visible counter input exists, sync it into the hidden field so FormData picks it up
             try {
                 const visibleCounter = document.getElementById('counter_no_update_visible');
                 if (visibleCounter) {
@@ -1512,9 +1336,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     if (hidden) hidden.value = visibleCounter.value;
                 }
             } catch (ex) { console.error(ex); }
-
-            const formData = new FormData(this);    // RESERVE :>
-
+            const formData = new FormData(this);
             const idcounter = formData.get('update_id');
             const selectedRadio = document.querySelector('input[name="employee-counter-set"]:checked');
             if (!selectedRadio) {
@@ -1527,7 +1349,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             const employee_id = selectedRadio.value;
             const counter_number = formData.get('update_counter_no');
             const priority = formData.get('transaction-filter-priority-update') || 'N';
-
             $.ajax({
                 url: buildApiUrl('/api/counters'),
                 type: 'PUT',
@@ -1541,7 +1362,10 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     idemployee: employee_id,
                     counter_priority: priority
                 }),
-                beforeSend: function() {
+                beforeSend: function(xhr) {
+                    <?php if (isset($_COOKIE['token']) && $_COOKIE['token']): ?>
+                    try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(ex) { console.error(ex); }
+                    <?php endif; ?>
                     try {
                         const submitBtn = document.getElementById('btnUpdateCounterSubmit');
                         if (submitBtn) {
@@ -1588,27 +1412,21 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     } catch (ex) { console.error(ex); }
                 }
             });
-
         });
-
-        // Open Delete modal after loading counter details
         $(document).on('click', '.btn-delete-counter', function (e) {
             e.preventDefault();
             const counterId = this.dataset.id;
-
             let frmDeleteCounter = document.getElementById('frmDeleteCounter');
             const params = new URLSearchParams({
                 counters: true,
                 id: counterId,
             });
-
             $.ajax({
                 url: buildApiUrl('/api/counters', params),
                 type: 'GET',
                 timeout: 10000,
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
-                // request as text and parse robustly because server may emit concatenated JSON objects
                 dataType: 'text',
                 beforeSend: function() {
                     try { document.body.style.cursor = 'progress'; } catch (ex) { console.error(ex); }
@@ -1638,8 +1456,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
                         deleteCounterNumber.innerText = response.counter.counterNumber;
                         frmDeleteCounter.reset();
                         frmDeleteCounter.elements['delete_id'].value = response.counter.idcounter;
-
-                        // show delete modal
                         const modalEl = document.getElementById('deleteCounterModal');
                         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                         modal.show();
@@ -1658,15 +1474,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 }
             });
         });
-
     let frmDeleteCounter = document.getElementById('frmDeleteCounter');
     if (frmDeleteCounter) {
-        // Wire up UI toggles for the delete modal so the button text and styles
-        // reflect whether the user chose a soft detach or a hard force-delete.
         const deleteForceCheckbox = document.getElementById('delete_force');
         const btnDeleteCounterSubmit = document.getElementById('btnDeleteCounterSubmit');
         const deleteModeDesc = document.getElementById('deleteModeDesc');
-
         function updateDeleteModeUI() {
             if (!btnDeleteCounterSubmit) return;
             if (deleteForceCheckbox && deleteForceCheckbox.checked) {
@@ -1681,21 +1493,15 @@ function phpUserStatusIcon($username, $role_type, $active) {
                 if (deleteModeDesc) deleteModeDesc.innerText = 'Detach will unassign the employee but will not reset today\'s counter counts. Past transactions remain intact.';
             }
         }
-
         if (deleteForceCheckbox) deleteForceCheckbox.addEventListener('change', updateDeleteModeUI);
-        // initialize UI
         updateDeleteModeUI();
-
         frmDeleteCounter.addEventListener('submit', function(e) {
             e.preventDefault();
-
             let formAlert = document.getElementById('deleteCounterAlert');
             let formAlertMsg = document.getElementById('deleteCounterAlertMsg');
-
             const formData = new FormData(this);
             const idcounter = formData.get('delete_id');
             const forceFlag = (formData.get('delete_force') === '1' || formData.get('delete_force') === 'on');
-
             $.ajax({
                 url: buildApiUrl('/api/counters'),
                 type: 'DELETE',
@@ -1707,7 +1513,10 @@ function phpUserStatusIcon($username, $role_type, $active) {
                     counter_id: idcounter,
                     force: !!forceFlag
                 }),
-                beforeSend: function() {
+                beforeSend: function(xhr) {
+                    <?php if (isset($_COOKIE['token']) && $_COOKIE['token']): ?>
+                    try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(ex) { console.error(ex); }
+                    <?php endif; ?>
                     try {
                         const btn = document.getElementById('btnDeleteCounterSubmit');
                         if (btn) {
@@ -1749,7 +1558,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             });
         });
     }
-
     let searchCounterRegistered = document.getElementById('searchCounterRegistered');
     if (searchCounterRegistered) searchCounterRegistered.addEventListener('keyup', function(e) {
             console.log(this.value);
@@ -1758,24 +1566,18 @@ function phpUserStatusIcon($username, $role_type, $active) {
             counter_search = this.value;
             loadCounters();
         });
-
-    // Role filter removed from UI; role-based filtering is unnecessary for counters.
-
     const filterAvailability = document.getElementById('counter-filter-availability');
     if (filterAvailability) filterAvailability.addEventListener('change', function(e) {
         counter_filter_availability = this.value || 'none';
         counter_page = 1;
         loadCounters();
     });
-
     const filterPriority = document.getElementById('counter-filter-priority');
     if (filterPriority) filterPriority.addEventListener('change', function(e) {
         counter_filter_priority = this.value || 'none';
         counter_page = 1;
         loadCounters();
     });
-
-    // Per-page selector, export and refresh handlers
     const countersPerPageSel = document.getElementById('countersPerPage');
     if (countersPerPageSel) {
         countersPerPageSel.addEventListener('change', function(e) {
@@ -1784,14 +1586,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
             counter_page = 1;
             loadCounters();
         });
-        // initialize paginate to match select (in case server-side rendered default differs)
         try { paginate = parseInt(countersPerPageSel.value, 10) || paginate; } catch(ex){}
     }
-
     const btnExportCountersCsv = document.getElementById('btnExportCountersCsv');
     if (btnExportCountersCsv) btnExportCountersCsv.addEventListener('click', function(e) {
         e.preventDefault();
-        // attempt to fetch all counters matching current filters for a complete export
         const paramsObj = {
             counters: true,
             page: 1,
@@ -1804,7 +1603,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             if (paramsObj[k] === 'none' || paramsObj[k] === '' || paramsObj[k] === undefined || paramsObj[k] === null) delete paramsObj[k];
         });
         const params = new URLSearchParams(paramsObj);
-
         const doExport = function(dataArray) {
             if (!dataArray || dataArray.length === 0) {
                 alert('No counters to export');
@@ -1828,8 +1626,6 @@ function phpUserStatusIcon($username, $role_type, $active) {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         };
-
-        // Fetch full dataset from API; fall back to cached lastCounters on failure
         $.ajax({
             url: buildApiUrl('/api/counters', params),
             type: 'GET',
@@ -1873,15 +1669,11 @@ function phpUserStatusIcon($username, $role_type, $active) {
             }
         });
     });
-
     const btnRefreshCounters = document.getElementById('btnRefreshCounters');
     if (btnRefreshCounters) btnRefreshCounters.addEventListener('click', function(e) {
         e.preventDefault();
         loadCounters();
     });
-
-
-
     </script>
 </body>
 </html>

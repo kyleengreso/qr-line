@@ -1,20 +1,14 @@
 <?php
-
 include_once __DIR__ . "/../base.php";
 restrictEmployeeMode();
-
-// Ensure API endpoint host is available
 include_once __DIR__ . "/../includes/config.php";
-
-// Use normalized token payload and guard against missing fields
 $payload = getDecodedTokenPayload();
 $tok = null;
 if (is_array($payload)) {
-    $tok = json_decode(json_encode($payload)); // stdClass for object-style access
+    $tok = json_decode(json_encode($payload));
 } elseif (is_object($payload)) {
     $tok = $payload;
 }
-
 $id = isset($tok->id) ? (int)$tok->id : 0;
 $username = isset($tok->username) ? $tok->username : '';
 $role_type = isset($tok->role_type) ? $tok->role_type : (isset($tok->role) ? $tok->role : '');
@@ -22,7 +16,6 @@ $email = isset($tok->email) ? $tok->email : '';
 $counterNumber = isset($tok->counterNumber) ? (int)$tok->counterNumber : 0;
 $priority = isset($tok->priority) ? $tok->priority : 'N';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,7 +40,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         COUNTER <span id="employee-counter-number"><?php echo $counterNumber ?></span>
                         <span class="text-danger d-none" id="cutOffState">(Cut-Off)</span>
                     </h3>
-                    
+
                     <p class="mb-3">Current Serving</p>
                     <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
                         <span id="queue-number">N/A</span>
@@ -63,7 +56,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             </div>
                         </div>
                     </form>
-                    
+
                     <div class="w-100 mb-4">
                         <div class="card border-1 p-4 text-center">
                             <form class="" action="" id="frmCutOff_trigger">
@@ -77,8 +70,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                                         <option value="3">After 3 queries</option>
                                         <option value="5">After 5 queries</option>
                                         <option value="10">After 10 queries</option>
-                                        <!-- On production -->
-                                        <!-- <option value="last">Until no transaction</option> -->
+
                                     </select>
                                     <label for="cut_off_select">Auto-cut off action</label>
                                 </div>
@@ -100,7 +92,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Rows are rendered by JS -->
+
                         </tbody>
                     </table>
                     <div class="d-flex justify-content-between align-items-center mt-2">
@@ -108,17 +100,14 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             <small class="text-muted" id="transactions-count">&nbsp;</small>
                         </div>
                         <div id="transactions-pagination" class="btn-group" role="group" aria-label="Transactions pagination">
-                            <!-- Pagination controls injected by JS -->
+
                         </div>
                     </div>
                 </div>
             </div>
             </div>
-
-
         </div>
     </div>
-
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
@@ -127,27 +116,16 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         var cutOff_auto = false;
         var queue_remain = null;
         var this_counter_priority = "<?php echo $priority; ?>";
-
         let frmCutOff_trigger = document.getElementById('frmCutOff_trigger');
         let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
-
         (function() {
             const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : '';?>";
             window.API_BASE = endpointHost + '/api';
         })();
-
-        // Attempt to keep the displayed COUNTER in sync with the JWT without a full reload.
-        // Strategy:
-        // 1. Try to read the `token` cookie in JS and decode the JWT payload.
-        // 2. If the cookie is HttpOnly (not readable), fall back to calling the
-        //    local PHP helper `public/includes/system_auth.php?action=status` which
-        //    returns the decoded payload server-side.
-        // 3. Only update the DOM when the token (or decoded payload) changes.
         (function() {
             let lastTokenValue = null;
-
             function tryGetTokenFromCookie() {
                 try {
                     const match = document.cookie.match('(?:^|; )token=([^;]*)');
@@ -156,16 +134,12 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     return null;
                 }
             }
-
             function base64UrlDecode(str) {
                 try {
                     str = str.replace(/-/g, '+').replace(/_/g, '/');
-                    // Pad base64 string
                     while (str.length % 4) str += '=';
-                    // atob returns a binary string; decodeURIComponent/escape handles UTF-8
                     const decoded = atob(str);
                     try {
-                        // Percent-encode UTF-8 bytes then decode
                         return decodeURIComponent(Array.prototype.map.call(decoded, function(c) {
                             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                         }).join(''));
@@ -176,7 +150,6 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     return null;
                 }
             }
-
             function decodeJwt(token) {
                 if (!token) return null;
                 const parts = token.split('.');
@@ -190,12 +163,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     return null;
                 }
             }
-
             function updateCounterFromPayload(payload) {
                 if (!payload) return;
                 const el = document.getElementById('employee-counter-number');
                 if (!el) return;
-                // Accept multiple common claim names (legacy compat)
                 const counter = (payload.counterNumber !== undefined && payload.counterNumber !== null)
                     ? payload.counterNumber
                     : (payload.counter_number !== undefined && payload.counter_number !== null)
@@ -203,21 +174,17 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         : (payload.counter !== undefined && payload.counter !== null)
                             ? payload.counter
                             : null;
-
                 if (counter !== null && counter !== undefined) {
-                    // Only update when value differs to avoid unnecessary DOM churn
                     const asInt = parseInt(counter, 10);
                     if (!Number.isNaN(asInt) && el.innerText != asInt) {
                         el.innerText = asInt;
                     }
                 }
             }
-
             async function refreshCounterFromToken() {
-                // First try local cookie (may be HttpOnly)
                 const token = tryGetTokenFromCookie();
                 if (token) {
-                    if (token === lastTokenValue) return; // unchanged
+                    if (token === lastTokenValue) return;
                     lastTokenValue = token;
                     const payload = decodeJwt(token);
                     if (payload) {
@@ -225,14 +192,11 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         return;
                     }
                 }
-
-                // Fallback: ask PHP to decode token server-side (same-origin)
                 try {
                     const resp = await fetch('/public/includes/system_auth.php?action=status', { credentials: 'same-origin' });
                     if (resp.ok) {
                         const j = await resp.json();
                         if (j && j.decoded) {
-                            // stringify to compare for changes
                             const sig = JSON.stringify(j.decoded);
                             if (sig === lastTokenValue) return;
                             lastTokenValue = sig;
@@ -240,23 +204,16 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         }
                     }
                 } catch (e) {
-                    // ignore network errors — best-effort only
                 }
             }
-
-            // Kick off initial refresh and poll (lightweight) so UI updates when token changes.
             refreshCounterFromToken();
             setInterval(refreshCounterFromToken, 5000);
         })();
-
-        // Ensure browser sends cookies (token) to Flask across origins
-        // Also add Authorization header if token is available (for cross-origin API calls)
         if (window.jQuery && $.ajaxSetup) {
             $.ajaxSetup({
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
                 beforeSend: function(xhr) {
-                    // Extract token from cookie and send via Authorization header
                     var token = null;
                     try {
                         var cookies = document.cookie.split(';');
@@ -274,7 +231,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 }
             });
         }
-    
+
         function queue_remain_set(queue_remain) {
             $.ajax({
                 url: window.API_BASE + "/cashier",
@@ -296,27 +253,22 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         notify_priority = false;
                         cutOff_trigger_notification.classList.add('d-none');
                     },notify_priority_timer * 1000);
-                    // Refresh current queue_remain after change
                     queue_remain_get();
                     console.log(response);
                 }
             });
         }
-
         let cut_off_select = document.getElementById('cut_off_select');
         cut_off_select.addEventListener('change', function (e) {
             console.log(this.value);
             fetchCutOff();
             if (this.value === "null") {
-                // Disable auto-cutoff
                 queue_remain_set(null);
             } else {
-                // Set numeric cutoff value
                 const v = parseInt(this.value, 10);
                 queue_remain_set(Number.isNaN(v) ? null : v);
             }
         });
-
         function queue_remain_get() {
             let param = new URLSearchParams({
                 counter_queue_remain: true,
@@ -326,14 +278,13 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 url: window.API_BASE + "/cashier?" + param.toString(),
                 method: "GET",
                 success: function(response) {
-                    console.log("Response received:", response); // Log the response
+                    console.log("Response received:", response);
                     queue_remain = response.queue_remain;
                     if (response.status === 'success') {
                         if (response.queue_remain != null) {
                             if (cutOff_trigger_notification.classList.contains('d-none')) {
                                 cutOff_trigger_notification.classList.remove('d-none');
                             }
-                            // Update the inner message span instead of replacing the container
                             if (typeof cutOff_trigger_message !== 'undefined' && cutOff_trigger_message) {
                                 cutOff_trigger_message.innerText = response.queue_remain + " queue remain.";
                             } else {
@@ -344,17 +295,16 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         }
                         console.log("Success:", response.message);
                     } else {
-                        // cutOff_trigger_notification.innerText = 
                         console.log("Error in response:", response.message);
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error("AJAX Error:", status, error);
-                    console.error("Response Text:", xhr.responseText); // Log the raw response
+                    console.error("Response Text:", xhr.responseText);
                 }
             });
         }
-    
+
         let x = <?php echo $counterNumber . $id?>;
         function fetchTransaction() {
             let resp = null;
@@ -380,17 +330,13 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         if (cutOff_auto && cutOff_trigger_queue == 0) {
                             cutOff.click();
                         }
-                        // console.log('Error:', response.message);     // Disable
                     }
                 },
                 error: function(xhr, status, error) {
-                    // Check phph erro message json
                     console.log(xhr.responseText);
-                    // console.error('AJAX Error:', status, error);
                 }
             });
         }
-
         let btn_counter_success = document.getElementById('btn-counter-success');
         let btn_counter_skip = document.getElementById('btn-counter-skip');
         btn_counter_success.addEventListener('click', function(e) {
@@ -405,9 +351,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 }),
                 success: function(response) {
                     if (response.status === 'success') {
-                        // Update remaining queue count immediately
                         queue_remain_get();
-                        // Also refresh the current transaction and student list
                         fetchTransaction();
                         fetchStudentTransaction();
                         return;
@@ -417,12 +361,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);
-                    // console.log('Raw Response:', xhr.responseText);
                 }
             });
         });
 
-        
         btn_counter_skip.addEventListener('click', function(e) {
             e.preventDefault();
             $.ajax({
@@ -435,7 +377,6 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 }),
                 success: function(response) {
                     if (response.status === 'success') {
-                        // Update remaining queue count immediately
                         queue_remain_get();
                         fetchTransaction();
                         fetchStudentTransaction();
@@ -446,36 +387,27 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);
-                    // console.log('Raw Response:', xhr.responseText);
                 }
             });
         });
-
-        // Students
         let table_transactions_student = document.getElementById('table-transactions-student');
         let this_employee_id = <?php echo $id?>;
-        // Client-side pagination state
         let studentTransactions = [];
         let studentTxnPage = 1;
-        const studentPageSize = 10; // rows per page
-
+        const studentPageSize = 10;
         function renderStudentTransactionsPage() {
-            // Clear tbody
             const tbody = table_transactions_student.querySelector('tbody');
             while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-
             if (!Array.isArray(studentTransactions) || studentTransactions.length === 0) {
                 document.getElementById('transactions-count').innerText = '';
                 updateTransactionsPagination();
                 return;
             }
-
             const total = studentTransactions.length;
             const totalPages = Math.max(1, Math.ceil(total / studentPageSize));
             if (studentTxnPage > totalPages) studentTxnPage = totalPages;
             const start = (studentTxnPage - 1) * studentPageSize;
             const end = Math.min(start + studentPageSize, total);
-
             for (let i = start; i < end; i++) {
                 const transaction = studentTransactions[i];
                 const row = document.createElement('tr');
@@ -490,19 +422,15 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 row.appendChild(cell3);
                 tbody.appendChild(row);
             }
-
             document.getElementById('transactions-count').innerText = `Showing ${start + 1}–${end} of ${total}`;
             updateTransactionsPagination(totalPages);
         }
-
         function updateTransactionsPagination(totalPages) {
             const container = document.getElementById('transactions-pagination');
-            // If totalPages is not provided, compute from current data
             if (typeof totalPages === 'undefined') {
                 totalPages = Math.max(1, Math.ceil((studentTransactions.length || 0) / studentPageSize));
             }
             container.innerHTML = '';
-
             const prev = document.createElement('button');
             prev.type = 'button';
             prev.className = 'btn btn-sm btn-outline-primary';
@@ -514,7 +442,6 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     renderStudentTransactionsPage();
                 }
             };
-
             const next = document.createElement('button');
             next.type = 'button';
             next.className = 'btn btn-sm btn-outline-primary';
@@ -526,16 +453,13 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     renderStudentTransactionsPage();
                 }
             };
-
             const pageInfo = document.createElement('span');
             pageInfo.className = 'mx-2 align-self-center';
             pageInfo.innerText = `Page ${studentTxnPage} / ${totalPages}`;
-
             container.appendChild(prev);
             container.appendChild(pageInfo);
             container.appendChild(next);
         }
-
         function fetchStudentTransaction() {
             $.ajax({
                 url: window.API_BASE + '/dashboard/cashier',
@@ -545,7 +469,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     let transactions = response.data || [];
                     if (!Array.isArray(transactions)) transactions = [];
                     studentTransactions = transactions;
-                    studentTxnPage = 1; // reset to first page on refresh
+                    studentTxnPage = 1;
                     renderStudentTransactionsPage();
                 },
                 error: function(xhr, status, error) {
@@ -553,22 +477,16 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 }
             });
         }
-
-
-        // Cut Off Feature
-
         var operational = false;
         let btn_counter_resume = document.getElementById('employee-resume');
         let cutOffNotification = document.getElementById('cutOffNotification');
-        
-        let cutOffState = document.getElementById('cutOffState');
 
+        let cutOffState = document.getElementById('cutOffState');
         let cutOff = document.getElementById('employee-cut-off');
         const params = new URLSearchParams({
             employeeCutOff: true,
             id: <?php echo $id?>
         });
-
         async function fetchCutOff() {
             $.ajax({
                 url: window.API_BASE + '/cashier?' + params,
@@ -580,9 +498,6 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         if (response.cut_off_state == 1) {
                             operational = false;
                             frmCutOff_trigger.classList.add('d-none');
-                            // frmCutOff_trigger.querySelectorAll('input, select, button, textarea').forEach(e => {
-                            //     e.disabled = true;
-                            // });
                             frmCutOff_trigger_message.classList.remove('d-none');
                             cutOffNotification.classList.remove('alert-success');
                             cutOffNotification.classList.add('alert-danger');
@@ -611,7 +526,6 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 }
             });
         };
-
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
             if (operational) {
@@ -679,8 +593,6 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 })
             }
         });
-
-
         async function daemon() {
             await fetchCutOff();
             queue_remain_get();
@@ -688,11 +600,9 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 fetchTransaction();
                 fetchStudentTransaction();
             }
-            // Schedule the next execution
             setTimeout(daemon, 500);
         }
-        
-        // Start the daemon loop
+
         daemon();
     </script>
 </body>
