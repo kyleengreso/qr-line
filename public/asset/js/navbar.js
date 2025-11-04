@@ -73,16 +73,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!btnNotifications) return;
 
-    // Determine API base URL.
-    // Prefer an explicit server-provided `endpointHost` (emitted by PHP pages).
-    // Fallback order: window.__API_BASE__ -> window.endpointHost -> location.origin
+    // Determine API base URL (dev server on 8080 → API on 5000)
     const API_BASE = (function(){
         if (window.__API_BASE__) return window.__API_BASE__;
-        if (typeof window.endpointHost === 'string' && window.endpointHost.length) {
-            return window.endpointHost.replace(/\/$/, '');
-        }
         try {
-            return window.location.origin;
+            const loc = window.location;
+            if (loc.port === '8080') {
+                return `${loc.protocol}//${loc.hostname}:5000`;
+            }
+            return loc.origin;
         } catch (e) {
             return '';
         }

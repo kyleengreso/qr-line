@@ -250,10 +250,28 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         })();
 
         // Ensure browser sends cookies (token) to Flask across origins
+        // Also add Authorization header if token is available (for cross-origin API calls)
         if (window.jQuery && $.ajaxSetup) {
             $.ajaxSetup({
                 xhrFields: { withCredentials: true },
-                crossDomain: true
+                crossDomain: true,
+                beforeSend: function(xhr) {
+                    // Extract token from cookie and send via Authorization header
+                    var token = null;
+                    try {
+                        var cookies = document.cookie.split(';');
+                        for (var i = 0; i < cookies.length; i++) {
+                            var c = cookies[i].trim();
+                            if (c.startsWith('token=')) {
+                                token = decodeURIComponent(c.substring(6));
+                                break;
+                            }
+                        }
+                    } catch (e) {}
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
+                }
             });
         }
     

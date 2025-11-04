@@ -660,9 +660,24 @@ $adminsCount = 0;
                 // when calling the remote host cross-origin we'd require credentials; for proxy it's same-origin
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
-                    beforeSend: function() {
+                    beforeSend: function(xhr) {
                         try { showEmployeesLoading(); } catch (e) {}
                         try { document.dispatchEvent(new CustomEvent('employees:loading')); } catch (e) {}
+                        // Extract token from cookie and send via Authorization header for cross-origin API calls
+                        var token = null;
+                        try {
+                            var cookies = document.cookie.split(';');
+                            for (var i = 0; i < cookies.length; i++) {
+                                var c = cookies[i].trim();
+                                if (c.startsWith('token=')) {
+                                    token = decodeURIComponent(c.substring(6));
+                                    break;
+                                }
+                            }
+                        } catch (e) {}
+                        if (token) {
+                            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                        }
                     },
                 success: function (response) {
                     // prefer rendering into the table body if present
