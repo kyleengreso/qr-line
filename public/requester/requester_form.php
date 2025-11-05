@@ -306,23 +306,3 @@ if ($schedule) {
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>
-                website: `${realHost}/public/requester/requester_number.php`
-            };
-            console.log(user);
-            sumbitUserForm(user);
-        });
-    </script>
-
-</body>
-<?php include_once "./../includes/footer.php"; ?>
-</html>realHost}/public/requester/requester_number.php`
-            };
-            console.log(user);
-            sumbitUserForm(user);
-        });
-
-    </script>
-    <!-- <script src="./../asset/js/counters.js"></script> -->
-</body>
-<?php include_once "./../includes/footer.php"; ?>
-</html>
