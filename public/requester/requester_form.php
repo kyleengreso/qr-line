@@ -256,7 +256,35 @@ if ($schedule) {
                         message_error(form, (response && response.message) || 'Submission failed');
                     }
                 },
-                error: function() {
+                error: function(xhr) {
+                    if (xhr && xhr.status === 409) {
+                        let payload = null;
+                        if (xhr.responseJSON) {
+                            payload = xhr.responseJSON;
+                        } else if (xhr.responseText) {
+                            try {
+                                payload = JSON.parse(xhr.responseText);
+                            } catch (parseErr) {
+                                payload = null;
+                            }
+                        }
+
+                        const infoMsg = payload && payload.message ? payload.message : 'You already have an active queue today.';
+                        if (payload && payload.queue_number) {
+                            message_warning(form, infoMsg + ` (Queue #${payload.queue_number})`);
+                        } else {
+                            message_warning(form, infoMsg);
+                        }
+
+                        if (payload && payload.token_number) {
+                            localStorage.setItem('requester_token', payload.token_number);
+                            setTimeout(function() {
+                                window.location.href = "./requester_number.php?requester_token=" + payload.token_number;
+                            }, 1200);
+                        }
+                        return;
+                    }
+
                     message_error(form, 'Network error. Please try again.');
                 }
             });
