@@ -410,7 +410,7 @@ $adminsCount = 0;
     <?php include_once "./../includes/footer.php";?>
     <script src="./../asset/js/message.js"></script>
     <script>       
-    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    const endpointHost = window.endpointHost;
 
     var employee_search = '';
     var page_employees = 1;

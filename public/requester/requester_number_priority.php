@@ -79,7 +79,6 @@ include './../base.php';
     </div>
     <?php after_js()?>
     <script>
-    var endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
         let this_requester_status_alert = document.getElementById("this_requester_status_alert");
         let this_requester_status_info = document.getElementById("this_requester_status_info");
         let connectionAlert = document.getElementById("connectionAlert");

@@ -82,7 +82,7 @@ include "./../base.php"
 <?php include_once "./../includes/footer.php"; ?>
 <script>
     // Monitor
-    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    const endpointHost = window.endpointHost;
     function rtTransaction() {
         if (!(typeof endpointHost !== 'undefined' && endpointHost && endpointHost.length > 0)) {
         console.warn('API host not configured; stats unavailable');

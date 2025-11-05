@@ -203,8 +203,8 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         });
 
         (function() {
-            const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : '';?>";
-            window.API_BASE = endpointHost + '/api';
+        const endpointHost = window.endpointHost;
+        window.API_BASE = endpointHost ? endpointHost.replace(/\/+$/, '') + '/api' : '';
         })();
         (function() {
             let lastTokenValue = null;
@@ -457,7 +457,11 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     method: 'cashier-success',
                     idemployee: <?php echo $id?>,
                 }),
-                beforeSend: function() {
+                beforeSend: function(xhr) {
+                    const token = getAuthTokenValue();
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
                     btn_counter_success.disabled = true;
                     btn_counter_success.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
                 },
@@ -493,7 +497,11 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     method: 'cashier-missed',
                     idemployee: <?php echo $id?>,
                 }),
-                beforeSend: function() {
+                beforeSend: function(xhr) {
+                    const token = getAuthTokenValue();
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
                     btn_counter_skip.disabled = true;
                     btn_counter_skip.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
                 },

@@ -1,7 +1,5 @@
 <?php
 include_once __DIR__ . "/../base.php";
-// API endpoint host (Flask) config
-// Load optional endpoint host/server from includes/config.php if present
 @include_once __DIR__ . '/../includes/config.php';
 // Require admin access for this dashboard
 requireAdmin();
@@ -298,7 +296,6 @@ $id = isset($token->id) ? (int)$token->id : 0;
 
     <?php after_js()?>
     <script>
-    var endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
     var currentUsername = "<?php echo isset($username) ? htmlentities($username) : ''; ?>";
         var page_counter = 1;
         var page_transaction = 1;

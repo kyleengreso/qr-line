@@ -125,7 +125,6 @@ if ($schedule) {
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
-    var endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
         function sumbitUserForm(user) {
             var form = $('#frmUserForm');
             message_info(form, 'Processing...');
