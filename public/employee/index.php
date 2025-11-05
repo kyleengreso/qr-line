@@ -28,6 +28,21 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
+    <!-- Connection Timeout Modal -->
+    <div class="modal fade" id="connectionTimeoutModal" tabindex="-1" aria-labelledby="connectionTimeoutLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 id="connectionTimeoutLabel" class="mt-3">Connecting...</h5>
+                    <p class="text-muted">Attempting to reconnect to the server</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container-lg d-flex justify-content-center align-items-center before-footer" style="margin-top: 100px">
         <div class="text-center w-100" style="max-width: 1200px;" id="employeeDashboard">
             <div class="row d-flex justify-content-center align-items-start" style="margin: auto;">
@@ -120,6 +135,55 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
+        // Connection timeout handler
+        let connectionTimeoutModal = null;
+        let connectionTimeoutTimer = null;
+        let lastResponseTime = Date.now();
+        let firstResponseReceived = false;
+
+        function initConnectionTimeoutModal() {
+            if (!connectionTimeoutModal) {
+                connectionTimeoutModal = new bootstrap.Modal(document.getElementById('connectionTimeoutModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            return connectionTimeoutModal;
+        }
+
+        function showConnectionTimeout() {
+            const modal = initConnectionTimeoutModal();
+            if (!modal._isShown) {
+                modal.show();
+            }
+        }
+
+        function hideConnectionTimeout() {
+            const modal = initConnectionTimeoutModal();
+            if (modal._isShown) {
+                modal.hide();
+            }
+        }
+
+        function resetConnectionTimeout() {
+            lastResponseTime = Date.now();
+            if (connectionTimeoutTimer) {
+                clearTimeout(connectionTimeoutTimer);
+            }
+            // Hide modal if it was shown
+            hideConnectionTimeout();
+            
+            // Set new timeout for 20 seconds
+            connectionTimeoutTimer = setTimeout(() => {
+                showConnectionTimeout();
+            }, 20000);
+        }
+
+        // Show the modal immediately when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            showConnectionTimeout();
+        });
+
         (function() {
             const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : '';?>";
             window.API_BASE = endpointHost + '/api';
@@ -214,6 +278,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
                 beforeSend: function(xhr) {
+                    resetConnectionTimeout();
                     var token = null;
                     try {
                         var cookies = document.cookie.split(';');
@@ -228,6 +293,9 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     if (token) {
                         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                     }
+                },
+                complete: function() {
+                    resetConnectionTimeout();
                 }
             });
         }
@@ -664,6 +732,8 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 fetchTransaction();
                 fetchStudentTransaction();
             }
+            // Reset connection timeout on each successful daemon cycle
+            resetConnectionTimeout();
             setTimeout(daemon, 500);
         }
 
