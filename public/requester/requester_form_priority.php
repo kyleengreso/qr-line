@@ -12,25 +12,125 @@ try {
     $schedule = null;
 }
 
-$schedule_present = false;
-$schedule_day_announcment = "Schedule is closed for today";
-$time_start = 'N/A';
-$time_end = 'N/A';
-$time_now = date("H:i:s");
+$schedule_present = true;
+$schedule_day_announcment = "Open now";
+$time_start = 'Always Open';
+$time_end = 'Always Open';
+$time_now = date("h:i:s A");
 
 if ($schedule) {
-    $time_start = date("H:i:s", strtotime($schedule['time_start']));
-    $time_end = date("H:i:s", strtotime($schedule['time_end']));
-    $everyday = explode(";", $schedule['everyday']);
-    $day_of_week = strtolower(date("D"));
-    $schedule_present = false;
-    foreach ($everyday as $day) {
-        if ($day == $day_of_week) {
-            $schedule_present = true;
-            $schedule_day_announcment = "Come back later at";
-            break;
-        }
+    $enabled = (int)($schedule['enable'] ?? 0);
+    $db_time_start = $schedule['time_start'] ?? null;
+    $db_time_end = $schedule['time_end'] ?? null;
+
+    if ($db_time_start) {
+        $time_start = date("g:i A", strtotime($db_time_start));
+    } else {
+        $time_start = 'N/A';
     }
+
+    if ($db_time_end) {
+        $time_end = date("g:i A", strtotime($db_time_end));
+    } else {
+        $time_end = 'N/A';
+    }
+
+    if ($enabled === 1) {
+        $now_ts = time();
+        $start_ts = $db_time_start ? strtotime(date('Y-m-d') . ' ' . $db_time_start) : null;
+        $end_ts = $db_time_end ? strtotime(date('Y-m-d') . ' ' . $db_time_end) : null;
+
+        $everyday_raw = $schedule['everyday'] ?? null;
+        $allowed_today = true;
+
+        if ($everyday_raw !== null && trim($everyday_raw) !== '') {
+            $today_short = strtolower(date('D'));
+            $parsed = json_decode($everyday_raw, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($parsed)) {
+                if (array_values($parsed) === $parsed) {
+                    $allowed_today = in_array($today_short, array_map('strtolower', $parsed));
+                } else {
+                    $allowed_today = !empty($parsed[strtolower($today_short)]) || !empty($parsed[$today_short]);
+                }
+            } else {
+                $tokens = preg_split('/[;,\s]+/', $everyday_raw, -1, PREG_SPLIT_NO_EMPTY);
+                $tokens = array_map('strtolower', $tokens);
+                $map = [
+                    'sun' => ['sun','sunday'],
+                    'mon' => ['mon','monday'],
+                    'tue' => ['tue','tues','tuesday'],
+                    'wed' => ['wed','wednesday'],
+                    'thu' => ['thu','thur','thursday'],
+                    'fri' => ['fri','friday'],
+                    'sat' => ['sat','saturday']
+                ];
+                $allowed_today = false;
+                foreach ($map as $short => $variants) {
+                    if ($today_short === $short) {
+                        foreach ($variants as $v) {
+                            if (in_array($v, $tokens)) {
+                                $allowed_today = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($allowed_today && $start_ts !== null && $end_ts !== null && $now_ts >= $start_ts && $now_ts <= $end_ts) {
+            $schedule_present = true;
+            $schedule_day_announcment = "Open now";
+        } else {
+            $schedule_present = false;
+            if (!$allowed_today) {
+                $next = null;
+                if (isset($everyday_raw) && trim((string)$everyday_raw) !== '') {
+                    $week = ['sun','mon','tue','wed','thu','fri','sat'];
+                    $allowed = [];
+                    $parsed = json_decode($everyday_raw, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($parsed)) {
+                        if (array_values($parsed) === $parsed) {
+                            $allowed = array_map('strtolower', $parsed);
+                        } else {
+                            foreach ($parsed as $k => $v) {
+                                if ($v) { $allowed[] = strtolower($k); }
+                            }
+                        }
+                    } else {
+                        $tokens = preg_split('/[;,\s]+/', $everyday_raw, -1, PREG_SPLIT_NO_EMPTY);
+                        $allowed = array_map('strtolower', $tokens);
+                    }
+                    $todayIndex = (int)date('w');
+                    for ($i = 1; $i <= 7; $i++) {
+                        $idx = ($todayIndex + $i) % 7;
+                        $short = $week[$idx];
+                        if (in_array($short, $allowed, true)) {
+                            $next = ucfirst($short);
+                            break;
+                        }
+                    }
+                }
+                $schedule_day_announcment = $next
+                    ? "Schedule is closed today — next open on {$next}"
+                    : "Schedule is closed for today";
+            } elseif ($start_ts !== null) {
+                $schedule_day_announcment = "Come back later at " . date('g:i A', $start_ts);
+            } else {
+                $schedule_day_announcment = "Schedule is closed for today";
+            }
+        }
+    } else {
+        $schedule_present = true;
+        $schedule_day_announcment = "Schedule disabled — form available all day.";
+        $time_start = 'Always Open';
+        $time_end = 'Always Open';
+    }
+} else {
+    $schedule_present = true;
+    $schedule_day_announcment = "Open now";
+    $time_start = 'Always Open';
+    $time_end = 'Always Open';
 }
 
 ?>
@@ -52,7 +152,7 @@ if ($schedule) {
             <div class="w-100 py-3">
                 <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
             </div>
-            <?php if ($time_now > $time_start && $time_now < $time_end && $schedule_present) :?>
+            <?php if ($schedule_present) :?>
             <h4 class="text-center fw-bold text-uppercase">Priority FORM</h4>
             <p class="text-center text-muted">PLEASE FILL UP</p>
             <form method="post" id="frmUserForm">
@@ -188,6 +288,22 @@ if ($schedule) {
                                 window.location.href = "./requester_number_priority.php?requester_token=" + payload.token_number;
                             }, 1200);
                         }
+                        return;
+                    }
+
+                    if (xhr && (xhr.status === 423 || xhr.status === 403)) {
+                        let payload = null;
+                        if (xhr.responseJSON) {
+                            payload = xhr.responseJSON;
+                        } else if (xhr.responseText) {
+                            try {
+                                payload = JSON.parse(xhr.responseText);
+                            } catch (parseErr) {
+                                payload = null;
+                            }
+                        }
+                        const infoMsg = payload && payload.message ? payload.message : 'Priority requester form is currently unavailable.';
+                        message_warning(form, infoMsg);
                         return;
                     }
 

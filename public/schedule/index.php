@@ -192,11 +192,24 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
             }
         }
 
-        function handleAuthError(xhr) {
-            if (!xhr || xhr.status !== 401) { return false; }
-            // Token missing or expired; redirect to login
-            window.location.href = '/public/auth/login.php';
-            return true;
+        function handleAuthError(xhr, notifyCtx) {
+            if (!xhr) { return false; }
+            if (xhr.status === 401) {
+                window.location.href = '/public/auth/login.php';
+                return true;
+            }
+            if (xhr.status === 403) {
+                if (notifyCtx && notifyCtx.element && notifyCtx.messageEl) {
+                    notifyCtx.element.classList.remove('alert-success');
+                    notifyCtx.element.classList.add('alert-danger');
+                    notifyCtx.messageEl.innerHTML = 'Administrator access required.';
+                    notifyCtx.element.classList.remove('d-none');
+                } else {
+                    alert('Administrator access required.');
+                }
+                return true;
+            }
+            return false;
         }
     </script>
     <script>
@@ -359,6 +372,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                                 window.location.reload();
                             }, 1200);
                         } else {
+                            notify.classList.remove('alert-success');
                             notify.classList.add('alert-danger');
                             notify_message.innerHTML = response && response.message ? response.message : 'Failed to update';
                             notify.classList.remove('d-none');
@@ -368,7 +382,8 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                         }
                     },
                     error: function(xhr, status, error) {
-                        if (handleAuthError(xhr)) { return; }
+                        if (handleAuthError(xhr, { element: notify, messageEl: notify_message })) { return; }
+                        notify.classList.remove('alert-success');
                         notify.classList.add('alert-danger');
                         notify_message.innerHTML = 'Network or server error';
                         notify.classList.remove('d-none');
@@ -422,6 +437,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                             window.location.reload();
                         }, 2000);
                     } else {
+                        notify_scheduler_requester.classList.remove('alert-success');
                         notify_scheduler_requester.classList.add('alert-danger');
                         notify_scheduler_requester_message.innerHTML = response && response.message ? response.message : 'Failed to update';
                         notify_scheduler_requester.classList.remove('d-none');
@@ -432,7 +448,8 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                     }
                 },
                 error: function(xhr, status, error) {
-                    if (handleAuthError(xhr)) { return; }
+                    if (handleAuthError(xhr, { element: notify_scheduler_requester, messageEl: notify_scheduler_requester_message })) { return; }
+                    notify_scheduler_requester.classList.remove('alert-success');
                     notify_scheduler_requester.classList.add('alert-danger');
                     notify_scheduler_requester_message.innerHTML = 'Network or server error';
                     notify_scheduler_requester.classList.remove('d-none');
