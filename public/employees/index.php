@@ -188,8 +188,8 @@ $adminsCount = 0;
                                     <div class="display-4 text-muted"><i class="bi bi-person-circle"></i></div>
                                 </div>
                                 <h5 class="fw-bold" id="viewEmployeeUsername">N/A</h5>
-                                <div class="small text-muted" id="viewEmployeeRoleType">&mdash;</div>
-                                <div class="mt-2" id="viewEmployeeStatus">&mdash;</div>
+                                <div class="small text-muted" id="viewEmployeeRoleTypeSidebar">&mdash;</div>
+                                <div class="mt-2" id="viewEmployeeStatusSidebar">&mdash;</div>
                             </div>
                             <div class="col-12 col-md-8">
                                 <div class="row mb-2">
@@ -789,12 +789,22 @@ $adminsCount = 0;
                     if (viewEmployeeEmail) viewEmployeeEmail.innerText = email ? email : 'Not present';
                     let viewEmployeeRoleType = document.getElementById('viewEmployeeRoleType');
                     if (viewEmployeeRoleType) viewEmployeeRoleType.innerText = role_type;
+                    let viewEmployeeRoleTypeSidebar = document.getElementById('viewEmployeeRoleTypeSidebar');
+                    if (viewEmployeeRoleTypeSidebar) viewEmployeeRoleTypeSidebar.innerText = role_type.charAt(0).toUpperCase() + role_type.slice(1);
                     let viewEmployeeStatus = document.getElementById('viewEmployeeStatus');
                     if (viewEmployeeStatus) {
                         if (active == 1) {
                             viewEmployeeStatus.innerHTML = textBadge('Active', 'success');
                         } else {
                             viewEmployeeStatus.innerHTML = textBadge('Inactive', 'danger');
+                        }
+                    }
+                    let viewEmployeeStatusSidebar = document.getElementById('viewEmployeeStatusSidebar');
+                    if (viewEmployeeStatusSidebar) {
+                        if (active == 1) {
+                            viewEmployeeStatusSidebar.innerHTML = textBadge('Active', 'success');
+                        } else {
+                            viewEmployeeStatusSidebar.innerHTML = textBadge('Inactive', 'danger');
                         }
                     }
                     try {
@@ -808,10 +818,35 @@ $adminsCount = 0;
                                 return iso;
                             }
                         };
+                        const fmtRelativeTime = (iso) => {
+                            if (!iso) return 'Never';
+                            try {
+                                const d = new Date(iso);
+                                if (isNaN(d.getTime())) return iso;
+                                const now = new Date();
+                                const secondsAgo = Math.floor((now - d) / 1000);
+                                if (secondsAgo < 60) {
+                                    return secondsAgo <= 1 ? 'few sec ago' : secondsAgo + 's ago';
+                                } else if (secondsAgo < 3600) {
+                                    const minAgo = Math.floor(secondsAgo / 60);
+                                    return minAgo === 1 ? 'a minute ago' : minAgo + ' min ago';
+                                } else if (secondsAgo < 86400) {
+                                    const hourAgo = Math.floor(secondsAgo / 3600);
+                                    return hourAgo === 1 ? 'an hour ago' : hourAgo + ' hrs ago';
+                                } else if (secondsAgo < 604800) {
+                                    const dayAgo = Math.floor(secondsAgo / 86400);
+                                    return dayAgo === 1 ? 'a day ago' : dayAgo + ' days ago';
+                                } else {
+                                    return fmtDate(iso);
+                                }
+                            } catch (e) {
+                                return iso;
+                            }
+                        };
                         let viewEmployeeCreated = document.getElementById('viewEmployeeCreated');
                         if (viewEmployeeCreated) viewEmployeeCreated.innerText = fmtDate(employee.created_at);
                         let viewEmployeeLastLogin = document.getElementById('viewEmployeeLastLogin');
-                        if (viewEmployeeLastLogin) viewEmployeeLastLogin.innerText = employee.last_login ? fmtDate(employee.last_login) : 'Never';
+                        if (viewEmployeeLastLogin) viewEmployeeLastLogin.innerText = employee.employee_last_login ? fmtRelativeTime(employee.employee_last_login) : 'Never';
                         let viewEmployeeEmailAnchor = document.getElementById('viewEmployeeEmail');
                         if (viewEmployeeEmailAnchor) {
                             if (email) {
@@ -826,10 +861,19 @@ $adminsCount = 0;
                             if (!role_type) {
                                 const el = document.getElementById('viewEmployeeRoleType');
                                 if (el) el.innerText = '—';
+                                const elSidebar = document.getElementById('viewEmployeeRoleTypeSidebar');
+                                if (elSidebar) elSidebar.innerText = '—';
+                            } else {
+                                const el = document.getElementById('viewEmployeeRoleType');
+                                if (el) el.innerText = role_type.charAt(0).toUpperCase() + role_type.slice(1);
+                                const elSidebar = document.getElementById('viewEmployeeRoleTypeSidebar');
+                                if (elSidebar) elSidebar.innerText = role_type.charAt(0).toUpperCase() + role_type.slice(1);
                             }
                             if (typeof active === 'undefined' || active === null) {
                                 const el = document.getElementById('viewEmployeeStatus');
                                 if (el) el.innerHTML = '<span class="text-muted">—</span>';
+                                const elSidebar = document.getElementById('viewEmployeeStatusSidebar');
+                                if (elSidebar) elSidebar.innerHTML = '<span class="text-muted">—</span>';
                             }
                         } catch (e) {}
                     } catch (e) {

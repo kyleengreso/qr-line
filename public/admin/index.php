@@ -14,6 +14,7 @@ if ($token) {
     $token = json_decode($token);
 }
 $username = isset($token->username) ? $token->username : null;
+$id = isset($token->id) ? (int)$token->id : 0;
 ?>
 
 <!DOCTYPE html>
@@ -874,18 +875,15 @@ $username = isset($token->username) ? $token->username : null;
         let cutOffNotification = document.getElementById('cutOffNotification');
         let cutOffState = document.getElementById('cutOffState');
         let cutOff = document.getElementById('employee-cut-off');
-        const params = new URLSearchParams({
-            employeeCutOff: true,
-            id: <?php echo $id?>
-        });
 
+        // Fetch admin cut-off state on page load
         $.ajax({
-            url: endpointHost.replace(/\/$/, '') + '/api/cashier?' + params,
+            url: endpointHost.replace(/\/$/, '') + '/api/dashboard/admin/cut-off',
             type: 'GET',
+            xhrFields: { withCredentials: true },
+            headers: window.phpToken ? { 'Authorization': 'Bearer ' + window.phpToken } : {},
             success: function(response) {
-                //console.log(response);
-                if (response.status == "success") {
-                    //console.log(response.cut_off);
+                if (response.status === 'success') {
                     if (response.cut_off_state == 1) {
                         operational = false;
                         cutOffNotification.classList.remove('alert-success');
@@ -895,9 +893,6 @@ $username = isset($token->username) ? $token->username : null;
                         cutOff.innerText = "Resume";
                         cutOff.classList.add('btn-success');
                         cutOffState.classList.remove('d-none');
-                        // setTimeout(() => {
-                        //     cutOffNotification.classList.add('d-none');
-                        // }, 5000);  
                     } else {
                         operational = true;
                         cutOffNotification.classList.remove('alert-danger');
@@ -907,26 +902,37 @@ $username = isset($token->username) ? $token->username : null;
                         cutOff.innerText = "Cut Off";
                         cutOff.classList.add('btn-danger');
                         cutOffState.classList.add('d-none');
-                        // setTimeout(() => {
-                        //     cutOffNotification.classList.add('d-none');
-                        // }, 5000);
                     }
                 }
+            },
+            error: function(xhr, status, error) {
+                console.error('Failed to fetch cut-off state:', error);
             }
         });
 
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
-            if (operational) {
-                $.ajax({
-                    url: endpointHost.replace(/\/$/, '') + '/api/cashier',
-                    type: 'POST',
-                    data: JSON.stringify({
-                        method: 'employee-cut-off',
-                        id: <?php echo $id?>,
-                    }),
-                    success: function(response) {
-                        if (response.status === 'success') {
+            var originalText = cutOff.innerHTML;
+            cutOff.disabled = true;
+            cutOff.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+            
+            var newState = operational ? 1 : 0;
+            $.ajax({
+                url: endpointHost.replace(/\/$/, '') + '/api/dashboard/admin/cut-off',
+                type: 'PATCH',
+                contentType: 'application/json',
+                xhrFields: { withCredentials: true },
+                headers: window.phpToken ? { 'Authorization': 'Bearer ' + window.phpToken } : {},
+                data: JSON.stringify({
+                    cut_off_state: newState
+                }),
+                complete: function() {
+                    cutOff.disabled = false;
+                    cutOff.innerHTML = originalText;
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        if (newState === 1) {
                             operational = false;
                             cutOffNotification.classList.remove('alert-success', 'd-none');
                             cutOffNotification.classList.add('alert-danger');
@@ -937,23 +943,8 @@ $username = isset($token->username) ? $token->username : null;
                             cutOffState.classList.remove('d-none');
                             setTimeout(() => {
                                 cutOffNotification.classList.add('d-none');
-                            }, 2000);      
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX Error:', status, error);
-                    }
-                });
-            } else {
-                $.ajax({
-                    url: endpointHost.replace(/\/$/, '') + '/api/cashier',
-                    type: 'POST',
-                    data: JSON.stringify({
-                        method: 'employee-cut-off',
-                        id: <?php echo $id?>,
-                    }),
-                    success: function(response) {
-                        if (response.status === 'success') {
+                            }, 2000);
+                        } else {
                             operational = true;
                             cutOffNotification.classList.remove('alert-danger', 'd-none');
                             cutOffNotification.classList.add('alert-success');
@@ -965,15 +956,15 @@ $username = isset($token->username) ? $token->username : null;
                             setTimeout(() => {
                                 cutOffNotification.classList.add('d-none');
                             }, 5000);
-                        } else {
-                            //console.log('Error:', response.message);
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX Error:', status, error);
+                    } else {
+                        console.error('Error:', response.message);
                     }
-                })
-            }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
         });
 
         function autoRefreshChart() {
