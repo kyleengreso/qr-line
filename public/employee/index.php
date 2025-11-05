@@ -1,7 +1,6 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictEmployeeMode();
-include_once __DIR__ . "/../includes/config.php";
 $payload = getDecodedTokenPayload();
 $tok = null;
 if (is_array($payload)) {
@@ -131,6 +130,25 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         var cutOff_auto = false;
         var queue_remain = null;
         var this_counter_priority = "<?php echo $priority; ?>";
+        const serverTokenFallback = <?php echo json_encode(isset($_COOKIE['token']) ? $_COOKIE['token'] : ''); ?>;
+        function getAuthTokenValue() {
+            try {
+                const match = document.cookie.match('(?:^|; )token=([^;]*)');
+                if (match) {
+                    const token = decodeURIComponent(match[1]);
+                    console.log('Token found in cookie (first 30 chars):', token.substring(0, 30) + '...');
+                    return token;
+                }
+            } catch (e) {
+                console.warn('Error reading token from cookie:', e);
+            }
+            if (serverTokenFallback) {
+                console.log('Using server-provided token fallback');
+                return serverTokenFallback;
+            }
+            console.error('No token available - neither from cookie nor server');
+            return null;
+        }
         let frmCutOff_trigger = document.getElementById('frmCutOff_trigger');
         let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
@@ -191,12 +209,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         (function() {
             let lastTokenValue = null;
             function tryGetTokenFromCookie() {
-                try {
-                    const match = document.cookie.match('(?:^|; )token=([^;]*)');
-                    return match ? decodeURIComponent(match[1]) : null;
-                } catch (e) {
-                    return null;
-                }
+                return getAuthTokenValue();
             }
             function base64UrlDecode(str) {
                 try {
@@ -279,17 +292,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 crossDomain: true,
                 beforeSend: function(xhr) {
                     resetConnectionTimeout();
-                    var token = null;
-                    try {
-                        var cookies = document.cookie.split(';');
-                        for (var i = 0; i < cookies.length; i++) {
-                            var c = cookies[i].trim();
-                            if (c.startsWith('token=')) {
-                                token = decodeURIComponent(c.substring(6));
-                                break;
-                            }
-                        }
-                    } catch (e) {}
+                    const token = getAuthTokenValue();
                     if (token) {
                         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                     }
@@ -410,6 +413,12 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 url: window.API_BASE + '/cashier',
                 type: 'GET',
                 cache: false,
+                beforeSend: function(xhr) {
+                    const token = getAuthTokenValue();
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
+                },
                 success: function(response) {
                     console.log("RECV:", response);
                     let queue_number = document.getElementById('queue-number');
@@ -582,6 +591,23 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
             $.ajax({
                 url: window.API_BASE + '/dashboard/cashier',
                 type: 'GET',
+                beforeSend: function(xhr) {
+                    // Ensure we send an Authorization header even when the cookie
+                    // is not readable by JS (HttpOnly or cross-site). Prefer the
+                    // cookie value if available, otherwise use the server-side
+                    // fallback embedded at render time.
+                    try {
+                        const token = getAuthTokenValue() || serverTokenFallback || null;
+                        if (token) {
+                            console.log('Attaching Authorization header for dashboard/cashier (first 30 chars):', token.substring(0,30) + '...');
+                            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                        } else {
+                            console.warn('No token available to attach for dashboard/cashier');
+                        }
+                    } catch (ex) {
+                        console.error('Error attaching Authorization header:', ex);
+                    }
+                },
                 cache: false,
                 success: function(response) {
                     let transactions = response.data || [];
