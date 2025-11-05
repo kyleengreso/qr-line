@@ -67,11 +67,40 @@ include './../base.php';
             </div>
         </div>
     </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11;">
+        <div id="connectionAlert" class="alert alert-warning alert-dismissible fade" role="alert" style="display: none; min-width: 300px;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span>Connecting...</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
     <?php after_js()?>
     <script>
     var endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
         let this_requester_status_alert = document.getElementById("this_requester_status_alert");
         let this_requester_status_info = document.getElementById("this_requester_status_info");
+        let connectionAlert = document.getElementById("connectionAlert");
+        let connectionTimeout = null;
+
+        function showConnectionAlert() {
+            if (connectionTimeout) clearTimeout(connectionTimeout);
+            connectionTimeout = setTimeout(function() {
+                connectionAlert.style.display = 'block';
+                connectionAlert.classList.add('show');
+            }, 20000);
+        }
+
+        function hideConnectionAlert() {
+            if (connectionTimeout) {
+                clearTimeout(connectionTimeout);
+                connectionTimeout = null;
+            }
+            connectionAlert.classList.remove('show');
+            connectionAlert.style.display = 'none';
+        }
 
         function fetchYourQuery() {
             const token = new URLSearchParams(window.location.search).get('requester_token');
@@ -81,23 +110,29 @@ include './../base.php';
                 window.location.href = `${realHost}/public/requester/requester_form.php`;
             }
 
-            // ONLY Flask API (no PHP fallback)
             if (!(endpointHost && endpointHost.length > 0)) {
                 alert('Service unavailable. Please try again later.');
                 return;
             }
+
+            showConnectionAlert();
+
             $.ajax({
                 url: endpointHost.replace(/\/$/, '') + '/api/requester?token_number=' + encodeURIComponent(token),
                 type: 'GET',
                 xhrFields: { withCredentials: true },
                 success: function(response) {
+                    hideConnectionAlert();
                     if (response && response.status === 'success') {
                         renderRequesterState(response);
                     } else {
                         alert(response && response.message ? response.message : 'Failed to load status');
                     }
                 },
-                error: function() { alert('Network error. Please try again.'); }
+                error: function() {
+                    hideConnectionAlert();
+                    alert('Network error. Please try again.');
+                }
             });
         }
 
