@@ -238,35 +238,62 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 type: 'PATCH',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    counter_number : <?php echo $counterNumber?>,
+                    counter_number: <?php echo htmlspecialchars($counterNumber); ?>,
                     queue_remain : queue_remain
                 }),
                 success: function (response) {
-                    cutOff_trigger_notification.classList.remove('d-none');
-                    notify_priority = true;
-                    if (notify_priority && queue_remain != null) {
-                        cutOff_trigger_message.innerText = "Queue remaining set to " + queue_remain;
-                    } else if (notify_priority && queue_remain == null) {
-                        cutOff_trigger_message.innerText = "Auto-cut off is disabled";
+                    if (response.status === 'success') {
+                        cutOff_trigger_notification.classList.remove('d-none');
+                        notify_priority = true;
+                        if (notify_priority && queue_remain != null) {
+                            cutOff_trigger_message.innerText = "Queue remaining set to " + queue_remain;
+                        } else if (notify_priority && queue_remain == null) {
+                            cutOff_trigger_message.innerText = "Auto-cut off is disabled";
+                        }
+                        setTimeout(() => {
+                            notify_priority = false;
+                            cutOff_trigger_notification.classList.add('d-none');
+                        },notify_priority_timer * 1000);
+                        queue_remain_get();
+                        console.log(response);
+                    } else {
+                        console.error("Failed to set queue_remain:", response.message);
+                        cutOff_trigger_notification.classList.remove('d-none');
+                        cutOff_trigger_notification.classList.add('alert-danger');
+                        cutOff_trigger_message.innerText = "Error: " + response.message;
+                        setTimeout(() => {
+                            cutOff_trigger_notification.classList.add('d-none');
+                            cutOff_trigger_notification.classList.remove('alert-danger');
+                        }, 5000);
                     }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error setting queue_remain:", status, error);
+                    cutOff_trigger_notification.classList.remove('d-none');
+                    cutOff_trigger_notification.classList.add('alert-danger');
+                    cutOff_trigger_message.innerText = "Error: Network error";
                     setTimeout(() => {
-                        notify_priority = false;
                         cutOff_trigger_notification.classList.add('d-none');
-                    },notify_priority_timer * 1000);
-                    queue_remain_get();
-                    console.log(response);
+                        cutOff_trigger_notification.classList.remove('alert-danger');
+                    }, 5000);
                 }
             });
         }
         let cut_off_select = document.getElementById('cut_off_select');
         cut_off_select.addEventListener('change', function (e) {
-            console.log(this.value);
+            console.log("Cut-off select changed to:", this.value);
             fetchCutOff();
             if (this.value === "null") {
+                console.log("Disabling auto cut-off");
                 queue_remain_set(null);
             } else {
                 const v = parseInt(this.value, 10);
-                queue_remain_set(Number.isNaN(v) ? null : v);
+                if (!Number.isNaN(v)) {
+                    console.log("Setting queue_remain to:", v);
+                    queue_remain_set(v);
+                } else {
+                    console.error("Invalid queue_remain value:", this.value);
+                }
             }
         });
         function queue_remain_get() {
@@ -290,8 +317,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             } else {
                                 cutOff_trigger_notification.innerText = response.queue_remain + " queue remain.";
                             }
+                            cut_off_select.value = response.queue_remain;
                         } else {
                             cutOff_trigger_notification.classList.add('d-none');
+                            cut_off_select.value = "null";
                         }
                         console.log("Success:", response.message);
                     } else {
@@ -362,6 +391,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 success: function(response) {
                     if (response.status === 'success') {
                         queue_remain_get();
+                        fetchCutOff();
                         fetchTransaction();
                         fetchStudentTransaction();
                         return;
@@ -397,6 +427,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 success: function(response) {
                     if (response.status === 'success') {
                         queue_remain_get();
+                        fetchCutOff();
                         fetchTransaction();
                         fetchStudentTransaction();
                         return;
@@ -527,6 +558,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             cutOffState.classList.remove('d-none');
                             btn_counter_success.disabled = true;
                             btn_counter_skip.disabled = true;
+                            cut_off_select.disabled = true;
                         } else if (response.cut_off_state == 0){
                             operational = true;
                             frmCutOff_trigger.classList.remove('d-none');
@@ -540,6 +572,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             cutOffState.classList.add('d-none');
                             btn_counter_success.disabled = false;
                             btn_counter_skip.disabled = false;
+                            cut_off_select.disabled = false;
                         }
                     }
                 }
@@ -547,6 +580,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         };
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
+            var originalText = cutOff.innerHTML;
+            cutOff.disabled = true;
+            cutOff.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+            
             if (operational) {
                 $.ajax({
                     url: window.API_BASE + '/cashier',
@@ -556,6 +593,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,
                     }),
+                    complete: function() {
+                        cutOff.disabled = false;
+                        cutOff.innerHTML = originalText;
+                    },
                     success: function(response) {
                         fetchCutOff();
                         if (response.status === 'success') {
@@ -587,6 +628,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,
                     }),
+                    complete: function() {
+                        cutOff.disabled = false;
+                        cutOff.innerHTML = originalText;
+                    },
                     success: function(response) {
                         if (response.status === 'success') {
                             operational = true;
