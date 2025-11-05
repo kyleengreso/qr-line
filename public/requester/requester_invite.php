@@ -16,6 +16,8 @@ $options = new QROptions([
 ]);
 
 $qrData = (new QRCode($options))->render($origin);
+$qrDataForm = (new QRCode($options))->render($origin . '/public/requester/requester_form.php');
+$qrDataFormPriority = (new QRCode($options))->render($origin . '/public/requester/requester_form_priority.php');
 ?>
 
 <!DOCTYPE html>
@@ -33,22 +35,62 @@ $qrData = (new QRCode($options))->render($origin);
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
     <div class="container d-flex justify-content-center" style="margin-top:100px;min-height:600px">
-        <div class="col card shadow p-4" style="max-height:500px;max-width: 400px;border-radius:30px">
-            <div class="w-100 text-center">
-                <h3>
-                    Join the queue
-                </h3>
-            </div>
-            <div class="w-100" id="qr_code_link">
-                <img class="p-2 mx-auto d-block" style="max-width:250px;width:100%;height:auto" id="qr_code_img" src="<?php echo $qrData; ?>" alt="qr_code">
-            </div>
-            <div class="w-100 text-center">
-                <h3>Scan the QR Code</h3>
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+            <div class="card shadow mb-4 p-4" style="border-radius:18px;">
+                <div class="row g-3 align-items-center">
+                    <div class="col-12 text-center">
+                        <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" style="max-width:88px" class="mb-2">
+                        <h4 class="mb-1">Join the queue</h4>
+                        <p class="text-muted small mb-3">Scan a QR code or copy a link to join</p>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-center gap-4 flex-wrap">
+                        <div class="d-flex flex-column align-items-center">
+                            <p class="small fw-semibold mb-2 h1 text-primary">Standard Form</p>
+                            <div class="border rounded-3 p-2 bg-white" style="max-width:200px;">
+                                <img id="qr_code_form" src="<?php echo $qrDataForm; ?>" alt="QR code for form" style="display:block;max-width:180px;width:100%;height:auto;margin:0 auto;">
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column align-items-center">
+                            <p class="small fw-semibold mb-2 h1 text-primary">Priority Form</p>
+                            <div class="border rounded-3 p-2 bg-white" style="max-width:200px;">
+                                <img id="qr_code_priority" src="<?php echo $qrDataFormPriority; ?>" alt="QR code for priority form" style="display:block;max-width:180px;width:100%;height:auto;margin:0 auto;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <?php after_js()?>
+    <script>
+    (function(){
+        var copyBtns = document.querySelectorAll('.copy-link-btn');
+        
+        copyBtns.forEach(function(btn){
+            btn.addEventListener('click', function(){
+                var url = this.getAttribute('data-url');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(url).then(function(){
+                        btn.textContent = 'Copied';
+                        setTimeout(function(){ btn.textContent = 'Copy'; }, 1200);
+                    }).catch(function(){
+                        btn.textContent = 'Copy';
+                    });
+                } else {
+                    var ta = document.createElement('textarea');
+                    ta.value = url;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try { document.execCommand('copy'); btn.textContent = 'Copied'; } catch(e){}
+                    document.body.removeChild(ta);
+                    setTimeout(function(){ btn.textContent = 'Copy'; }, 1200);
+                }
+            });
+        });
+    })();
+    </script>
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>

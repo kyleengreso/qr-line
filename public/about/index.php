@@ -40,18 +40,18 @@ include "./../base.php";
                     <?php
                         $contributors = [
                             ['login'=>'aceday','name'=>'Mark Cedie Buday','avatar'=>'https://avatars.githubusercontent.com/u/68708541','url'=>'https://github.com/aceday'],
-                            ['login'=>'kyleengreso','name'=>'Kyle Engreso','avatar'=>'https://avatars.githubusercontent.com/u/125529632','url'=>'https://github.com/kyleengreso'],
+                            ['login'=>'kyleengreso','name'=>'Kyle Cedric Engreso','avatar'=>'https://avatars.githubusercontent.com/u/125529632','url'=>'https://github.com/kyleengreso'],
                             ['login'=>'NaldCapuno','name'=>'Ronald Jason Capuno','avatar'=>'https://avatars.githubusercontent.com/u/120568365','url'=>'https://github.com/NaldCapuno'],
                             ['login'=>'PaelMacalinao','name'=>'John Rafael Macalinao','avatar'=>'https://avatars.githubusercontent.com/u/141973593','url'=>'https://github.com/PaelMacalinao'],
                             ['name'=>'Dale Gabriel Alie'],
-                            ['name'=>'Darwin Velasco'],
+                            ['name'=>'Darwin Velasco Jr.'],
                             ['name'=>'John Rafael Macalinao'],
-                            ['name'=>'John Whynne Jeresano'],
+                            ['name'=>'John Wynne Jeresano'],
                             ['name'=>'Ken Roger Domingo'],
-                            ['name'=>'Laurence Tabang'],
+                            ['name'=>'Jay Mar Laurence Tabang'],
                             ['name'=>'John Lester Balmaceda'],
                             ['name'=>'Michael John Austria'],
-                            ['name'=>'Mimi Apilan'],
+                            ['name'=>'Mary Mae Apilan'],
                             ['name'=>'Rolando Coloquit Jr.'],
                             ['name'=>'Siradz Sahiddin'],
                         ];

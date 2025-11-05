@@ -143,7 +143,7 @@ if ($schedule) {
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
     <div class="container d-flex justify-content-center align-items-center" style="margin-top: 100px;min-height: 600px;">
-        <div class="card shadow-sm p-4" style="max-width: 400px;width: 100%;border-radius:30px">
+        <div class="card shadow-sm mb-4 p-4" style="max-width: 400px;width: 100%;border-radius:30px">
             <div class="w-100 py-3">
                 <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
             </div>
