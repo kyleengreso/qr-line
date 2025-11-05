@@ -1,13 +1,10 @@
 <?php
-// Session Control: Start Session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Load global config (CORS, endpoint server, allowed origins)
 @include_once __DIR__ . '/includes/config.php';
 
-// Project Information
 $project_name = "QR-Line";
 $project_name_alt = "qr-line";
 $project_name_full = "QR-Line: Palawan State University";
@@ -15,15 +12,12 @@ $project_description = "QR-Line is a web-based queue management system utilizing
 $project_release = false;
 $project_version = "1.0.0";
 
-// Network Feature
 $serverName = "192.168.1.137:80"; // IP Address version
 
-// Project Support
 $project_address = " Tiniguiban Heights, Puerto Princesa City, Palawan, Philippines";
 $project_email = " marcsysman@gmail.com";
 $project_phone = " (+63)909-123-4567";
 
-// Simple .env loader
 $envPath = __DIR__ . '/.env';
 if (!file_exists($envPath)) {
     die('.env file missing.');
@@ -35,16 +29,12 @@ foreach (parse_ini_file($envPath) as $key => $value) {
 }
 
 
-// Website Security Feature
 $enable_http = true;                // Enable HTTP connection. Default: true
 $enable_secure = true;              // Enable HTTPS connection. Default: true
 $master_key = "master";             // Master key for encryption and decryption. Default: "master"
 
-// Include auth helpers after master key is defined so they can access $master_key
 require_once __DIR__ . '/./includes/system_auth.php';
 
-// Normalize token for templates: decode cookie once and expose as $token (object)
-// so templates can safely use $token->username and $token->role_type.
 $token = null;
 if (isset($_COOKIE['token'])) {
     $decoded = decryptToken($_COOKIE['token'], $master_key ?? '');
@@ -58,7 +48,6 @@ if (isset($_COOKIE['token'])) {
     }
 }
 
-// Email Feature setup
 $email_feature = FALSE;
 
 // SMTP AUTH
@@ -67,33 +56,18 @@ $smtp_port = 465;
 $smtp_email = "marcsysman@gmail.com";
 $smtp_password = "zgojyaysdylvdlnh";
 
-// PATHS
 $root_path = "/public/";
 $auth_path = $root_path . "/auth/";
 $admin_path = $root_path . "/admin/";
 $employee_path = $root_path . "/employee/";
 $api_path = $root_path . "/api/";
 
-// System Website Control
 $system_development_mode = true;
 $enable_register_employee = false;
 
 
-// Website tweaks
 $form_label_state = "hidden";
 date_default_timezone_set("Asia/Manila");
-
-// Social Media Links
-/*
-    $social_media_show: show the social media links on the footer website
-        Default: true   [true, false]
-    $social_facebook_link: Direct to Facebook link
-        Default: null   [null, "https://www.facebook.com/yourpage"]
-    $social_twitter_link: Direct to Twitter link
-        Default: null   [null, "https://www.twitter.com/yourpage"]
-    $social_direct_link: Direct to your website link
-        Default: null   [null, "https://www.yourwebsite.com"]
-*/
 
 $social_media_show = true;          // To show the social media links
 $social_facebook_link = null;
@@ -101,7 +75,6 @@ $social_twitter_link = null;
 $social_direct_link = null;
 
 
-// Transaction System
 $transaction_cancelled_yesterday = true;
 
 
@@ -115,9 +88,6 @@ function head_css() {
         <link rel="stylesheet" href="./../asset/css/theme.css">
     ';
 }
-/**
- * Optional meta helper for pages to inject small modern meta tags
- */
 function head_meta() {
     echo "<meta name=\"theme-color\" content=\"#ff6e37\">\n";
 }
@@ -129,12 +99,12 @@ function before_js() {
 }
 
 function after_js() {
-    echo '
-    <script src="./../asset/js/base.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <script src="./../asset/js/message.js"></script>
-    
-    ';
+    $endpoint = isset($GLOBALS['endpoint_server']) ? rtrim($GLOBALS['endpoint_server'], '/') : '';
+    $endpoint_json = json_encode($endpoint, JSON_UNESCAPED_SLASHES);
+    if ($endpoint_json === false) {
+        $endpoint_json = '""';
+    }
+    echo "<script>window.endpointHost = {$endpoint_json} || '';window.API_BASE = window.endpointHost ? window.endpointHost.replace(/\\/+$/, '') + '/api' : '';</script><script src=\"./../asset/js/base.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js\"></script><script src=\"./../asset/js/message.js\"></script>";
     return;
 }
 

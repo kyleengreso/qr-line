@@ -61,7 +61,7 @@ restrictCheckLoggedIn();
     <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
     <script>
-        const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    const endpointHost = window.endpointHost;
     </script>
     <script>
         $(document).ready(function() {

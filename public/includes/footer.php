@@ -15,9 +15,9 @@
 
         
         <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mt-3">
+            <h6 class="text-uppercase mb-4">LINKS</h6>
+            <hr class="w-100 clearfix d-md-none" />
             <?php if (!isset($_COOKIE['token'])): ?>
-                <hr class="w-100 clearfix d-md-none" />
-                <h6 class="text-uppercase mb-4">LINKS</h6>
                 <p>
                     <a class="text-black text-decoration-none" href="/public/auth/login.php">Login</a>
                 </p>
@@ -32,10 +32,10 @@
                 <p>
                     <a class="text-black text-decoration-none" href="/public/cashier_stats">Counter Stats</a>
                 </p>
+                <?php endif; ?>
                 <p>
                     <a class="text-black text-decoration-none" href="/public/about">About</a>
                 </p>
-                <?php endif; ?>
         </div>
 
         <hr class="w-100 clearfix d-md-none" />

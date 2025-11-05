@@ -411,7 +411,7 @@ function phpUserStatusIcon($username, $role_type, $active) {
     <?php include_once './../includes/footer.php'; ?>
     <?php after_js()?>
     <script>
-        const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    const endpointHost = window.endpointHost;
 
         var counter_search = '';
     var counter_page = 1;

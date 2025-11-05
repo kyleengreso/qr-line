@@ -24,6 +24,9 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
     <title>Settings | <?php echo $project_name ?></title>
     <?php head_css() ?>
     <?php before_js() ?>
+    <script>
+        window.phpToken = <?php echo isset($_COOKIE['token']) ? "'" . addslashes($_COOKIE['token']) . "'" : 'null'; ?>;
+    </script>
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
@@ -177,7 +180,37 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
     <?php include_once "./../includes/footer.php"; ?>
     <script src="./../asset/js/message.js"></script>
     <script>
-    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+        const endpointHost = window.endpointHost;
+        const authToken = (typeof window.phpToken === 'string' && window.phpToken.length > 0) ? window.phpToken : '';
+
+        function attachAuthHeader(xhr) {
+            if (!authToken) { return; }
+            try {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + authToken);
+            } catch (err) {
+                console.error('Failed to attach Authorization header', err);
+            }
+        }
+
+        function handleAuthError(xhr, notifyCtx) {
+            if (!xhr) { return false; }
+            if (xhr.status === 401) {
+                window.location.href = '/public/auth/login.php';
+                return true;
+            }
+            if (xhr.status === 403) {
+                if (notifyCtx && notifyCtx.element && notifyCtx.messageEl) {
+                    notifyCtx.element.classList.remove('alert-success');
+                    notifyCtx.element.classList.add('alert-danger');
+                    notifyCtx.messageEl.innerHTML = 'Administrator access required.';
+                    notifyCtx.element.classList.remove('d-none');
+                } else {
+                    alert('Administrator access required.');
+                }
+                return true;
+            }
+            return false;
+        }
     </script>
     <script>
         let frmScheduleRequesterForm = document.getElementById('frmScheduleRequesterForm');
@@ -189,6 +222,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
             $.ajax({
                 url: endpointHost.replace(/\/$/, '') + '/api/schedule/requester_form',
                 type: 'GET',
+                beforeSend: function(xhr) { attachAuthHeader(xhr); },
                 xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log("Response GET:", response);
@@ -244,6 +278,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                     }
                 },
                 error: function(xhr, status, error) {
+                    if (handleAuthError(xhr)) { return; }
                     console.error("AJAX Error:", status, error);
                     // If no schedule is found yet (404), populate sensible defaults to keep UI usable
                     if (xhr && xhr.status === 404) {
@@ -271,6 +306,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
             $.ajax({
                 url: endpointHost.replace(/\/$/, '') + '/api/transaction_limiter',
                 type: 'GET',
+                beforeSend: function(xhr) { attachAuthHeader(xhr); },
                 xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log('Transaction limiter GET:', response);
@@ -291,6 +327,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                     }
                 },
                 error: function(xhr, status, error) {
+                    if (handleAuthError(xhr)) { return; }
                     console.error('AJAX Error (transaction_limiter):', status, error);
                     // If not found (404), set sensible defaults
                     if (xhr && xhr.status === 404) {
@@ -323,6 +360,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                         transaction_limit: parseInt(transaction_limit, 10),
                         transaction_limit_enable: transaction_limit_enable
                     }),
+                    beforeSend: function(xhr) { attachAuthHeader(xhr); },
                     xhrFields: { withCredentials: true },
                     success: function(response) {
                         notify.classList.remove('alert-success', 'alert-danger', 'alert-info');
@@ -334,6 +372,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                                 window.location.reload();
                             }, 1200);
                         } else {
+                            notify.classList.remove('alert-success');
                             notify.classList.add('alert-danger');
                             notify_message.innerHTML = response && response.message ? response.message : 'Failed to update';
                             notify.classList.remove('d-none');
@@ -343,6 +382,8 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                         }
                     },
                     error: function(xhr, status, error) {
+                        if (handleAuthError(xhr, { element: notify, messageEl: notify_message })) { return; }
+                        notify.classList.remove('alert-success');
                         notify.classList.add('alert-danger');
                         notify_message.innerHTML = 'Network or server error';
                         notify.classList.remove('d-none');
@@ -381,6 +422,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                     repeat: 'daily',
                     everyday: days
                 }),
+                beforeSend: function(xhr) { attachAuthHeader(xhr); },
                 xhrFields: { withCredentials: true },
                 success: function(response) {
                     console.log("Response:" + response);
@@ -395,6 +437,7 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                             window.location.reload();
                         }, 2000);
                     } else {
+                        notify_scheduler_requester.classList.remove('alert-success');
                         notify_scheduler_requester.classList.add('alert-danger');
                         notify_scheduler_requester_message.innerHTML = response && response.message ? response.message : 'Failed to update';
                         notify_scheduler_requester.classList.remove('d-none');
@@ -404,7 +447,17 @@ $counterNumber = isset($token->counterNumber) ? $token->counterNumber : null;
                         }, 2000); 
                     }
                 },
-            })
+                error: function(xhr, status, error) {
+                    if (handleAuthError(xhr, { element: notify_scheduler_requester, messageEl: notify_scheduler_requester_message })) { return; }
+                    notify_scheduler_requester.classList.remove('alert-success');
+                    notify_scheduler_requester.classList.add('alert-danger');
+                    notify_scheduler_requester_message.innerHTML = 'Network or server error';
+                    notify_scheduler_requester.classList.remove('d-none');
+                    setTimeout(() => {
+                        notify_scheduler_requester.classList.add('d-none');
+                    }, 2000);
+                }
+            });
             
             console.log('Ready');
 

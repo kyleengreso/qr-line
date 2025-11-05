@@ -1,7 +1,6 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictEmployeeMode();
-include_once __DIR__ . "/../includes/config.php";
 $payload = getDecodedTokenPayload();
 $tok = null;
 if (is_array($payload)) {
@@ -28,6 +27,21 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
 </head>
 <body>
     <?php include "./../includes/navbar.php"; ?>
+    <!-- Connection Timeout Modal -->
+    <div class="modal fade" id="connectionTimeoutModal" tabindex="-1" aria-labelledby="connectionTimeoutLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 id="connectionTimeoutLabel" class="mt-3">Connecting...</h5>
+                    <p class="text-muted">Attempting to reconnect to the server</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container-lg d-flex justify-content-center align-items-center before-footer" style="margin-top: 100px">
         <div class="text-center w-100" style="max-width: 1200px;" id="employeeDashboard">
             <div class="row d-flex justify-content-center align-items-start" style="margin: auto;">
@@ -116,23 +130,86 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         var cutOff_auto = false;
         var queue_remain = null;
         var this_counter_priority = "<?php echo $priority; ?>";
+        const serverTokenFallback = <?php echo json_encode(isset($_COOKIE['token']) ? $_COOKIE['token'] : ''); ?>;
+        function getAuthTokenValue() {
+            try {
+                const match = document.cookie.match('(?:^|; )token=([^;]*)');
+                if (match) {
+                    const token = decodeURIComponent(match[1]);
+                    console.log('Token found in cookie (first 30 chars):', token.substring(0, 30) + '...');
+                    return token;
+                }
+            } catch (e) {
+                console.warn('Error reading token from cookie:', e);
+            }
+            if (serverTokenFallback) {
+                console.log('Using server-provided token fallback');
+                return serverTokenFallback;
+            }
+            console.error('No token available - neither from cookie nor server');
+            return null;
+        }
         let frmCutOff_trigger = document.getElementById('frmCutOff_trigger');
         let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
         let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
         let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
+        // Connection timeout handler
+        let connectionTimeoutModal = null;
+        let connectionTimeoutTimer = null;
+        let lastResponseTime = Date.now();
+        let firstResponseReceived = false;
+
+        function initConnectionTimeoutModal() {
+            if (!connectionTimeoutModal) {
+                connectionTimeoutModal = new bootstrap.Modal(document.getElementById('connectionTimeoutModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            return connectionTimeoutModal;
+        }
+
+        function showConnectionTimeout() {
+            const modal = initConnectionTimeoutModal();
+            if (!modal._isShown) {
+                modal.show();
+            }
+        }
+
+        function hideConnectionTimeout() {
+            const modal = initConnectionTimeoutModal();
+            if (modal._isShown) {
+                modal.hide();
+            }
+        }
+
+        function resetConnectionTimeout() {
+            lastResponseTime = Date.now();
+            if (connectionTimeoutTimer) {
+                clearTimeout(connectionTimeoutTimer);
+            }
+            // Hide modal if it was shown
+            hideConnectionTimeout();
+            
+            // Set new timeout for 20 seconds
+            connectionTimeoutTimer = setTimeout(() => {
+                showConnectionTimeout();
+            }, 20000);
+        }
+
+        // Show the modal immediately when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            showConnectionTimeout();
+        });
+
         (function() {
-            const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : '';?>";
-            window.API_BASE = endpointHost + '/api';
+        const endpointHost = window.endpointHost;
+        window.API_BASE = endpointHost ? endpointHost.replace(/\/+$/, '') + '/api' : '';
         })();
         (function() {
             let lastTokenValue = null;
             function tryGetTokenFromCookie() {
-                try {
-                    const match = document.cookie.match('(?:^|; )token=([^;]*)');
-                    return match ? decodeURIComponent(match[1]) : null;
-                } catch (e) {
-                    return null;
-                }
+                return getAuthTokenValue();
             }
             function base64UrlDecode(str) {
                 try {
@@ -214,20 +291,14 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 xhrFields: { withCredentials: true },
                 crossDomain: true,
                 beforeSend: function(xhr) {
-                    var token = null;
-                    try {
-                        var cookies = document.cookie.split(';');
-                        for (var i = 0; i < cookies.length; i++) {
-                            var c = cookies[i].trim();
-                            if (c.startsWith('token=')) {
-                                token = decodeURIComponent(c.substring(6));
-                                break;
-                            }
-                        }
-                    } catch (e) {}
+                    resetConnectionTimeout();
+                    const token = getAuthTokenValue();
                     if (token) {
                         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                     }
+                },
+                complete: function() {
+                    resetConnectionTimeout();
                 }
             });
         }
@@ -238,35 +309,62 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 type: 'PATCH',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    counter_number : <?php echo $counterNumber?>,
+                    counter_number: <?php echo htmlspecialchars($counterNumber); ?>,
                     queue_remain : queue_remain
                 }),
                 success: function (response) {
-                    cutOff_trigger_notification.classList.remove('d-none');
-                    notify_priority = true;
-                    if (notify_priority && queue_remain != null) {
-                        cutOff_trigger_message.innerText = "Queue remaining set to " + queue_remain;
-                    } else if (notify_priority && queue_remain == null) {
-                        cutOff_trigger_message.innerText = "Auto-cut off is disabled";
+                    if (response.status === 'success') {
+                        cutOff_trigger_notification.classList.remove('d-none');
+                        notify_priority = true;
+                        if (notify_priority && queue_remain != null) {
+                            cutOff_trigger_message.innerText = "Queue remaining set to " + queue_remain;
+                        } else if (notify_priority && queue_remain == null) {
+                            cutOff_trigger_message.innerText = "Auto-cut off is disabled";
+                        }
+                        setTimeout(() => {
+                            notify_priority = false;
+                            cutOff_trigger_notification.classList.add('d-none');
+                        },notify_priority_timer * 1000);
+                        queue_remain_get();
+                        console.log(response);
+                    } else {
+                        console.error("Failed to set queue_remain:", response.message);
+                        cutOff_trigger_notification.classList.remove('d-none');
+                        cutOff_trigger_notification.classList.add('alert-danger');
+                        cutOff_trigger_message.innerText = "Error: " + response.message;
+                        setTimeout(() => {
+                            cutOff_trigger_notification.classList.add('d-none');
+                            cutOff_trigger_notification.classList.remove('alert-danger');
+                        }, 5000);
                     }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error setting queue_remain:", status, error);
+                    cutOff_trigger_notification.classList.remove('d-none');
+                    cutOff_trigger_notification.classList.add('alert-danger');
+                    cutOff_trigger_message.innerText = "Error: Network error";
                     setTimeout(() => {
-                        notify_priority = false;
                         cutOff_trigger_notification.classList.add('d-none');
-                    },notify_priority_timer * 1000);
-                    queue_remain_get();
-                    console.log(response);
+                        cutOff_trigger_notification.classList.remove('alert-danger');
+                    }, 5000);
                 }
             });
         }
         let cut_off_select = document.getElementById('cut_off_select');
         cut_off_select.addEventListener('change', function (e) {
-            console.log(this.value);
+            console.log("Cut-off select changed to:", this.value);
             fetchCutOff();
             if (this.value === "null") {
+                console.log("Disabling auto cut-off");
                 queue_remain_set(null);
             } else {
                 const v = parseInt(this.value, 10);
-                queue_remain_set(Number.isNaN(v) ? null : v);
+                if (!Number.isNaN(v)) {
+                    console.log("Setting queue_remain to:", v);
+                    queue_remain_set(v);
+                } else {
+                    console.error("Invalid queue_remain value:", this.value);
+                }
             }
         });
         function queue_remain_get() {
@@ -290,8 +388,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             } else {
                                 cutOff_trigger_notification.innerText = response.queue_remain + " queue remain.";
                             }
+                            cut_off_select.value = response.queue_remain;
                         } else {
                             cutOff_trigger_notification.classList.add('d-none');
+                            cut_off_select.value = "null";
                         }
                         console.log("Success:", response.message);
                     } else {
@@ -313,6 +413,12 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 url: window.API_BASE + '/cashier',
                 type: 'GET',
                 cache: false,
+                beforeSend: function(xhr) {
+                    const token = getAuthTokenValue();
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
+                },
                 success: function(response) {
                     console.log("RECV:", response);
                     let queue_number = document.getElementById('queue-number');
@@ -337,10 +443,12 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 }
             });
         }
+
         let btn_counter_success = document.getElementById('btn-counter-success');
         let btn_counter_skip = document.getElementById('btn-counter-skip');
         btn_counter_success.addEventListener('click', function(e) {
             e.preventDefault();
+            var originalText = btn_counter_success.innerHTML;
             $.ajax({
                 url: window.API_BASE + '/cashier',
                 type: 'POST',
@@ -349,9 +457,22 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     method: 'cashier-success',
                     idemployee: <?php echo $id?>,
                 }),
+                beforeSend: function(xhr) {
+                    const token = getAuthTokenValue();
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
+                    btn_counter_success.disabled = true;
+                    btn_counter_success.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                },
+                complete: function() {
+                    btn_counter_success.disabled = false;
+                    btn_counter_success.innerHTML = originalText;
+                },
                 success: function(response) {
                     if (response.status === 'success') {
                         queue_remain_get();
+                        fetchCutOff();
                         fetchTransaction();
                         fetchStudentTransaction();
                         return;
@@ -367,6 +488,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
 
         btn_counter_skip.addEventListener('click', function(e) {
             e.preventDefault();
+            var originalText = btn_counter_skip.innerHTML;
             $.ajax({
                 url: window.API_BASE + '/cashier',
                 type: 'POST',
@@ -375,9 +497,22 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     method: 'cashier-missed',
                     idemployee: <?php echo $id?>,
                 }),
+                beforeSend: function(xhr) {
+                    const token = getAuthTokenValue();
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
+                    btn_counter_skip.disabled = true;
+                    btn_counter_skip.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                },
+                complete: function() {
+                    btn_counter_skip.disabled = false;
+                    btn_counter_skip.innerHTML = originalText;
+                },
                 success: function(response) {
                     if (response.status === 'success') {
                         queue_remain_get();
+                        fetchCutOff();
                         fetchTransaction();
                         fetchStudentTransaction();
                         return;
@@ -464,6 +599,23 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
             $.ajax({
                 url: window.API_BASE + '/dashboard/cashier',
                 type: 'GET',
+                beforeSend: function(xhr) {
+                    // Ensure we send an Authorization header even when the cookie
+                    // is not readable by JS (HttpOnly or cross-site). Prefer the
+                    // cookie value if available, otherwise use the server-side
+                    // fallback embedded at render time.
+                    try {
+                        const token = getAuthTokenValue() || serverTokenFallback || null;
+                        if (token) {
+                            console.log('Attaching Authorization header for dashboard/cashier (first 30 chars):', token.substring(0,30) + '...');
+                            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                        } else {
+                            console.warn('No token available to attach for dashboard/cashier');
+                        }
+                    } catch (ex) {
+                        console.error('Error attaching Authorization header:', ex);
+                    }
+                },
                 cache: false,
                 success: function(response) {
                     let transactions = response.data || [];
@@ -508,6 +660,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             cutOffState.classList.remove('d-none');
                             btn_counter_success.disabled = true;
                             btn_counter_skip.disabled = true;
+                            cut_off_select.disabled = true;
                         } else if (response.cut_off_state == 0){
                             operational = true;
                             frmCutOff_trigger.classList.remove('d-none');
@@ -521,6 +674,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                             cutOffState.classList.add('d-none');
                             btn_counter_success.disabled = false;
                             btn_counter_skip.disabled = false;
+                            cut_off_select.disabled = false;
                         }
                     }
                 }
@@ -528,6 +682,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
         };
         cutOff.addEventListener('click', function(e) {
             e.preventDefault();
+            var originalText = cutOff.innerHTML;
+            cutOff.disabled = true;
+            cutOff.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+            
             if (operational) {
                 $.ajax({
                     url: window.API_BASE + '/cashier',
@@ -537,6 +695,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,
                     }),
+                    complete: function() {
+                        cutOff.disabled = false;
+                        cutOff.innerHTML = originalText;
+                    },
                     success: function(response) {
                         fetchCutOff();
                         if (response.status === 'success') {
@@ -568,6 +730,10 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                         method: 'employee-cut-off',
                         id: <?php echo $id?>,
                     }),
+                    complete: function() {
+                        cutOff.disabled = false;
+                        cutOff.innerHTML = originalText;
+                    },
                     success: function(response) {
                         if (response.status === 'success') {
                             operational = true;
@@ -600,6 +766,8 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 fetchTransaction();
                 fetchStudentTransaction();
             }
+            // Reset connection timeout on each successful daemon cycle
+            resetConnectionTimeout();
             setTimeout(daemon, 500);
         }
 

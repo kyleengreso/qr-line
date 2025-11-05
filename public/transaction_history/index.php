@@ -223,7 +223,7 @@ $email = isset($token->email) ? $token->email : null;
     <?php after_js()?>
 </body>
 <script>
-    const endpointHost = "<?php echo isset($endpoint_server) ? rtrim($endpoint_server, '/') : ''; ?>";
+    const endpointHost = window.endpointHost;
     let table_transactions_history = document.getElementById("table-transactions-history");
     let searchEmail = document.getElementById("searchEmail");
     let getPaymentType = document.getElementById("getPaymentType");
