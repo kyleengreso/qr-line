@@ -1,5 +1,21 @@
 <?php
 include './../base.php';
+@include_once __DIR__ . '/../../vendor/autoload.php';
+use chillerlan\QRCode\{QRCode, QROptions};
+use chillerlan\QRCode\Output\QROutputInterface;
+
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'];
+$origin = $scheme . '://' . $host;
+
+$options = new QROptions([
+    'outputType'   => QROutputInterface::GDIMAGE_PNG,
+    'eccLevel'     => QRCode::ECC_M,
+    'scale'        => 6,
+    'outputBase64' => true,
+]);
+
+$qrData = (new QRCode($options))->render($origin);
 ?>
 
 <!DOCTYPE html>
@@ -24,7 +40,7 @@ include './../base.php';
                 </h3>
             </div>
             <div class="w-100" id="qr_code_link">
-                <img class="p-2 w-100 h-100" id="qr_code_img" src="" alt="qr_code">
+                <img class="p-2 mx-auto d-block" style="max-width:250px;width:100%;height:auto" id="qr_code_img" src="<?php echo $qrData; ?>" alt="qr_code">
             </div>
             <div class="w-100 text-center">
                 <h3>Scan the QR Code</h3>
@@ -33,11 +49,6 @@ include './../base.php';
     </div>
 
     <?php after_js()?>
-    <script>
-        let qr_code_link = document.getElementById("qr_code_link");
-        let qr_code_img = document.getElementById("qr_code_img");
-        qr_code_img.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + realHost;
-    </script>
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>

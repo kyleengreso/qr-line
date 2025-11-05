@@ -227,12 +227,24 @@ if ($schedule) {
                 message_error(form, 'Service is unavailable. Please try again later.');
                 return;
             }
+            var $btn = $('#frmUserForm button[type=submit]');
+            var _orig = $btn.html();
             $.ajax({
                 url: endpointHost.replace(/\/$/, '') + '/api/requester',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(user),
                 xhrFields: { withCredentials: true },
+                beforeSend: function() {
+                    $btn.prop('disabled', true);
+                    $btn.addClass('bg-warning text-dark');
+                    $btn.html('<span class="spinner-border spinner-border-sm text-white" role="status" aria-hidden="true"></span> Processing...');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false);
+                    $btn.removeClass('bg-warning text-dark');
+                    $btn.html(_orig);
+                },
                 success: function(response) {
                     if (response && response.status === 'success') {
                         message_success(form, response.message || 'Success');
@@ -284,6 +296,26 @@ if ($schedule) {
                 is_student: student,
                 priority: 'none',
                 website: `${realHost}/public/requester/requester_number.php`
+            };
+            console.log(user);
+            sumbitUserForm(user);
+        });
+
+    </script>
+    <!-- <script src="./../asset/js/counters.js"></script> -->
+</body>
+<?php include_once "./../includes/footer.php"; ?>
+</html>
+                website: `${realHost}/public/requester/requester_number.php`
+            };
+            console.log(user);
+            sumbitUserForm(user);
+        });
+    </script>
+
+</body>
+<?php include_once "./../includes/footer.php"; ?>
+</html>realHost}/public/requester/requester_number.php`
             };
             console.log(user);
             sumbitUserForm(user);
