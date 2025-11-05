@@ -337,10 +337,12 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                 }
             });
         }
+
         let btn_counter_success = document.getElementById('btn-counter-success');
         let btn_counter_skip = document.getElementById('btn-counter-skip');
         btn_counter_success.addEventListener('click', function(e) {
             e.preventDefault();
+            var originalText = btn_counter_success.innerHTML;
             $.ajax({
                 url: window.API_BASE + '/cashier',
                 type: 'POST',
@@ -349,6 +351,14 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     method: 'cashier-success',
                     idemployee: <?php echo $id?>,
                 }),
+                beforeSend: function() {
+                    btn_counter_success.disabled = true;
+                    btn_counter_success.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                },
+                complete: function() {
+                    btn_counter_success.disabled = false;
+                    btn_counter_success.innerHTML = originalText;
+                },
                 success: function(response) {
                     if (response.status === 'success') {
                         queue_remain_get();
@@ -367,6 +377,7 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
 
         btn_counter_skip.addEventListener('click', function(e) {
             e.preventDefault();
+            var originalText = btn_counter_skip.innerHTML;
             $.ajax({
                 url: window.API_BASE + '/cashier',
                 type: 'POST',
@@ -375,6 +386,14 @@ $priority = isset($tok->priority) ? $tok->priority : 'N';
                     method: 'cashier-missed',
                     idemployee: <?php echo $id?>,
                 }),
+                beforeSend: function() {
+                    btn_counter_skip.disabled = true;
+                    btn_counter_skip.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                },
+                complete: function() {
+                    btn_counter_skip.disabled = false;
+                    btn_counter_skip.innerHTML = originalText;
+                },
                 success: function(response) {
                     if (response.status === 'success') {
                         queue_remain_get();
