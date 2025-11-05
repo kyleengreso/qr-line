@@ -379,3 +379,36 @@
 .per-page-select {
     width: 88px;
 }
+
+.about-hero {
+    margin-top: 80px;
+    min-height: 420px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+.about-panel {
+    width: 100%;
+    max-width: 980px;
+    border-radius: 12px;
+    padding: 20px;
+    background: #fff;
+}
+.about-header { display:flex; gap:1rem; align-items:center; }
+.about-header img { max-width:96px; height:auto; }
+.about-desc { color: #6c757d; margin-top:8px; }
+.about-content { padding: 1rem; }
+.about-cta { margin-top: 0.5rem; }
+.about-title-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.about-header .col-md-4 { display:flex; justify-content:center; align-items:center; padding-top:1rem; padding-bottom:1rem; }
+.list-group-flush .member-item { padding-top:0.6rem; padding-bottom:0.6rem; border-bottom:1px solid #f1f3f5; }
+.member-item strong { font-weight:600; color:#212529; }
+.members-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 1rem;
+    align-items: start;
+}
+@media (max-width: 576px) {
+    .members-grid { grid-template-columns: 1fr; }
+}

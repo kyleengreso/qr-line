@@ -15,90 +15,74 @@ include "./../base.php";
 </head>
 <body class="bg">
     <?php include "./../includes/navbar_non.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 100px;min-height: 600px;">
-        <div class="card shadow-sm p-4 mb-4" style="width: 100%;border-radius:30px">
-            <div class="w-100 py-3">
-                <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid mx-auto d-block" style="max-width: 100px">
-            </div>
-            <div class="text-center">
-                <div class="mb-4">
-                    <h3>About this project</h3>
+    <div class="container about-hero">
+        <div class="about-panel shadow-sm mb-4">
+            <div class="row g-0 align-items-center about-header">
+                <div class="col-12 d-flex justify-content-center py-3">
+                    <img src="./../asset/images/logo_blk.png" alt="<?php echo $project_name?>" class="img-fluid">
                 </div>
-                <div class="mb-4">
-                    <h5>Developers</h5>
-                    <div class="row">
-                        <div class="col-6 col-lg-3 p-0 m-0">
-                            <div class="card shadow m-2 card-body text-center">
-                                <div class="d-flex justify-content-center">
-                                    <img src="https://avatars.githubusercontent.com/u/68708541" alt="aceday"
-                                    class="rounded-circle img-fluid" style="width: 150px;">
-                                </div>
-                                    <a class="text-decoration-none text-black" href="https://github.com/aceday">
-                                        <h5 class="my-3">aceday</h5>
-                                    </a>
-                                <p class="text-muted mb-1">Mark Cedie Buday</p>
-                                <p class="text-muted mb-4">BSCS-3 B1</p>
-                                <div class="d-flex justify-content-center mb-2">
-                                </div>
-                            </div>
+                <div class="col-12">
+                    <div class="about-content">
+                        <div class="about-title-row">
+                            <h2 class="mb-1"><?php echo $project_name?></h2>
+                            <a href="/" class="btn btn-outline-primary btn-sm">Home</a>
                         </div>
-                        <div class="col-6 col-lg-3 p-0 m-0">
-                            <div class="card shadow m-2 card-body text-center">
-                                <div class="d-flex justify-content-center">
-                                    <img src="https://avatars.githubusercontent.com/u/125529632" alt="kyleengreso"
-                                    class="rounded-circle img-fluid" style="width: 150px;">
-                                </div>
-                                <a class="text-decoration-none text-black" href="https://github.com/kyleengreso">
-                                    <h5 class="my-3">kyleengreso</h5>
-                                </a>
-                                <p class="text-muted mb-1">Kyle Engreso</p>
-                                <p class="text-muted mb-4">BSCS-3 B1</p>
-                                <div class="d-flex justify-content-center mb-2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3 p-0 m-0">
-                            <div class="card shadow m-2 card-body text-center">
-                                <div class="d-flex justify-content-center">
-                                    <img src="https://avatars.githubusercontent.com/u/120568365" alt="NaldCapuno"
-                                    class="rounded-circle img-fluid" style="width: 150px;">
-                                </div>
-                                <a class="text-decoration-none text-black" href="https://github.com/NaldCapuno">
-                                    <h5 class="my-3">NaldCapuno</h5>
-                                </a>
-                                <p class="text-muted mb-1">Ronald Capuno</p>
-                                <p class="text-muted mb-4">BSCS-3 B1</p>
-                                <div class="d-flex justify-content-center mb-2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3 p-0 m-0">
-                            <div class="card shadow m-2 card-body text-center">
-                                <div class="d-flex justify-content-center">
-                                    <img src="https://avatars.githubusercontent.com/u/141973593" alt="aceday"
-                                    class="rounded-circle img-fluid" style="width: 150px;">
-                                </div>
-                                <a class="text-decoration-none text-black" href="https://github.com/PaelMacalinao">
-                                    <h5 class="my-3">PaelMacalinao</h5>
-                                </a>
-                                <p class="text-muted mb-1">John Rafael Macalinao</p>
-                                <p class="text-muted mb-4">BSCS-3 B1</p>
-                                <div class="d-flex justify-content-center mb-2">
-                                </div>
-                            </div>
-                        </div>
+                        <p class="about-desc"><?php echo $project_description?></p>
                     </div>
                 </div>
-                
             </div>
 
+            <hr class="my-3">
+
+            <div class="mb-3 px-1">
+                <h5 class="mb-3">Members</h5>
+                <div class="row">
+                    <?php
+                        $contributors = [
+                            ['login'=>'aceday','name'=>'Mark Cedie Buday','avatar'=>'https://avatars.githubusercontent.com/u/68708541','url'=>'https://github.com/aceday'],
+                            ['login'=>'kyleengreso','name'=>'Kyle Engreso','avatar'=>'https://avatars.githubusercontent.com/u/125529632','url'=>'https://github.com/kyleengreso'],
+                            ['login'=>'NaldCapuno','name'=>'Ronald Jason Capuno','avatar'=>'https://avatars.githubusercontent.com/u/120568365','url'=>'https://github.com/NaldCapuno'],
+                            ['login'=>'PaelMacalinao','name'=>'John Rafael Macalinao','avatar'=>'https://avatars.githubusercontent.com/u/141973593','url'=>'https://github.com/PaelMacalinao'],
+                            ['name'=>'Dale Gabriel Alie'],
+                            ['name'=>'Darwin Velasco'],
+                            ['name'=>'John Rafael Macalinao'],
+                            ['name'=>'John Whynne Jeresano'],
+                            ['name'=>'Ken Roger Domingo'],
+                            ['name'=>'Laurence Tabang'],
+                            ['name'=>'John Lester Balmaceda'],
+                            ['name'=>'Michael John Austria'],
+                            ['name'=>'Mimi Apilan'],
+                            ['name'=>'Rolando Coloquit Jr.'],
+                            ['name'=>'Siradz Sahiddin'],
+                        ];
+                        shuffle($contributors);
+                        $seen = [];
+                        $unique = [];
+                        foreach($contributors as $item){
+                            $dn = !empty($item['name']) ? $item['name'] : (!empty($item['login']) ? $item['login'] : 'Member');
+                            $key = mb_strtolower(trim($dn));
+                            if(isset($seen[$key])){ continue; }
+                            $seen[$key] = true;
+                            $unique[] = $item;
+                        }
+                    ?>
+                    <?php if(!empty($unique)): ?>
+                        <ul class="list-group list-group-flush w-100 members-grid">
+                        <?php foreach($unique as $c): ?>
+                            <?php $displayName = !empty($c['name']) ? $c['name'] : (!empty($c['login']) ? $c['login'] : 'Member'); ?>
+                            <li class="list-group-item member-item py-2 border-0">
+                                <span class="text-dark"><strong><?= htmlspecialchars($displayName) ?></strong></span>
+                            </li>
+                        <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
 <?php after_js()?>
     <script src="./../asset/js/message.js"></script>
-    <script src="./../asset/js/user_form.js"></script>
-    <!-- <script src="./../asset/js/counters.js"></script> -->
 </body>
 <?php include_once "./../includes/footer.php"; ?>
 </html>
