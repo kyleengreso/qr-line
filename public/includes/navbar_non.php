@@ -1,10 +1,10 @@
-<nav class="navbar fixed-top" style="background-color: rgb(255, 110, 55);">
-    <div class="container d-flex justify-content-center align-items-center" style="width: 80%;">
-        <a class="text-decoration-none" href="/">
-            <span class="navbar-brand mb-0 text-white d-flex align-items-center">
-                <img src="./../asset/images/logo.png" alt="PSU logo" width="40" height="40" class="me-2">
-                <span class="fs-5 fw-normal fs-4"><?php echo $project_name_full?></span>
-            </span>
-        </a>
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-center h-16">
+            <a href="/" class="flex items-center gap-3">
+                <img src="./../asset/images/logo_blk.png" alt="Logo" class="h-9 w-9">
+                <span class="font-semibold text-gray-800 text-lg"><?php echo $project_name_full?></span>
+            </a>
+        </div>
     </div>
 </nav>

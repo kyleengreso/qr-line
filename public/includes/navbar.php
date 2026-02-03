@@ -1,171 +1,140 @@
 <?php
-// Checking if token was present
-if (isset($_COOKIE['token'])) {
-    $token = $_COOKIE['token'];
-    $token = decryptToken($token, $master_key);
-    $token = json_encode($token);
-    $token = json_decode($token);
+function token_prop($token, $prop) {
+    if (is_object($token) && isset($token->{$prop})) return $token->{$prop};
+    if (is_array($token) && isset($token[$prop])) return $token[$prop];
+    return null;
 }
+$token_role_raw = token_prop($token, 'role_type');
+if (!$token_role_raw && isset($_COOKIE['role_type'])) $token_role_raw = $_COOKIE['role_type'];
+$token_role = is_string($token_role_raw) ? strtolower($token_role_raw) : null;
+$is_admin = in_array($token_role, ['admin','administrator','superadmin'], true);
+$is_employee = in_array($token_role, ['employee','cashier','attendant'], true);
+$token_username = token_prop($token, 'username');
 ?>
-<nav class="navbar fixed-top" style="background-color: rgb(255, 110, 55);">
-    <div class="container d-flex justify-content-between align-items-center" style="width: 100%;">
-
-        <!-- Sidebar Toggle Button -->
-        <?php if ($token->role_type === 'admin') : ?>
-        <button class="btn btn-primary text-decoration-none me-3" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle Sidebar">
-            <i class="bi bi-list"></i>
-        </button>
-        <?php else : ?>
-        <button class="invisible">wews</button>
-        <?php endif; ?>
-
-        <!-- Project Name -->
-        <a class="text-decoration-none" href="/public">
-            <span class="navbar-brand mb-0 text-white d-flex align-items-center">
-                <img src="./../asset/images/logo.png" alt="PSU logo" width="40" height="40" class="me-2">
-                <span class="fs-5 fw-normal d-md-inline d-none"><?php echo $project_name_full; ?></span>
-            </span>
-        </a>
-
-        <!-- Username and Clock -->
-        <div class="d-flex align-items-center">
-            <?php if (isset($token) && $token) : ?>
-                <span class="text-white me-3 d-none d-md-block">
-                    <span class="fs-5"><?php echo $token->username; ?></span>
-                </span>
-            <?php endif; ?>
-            <span class="text-white me-3 d-none d-md-block" id="navbar-clock">
-                <span id="current-time"></span>
-            </span>
-            <a class="btn btn-primary text-decoration-none" style="border-radius: 5px; border: 1px solid #fff; background-color: transparent;" id="btn-logout-1" aria-label="Logout">
-                <i class="bi bi-box-arrow-right"></i>
-            </a>
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-4">
+                <?php if ($is_admin) : ?>
+                <button id="sidebar-toggle" class="p-2 text-gray-600 hover:text-[rgb(255,110,55)] hover:bg-gray-100 rounded-md transition">
+                    <i class="bi bi-list text-xl"></i>
+                </button>
+                <?php endif; ?>
+                <a href="/public" class="flex items-center gap-3">
+                    <img src="./../asset/images/logo_blk.png" alt="Logo" class="h-9 w-9">
+                    <span class="hidden sm:block font-semibold text-gray-800 text-lg"><?php echo $project_name_full; ?></span>
+                </a>
+            </div>
+            <div class="flex items-center gap-3">
+                <?php if ($token_username) : ?>
+                <div class="hidden md:flex items-center gap-2 text-gray-600">
+                    <i class="bi bi-person-circle text-lg"></i>
+                    <span class="text-sm font-medium"><?php echo htmlentities($token_username); ?></span>
+                </div>
+                <?php endif; ?>
+                <div class="hidden md:flex items-center gap-2 text-gray-500 text-sm" id="navbar-clock">
+                    <i class="bi bi-clock"></i>
+                    <span id="current-time" class="font-medium"></span>
+                </div>
+                <button id="btn-logout-1" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[rgb(255,110,55)] hover:bg-[rgb(230,60,20)] rounded-md transition">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
+            </div>
         </div>
     </div>
 </nav>
 
-<!-- Sidebar -->
-<?php if ($token->role_type === 'admin') : ?>
-<div class="offcanvas offcanvas-start bg-primary text-white" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" style="width: 350px;">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title fs-3" id="sidebarLabel"><?php echo $project_name?></h5>
-        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+<?php if ($is_admin) : ?>
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-40 hidden transition-opacity"></div>
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 z-50 -translate-x-full transition-transform duration-300 flex flex-col shadow-xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 h-16 border-b border-gray-200">
+        <div class="flex items-center gap-2">
+            <img src="./../asset/images/logo_blk.png" alt="Logo" class="h-8 w-8">
+            <span class="font-bold text-gray-800 text-lg"><?php echo $project_name?></span>
+        </div>
+        <button id="sidebar-close" class="p-1 text-gray-400 hover:text-gray-600 rounded">
+            <i class="bi bi-x-lg text-xl"></i>
+        </button>
     </div>
-    <div class="offcanvas-body">
-        <div class="d-flex align-items-center mb-3">
-            <img src="./../asset/images/user_icon.png" alt="User" class="rounded-circle me-2 mr-2" width="75" height="75" style="border: 1px #111 solid">
-            <div class="text-white">
-                <h6 class="mb-0 fs-4"><?php echo $token->username; ?></h6>
+    <!-- User Info -->
+    <div class="px-4 py-4 border-b border-gray-100 bg-gray-50">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <img src="./../asset/images/user_icon.png" alt="User" class="w-12 h-12 rounded-full border-2 border-[rgb(255,110,55)]">
+                <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800"><?php echo htmlentities($token->username); ?></p>
+                <p class="text-xs text-gray-500">Administrator</p>
             </div>
         </div>
-        <ul class="list-unstyled">
+    </div>
+    <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false): ?>
+    <!-- Cut Off Button -->
+    <div class="px-4 py-3 border-b border-gray-100">
+        <button id="employee-cut-off" class="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition">
+            <i class="bi bi-power"></i>Cut Off
+        </button>
+    </div>
+    <?php endif; ?>
+    <!-- Navigation -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+        <ul class="space-y-1 px-3">
             <li>
-            <!-- Show the "CUT OFF" button only on specific pages -->
-            <!-- <?php // if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false || strpos($_SERVER['REQUEST_URI'], '/public/employee') !== false): ?> -->
-            <?php if (strpos($_SERVER['REQUEST_URI'], '/public/admin') !== false): ?>
-
-                <div class="py-4 px-2">
-                    <div class="row">
-                        <a class="btn btn-danger ms-auto" id="employee-cut-off">
-                            <span><i class="bi bi-power shadow-sm"></i></span>
-                            CUT OFF
-                        </a>
-                    </div>
-                </div>
-            <?php endif; ?>
-            </li>
-            <?php if ($token->role_type == 'admin') : ?>
-            <li>
-                <div class="py-4 px-2">
-                    <a href="/public/admin" class="w-100 fs-4 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-house-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Home</span>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+                <a href="/public/admin" class="nav-link flex items-center gap-3 px-3 py-2.5 text-gray-700 rounded-md hover:bg-[rgb(255,110,55)] hover:text-white transition">
+                    <i class="bi bi-house-door text-lg w-5 text-center"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
             </li>
             <li>
-                <div class="py-4 px-2">
-                    <a href="/public/employees" class="w-100 fs-4 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-people-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Employees</span>    
-                            </div>
-                        </div>
-                    </a>
-                </div>
+                <a href="/public/employees" class="nav-link flex items-center gap-3 px-3 py-2.5 text-gray-700 rounded-md hover:bg-[rgb(255,110,55)] hover:text-white transition">
+                    <i class="bi bi-people text-lg w-5 text-center"></i>
+                    <span class="font-medium">Employees</span>
+                </a>
             </li>
             <li>
-                <div class="py-4 px-2">
-                        <a href="/public/counters" class="w-100 fs-4 text-white text-decoration-none"> 
-                            <div class="row">
-                                <div class="col-2">
-                                    <i class="bi bi-arrow-down-up"></i>
-                                </div>
-                                <div class="col-10">
-                                    <span>Counters</span>
-                                </div>
-                            </div>                 
-                    </a>
-                </div>
+                <a href="/public/counters" class="nav-link flex items-center gap-3 px-3 py-2.5 text-gray-700 rounded-md hover:bg-[rgb(255,110,55)] hover:text-white transition">
+                    <i class="bi bi-diagram-3 text-lg w-5 text-center"></i>
+                    <span class="font-medium">Counters</span>
+                </a>
             </li>
             <li>
-                <div class="py-4 px-2">
-                    <a href="/public/transaction_history" class="fs-4 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-person-lines-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Transaction History</span>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+                <a href="/public/transaction_history" class="nav-link flex items-center gap-3 px-3 py-2.5 text-gray-700 rounded-md hover:bg-[rgb(255,110,55)] hover:text-white transition">
+                    <i class="bi bi-clock-history text-lg w-5 text-center"></i>
+                    <span class="font-medium">Transactions</span>
+                </a>
             </li>
             <li>
-                <div class="py-4 px-2">
-                    <a href="/public/schedule" class="w-100 fs-4 text-white text-decoration-none">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-gear-fill"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Settings</span>    
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </li>
-            <?php endif; ?>
-            <li>
-                <div class="py-4 px-2">
-                    <a class="w-100 fs-4 text-white text-decoration-none" id="btn-logout-2">
-                        <div class="row">
-                            <div class="col-2">
-                                <i class="bi bi-box-arrow-right"></i>
-                            </div>
-                            <div class="col-10">
-                                <span>Logout</span>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+                <a href="/public/schedule" class="nav-link flex items-center gap-3 px-3 py-2.5 text-gray-700 rounded-md hover:bg-[rgb(255,110,55)] hover:text-white transition">
+                    <i class="bi bi-calendar-check text-lg w-5 text-center"></i>
+                    <span class="font-medium">Schedule</span>
+                </a>
             </li>
         </ul>
+    </nav>
+    <!-- Footer -->
+    <div class="border-t border-gray-200 p-4">
+        <button id="btn-logout-2" class="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition">
+            <i class="bi bi-box-arrow-right"></i>Logout
+        </button>
+        <p class="text-center text-xs text-gray-400 mt-3">&copy; <?php echo project_year()?> <?php echo $project_name?></p>
     </div>
-    <div class="offcanvas-footer text-center py-3" style="background-color: rgb(255, 110, 55);">
-        <span>&copy <?php echo project_year()?> <?php echo $project_name?>, All Rights Reserved.</span>
-    </div>
-</div>
+</aside>
+<script>
+(function(){
+    const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'),tg=document.getElementById('sidebar-toggle'),cl=document.getElementById('sidebar-close');
+    function open(){sb.classList.remove('-translate-x-full');ov.classList.remove('hidden');}
+    function close(){sb.classList.add('-translate-x-full');ov.classList.add('hidden');}
+    tg&&tg.addEventListener('click',open);cl&&cl.addEventListener('click',close);ov&&ov.addEventListener('click',close);
+    document.querySelectorAll('.nav-link').forEach(l=>{
+        if(location.pathname.includes(l.getAttribute('href'))){
+            l.classList.remove('text-gray-700');
+            l.classList.add('bg-[rgb(255,110,55)]','text-white');
+        }
+    });
+})();
+</script>
 <?php endif; ?>
-
 <script src="./../asset/js/navbar.js"></script>

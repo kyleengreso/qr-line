@@ -1,18 +1,17 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
-
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
+$raw_token = isset($_COOKIE['token']) ? $_COOKIE['token'] : null;
+$token = null;
+if ($raw_token) {
+    $decoded = decryptToken($raw_token, $master_key);
+    if ($decoded) $token = json_decode(json_encode($decoded));
+}
+$id = isset($token->id) ? $token->id : null;
+$username = isset($token->username) ? $token->username : null;
+$role_type = isset($token->role_type) ? $token->role_type : (isset($_COOKIE['role_type']) ? $_COOKIE['role_type'] : null);
+$email = isset($token->email) ? $token->email : null;
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,329 +21,259 @@ $counterNumber = $token->counterNumber;
     <title>Employees | <?php echo $project_name?></title>
     <?php head_css()?>
     <?php before_js()?>
+    <style>
+        .table-employees thead th { position:sticky; top:0; background:#fff; z-index:2; }
+        .table-employees tbody tr:hover { background:rgba(0,0,0,0.02); }
+        .td-truncate { max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    </style>
 </head>
-<body>
+<body class="bg">
     <?php include "./../includes/navbar.php"; ?>
-
-    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;margin-top:100px;min-height:500px">
-        <div class="col-md-6" style="min-width:400px;max-width:900px;transform:scale(0.9)">
-            <div class="alert text-start alert-success d-none" id="logOutNotify">
+    <div class="min-h-screen pt-24 pb-32 flex justify-center px-4">
+        <div class="w-full max-w-4xl">
+            <div id="logOutNotify" class="hidden mb-4 p-4 bg-green-100 text-green-800 rounded-lg">
                 <span><?php echo $username?> has logged out successfully</span>
             </div>
-            <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
-                <nav aria-label="breadcrumb mx-4">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="/public/admin" style="text-decoration:none;color:black">Dashboard</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Employees</li>
-                    </ol>
+            <div class="bg-white shadow rounded-full px-6 py-2 mb-4">
+                <nav class="text-sm">
+                    <a href="/public/admin" class="text-gray-700 hover:text-[rgb(255,110,55)]">Dashboard</a>
+                    <span class="mx-2 text-gray-400">/</span>
+                    <span class="text-gray-500">Employees</span>
                 </nav>
             </div>
-            <div class="card shadow">
-                <div class="card-header">
-                    <span>Employees</span>
+            <div class="bg-white shadow rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h5 class="text-lg font-semibold">Employees</h5>
+                        <div class="text-sm text-gray-500">List of employees, roles and status</div>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-gray-500">Per page</span>
+                        <select id="employeesPerPage" class="border border-gray-300 rounded px-2 py-1 text-sm">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col">
-                                <h3 class="text-start my-1 mx-2 fw-bold">Employees</h3>
-                            </div>
-                            <div class="col d-flex justify-content-end">
-                                <a class="btn btn-success text-white px-4" id="btn-add-employee" data-toggle="modal" data-target="#addEmployeeModal"><span class="fw-bold">+</span> Add New</a>
+                <div class="p-6">
+                    <div class="mb-4 flex flex-wrap gap-3">
+                        <div class="flex-1 min-w-[200px]">
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="bi bi-search"></i></span>
+                                <input type="text" id="searchEmployee" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" placeholder="Search username or email">
                             </div>
                         </div>
-                    </div>
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col-8">
-                                <div class="input-group mb-2">
-                                    <div class="input-group-text"><i class="bi bi-search"></i></div>
-                                    <div class="form-floating">
-                                        <input type="text" name="search" id="search" class="form-control" placeholder="Search username">
-                                        <label for="search">Search</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-floating mb-2">
-                                    <select class="form-control" name="getRoleType" id="getRoleType">
-                                        <option value="none">All</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="employee">Cashier</option>
-                                    </select>
-                                    <label for="getRoleType" class="form-label">Role</label>
-                                </div>
-                            </div>
+                        <select id="filterRole" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="none">All Roles</option>
+                            <option value="employee">Employee</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <select id="filterStatus" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="none">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <div class="flex gap-2 ml-auto">
+                            <button id="btn-add-employee" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"><span class="font-bold">+</span> Add</button>
+                            <button id="btnExportEmployeesCsv" class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Export CSV</button>
+                            <button id="btnRefreshEmployees" class="px-4 py-2 bg-[rgb(255,110,55)] text-white rounded-lg text-sm hover:bg-[rgb(230,60,20)]">Refresh</button>
                         </div>
                     </div>
-                    <table class="table table-striped table-members" id="table-employees">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Username</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Load -->
-                        </tbody>
-                    </table>
-                    <nav aria-label="Page navigation example">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item">
-                                <a class="page-link" id="pagePrevEmployees">Previous</a>
-                            </li>
-                            <!-- Page number reserved -->
-                            <li class="page-item">
-                                <a class="page-link" id="pageNextEmployees">Next</a>
-                            </li>
-                        </ul>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-employees text-sm" id="table-employees">
+                            <thead class="bg-gray-50 text-left">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">Username</th>
+                                    <th class="px-4 py-3 font-medium hidden md:table-cell">Email</th>
+                                    <th class="px-4 py-3 font-medium hidden md:table-cell">Role</th>
+                                    <th class="px-4 py-3 font-medium">Status</th>
+                                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="flex items-center justify-between mt-4">
+                        <small class="text-gray-500">Showing <strong id="empShowingCount">0</strong></small>
+                    </div>
+                    <nav class="mt-4">
+                        <ul id="employeesPagination" class="flex justify-center gap-1"></ul>
                     </nav>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- View Employee -->
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">View Employee: <span id="viewUsernameDisplay"></span></h5>
+    <!-- View Modal -->
+    <div id="viewEmployeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeModal('viewEmployeeModal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
+            <div class="bg-[rgb(255,110,55)] text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                <div>
+                    <h5 class="font-bold">View Employee: <span id="viewUsernameDisplay"></span></h5>
+                    <div class="text-sm opacity-80">Employee details</div>
                 </div>
-                <div class="modal-body py-4 px-6" id="viewEmployeeBody">
-                    <div class="col">
-                        <div class="row-12">
-                            <div class="col text-center">
-                                <h4 class="text-center my-1 fw-bold">Employee Details</h4>
-                            </div>
-                        </div>
-                        <!-- <div class="row-12">
-                            <div class="col d-flex justify-content-center" style="max-width:300px;max-height:300px;">
-                                <img class="w-100 h-100" src="./../asset/images/user_icon.png" alt="">
-                            </div>
-                        </div> -->
-                        <div class="row">
-                            <div class="col">
-                                ID
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeId">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Username
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeUsername">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Email
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeEmail">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Role
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeRoleType">N/A</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                Status
-                            </div>
-                            <div class="col">
-                                <span id="viewEmployeeStatus">N/A</span>
-                            </div>
-                        </div>
+                <button onclick="closeModal('viewEmployeeModal')" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="text-center md:w-1/3">
+                        <div class="text-6xl text-gray-400 mb-2"><i class="bi bi-person-circle"></i></div>
+                        <h5 class="font-bold" id="viewEmployeeUsername">N/A</h5>
+                        <div class="text-sm text-gray-500" id="viewEmployeeRoleTypeSidebar">&mdash;</div>
+                        <div class="mt-2" id="viewEmployeeStatusSidebar">&mdash;</div>
+                    </div>
+                    <div class="flex-1 text-sm space-y-2">
+                        <div class="flex"><span class="w-24 text-gray-500">ID</span><span id="viewEmployeeId">N/A</span></div>
+                        <div class="flex"><span class="w-24 text-gray-500">Email</span><a href="#" id="viewEmployeeEmail" class="text-[rgb(255,110,55)]">N/A</a></div>
+                        <div class="flex"><span class="w-24 text-gray-500">Role</span><span id="viewEmployeeRoleType">&mdash;</span></div>
+                        <div class="flex"><span class="w-24 text-gray-500">Status</span><span id="viewEmployeeStatus">&mdash;</span></div>
+                        <div class="flex"><span class="w-24 text-gray-500">Created</span><span id="viewEmployeeCreated">&mdash;</span></div>
+                        <div class="flex"><span class="w-24 text-gray-500">Last login</span><span id="viewEmployeeLastLogin">&mdash;</span></div>
                     </div>
                 </div>
-                <div class="modal-footer" id="viewEmployeeFooter">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 text-right">
+                <button onclick="closeModal('viewEmployeeModal')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Employee -->
-    <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <form method="POST" id="frmAddEmployee">
-                <div class="modal-content">
-                    <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="addEmployeeTitle">Add Employee</h5>
+    <!-- Add Modal -->
+    <div id="addEmployeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeModal('addEmployeeModal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <form id="frmAddEmployee">
+                <div class="bg-[rgb(255,110,55)] text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                        <h5 class="font-bold">Add Employee</h5>
+                        <div class="text-sm opacity-80">Create a new employee account and assign role</div>
                     </div>
-                    <div class="modal-body py-4 px-6" id="addEmployeeBody">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="addEmployeeAlert">
-                                <span id="addEmployeeAlertMsg"></span>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="text" name="add_username" id="add_username" class="form-control" placeholder="Username" required>
-                                <label for="add_username">Username</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="add_password" id="add_password" class="form-control" placeholder="Password" required>
-                                <label for="add_password">Password</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="add_confirm_password" id="add_confirm_password" class="form-control" placeholder="Confirm password" required>
-                                <label for="add_confirm_password">Confirm password</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="email" name="add_email" id="add_email" class="form-control" placeholder="Email" required>
-                                <label for="add_email">Email</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-4">
-                            <div class="input-group-text"><i class="bi bi-person-up"></i></div>
-                            <div class="form-floating">
-                                <select class="form-select" name="add_role_type" id="add_role_type" required>
-                                    <option value="">Select Role</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="employee">Employee</option>
-                                </select>
-                                <label for="add_role_type" class="form-label">Role</label>
-                            </div>
-                        </div>
-                        <div class="mb-4 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="add_status" id="add_status" value="1">
-                            <label class="form-check-label">Activate Employee</label>
-                        </div>
-                        <div class="modal-footer" id="addEmployeeFooter">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success" id="btnAddEmployee">Add</button>
-                        </div>
-                    </div>
+                    <button type="button" onclick="closeModal('addEmployeeModal')" class="text-white hover:text-gray-200 text-2xl">&times;</button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Update Employee -->
-    <div class="modal fade" id="updateEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <form id="frmUpdateEmployee" method="POST">
-                <div class="modal-content">
-                    <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="updateEmployeeTitle">Update Employee: <span id="updateUsernameDisplay"></span></h5>
-                    </div>
-                    <div class="modal-body py-4 px-6" id="updateEmployeeBody">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="updateEmployeeAlert">
-                                <span id="updateEmployeeAlertMsg"></span>
-                            </div>
+                <div class="p-6">
+                    <div id="addEmployeeAlert" class="hidden mb-4 p-4 bg-red-100 text-red-800 rounded-lg"><span id="addEmployeeAlertMsg"></span></div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Username</label>
+                            <input type="text" name="add_username" id="add_username" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="text" name="update_username" id="update_username" class="form-control" placeholder="Username">
-                                <label for="update_username">Username</label>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Email</label>
+                            <input type="email" name="add_email" id="add_email" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
                         </div>
-                        <!-- <div class="mb-4"> -->
-                            <input type="hidden" name="update_id" id="update_id">
-                        <!-- </div> -->
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="update_password" id="update_password" class="form-control" placeholder="Password">
-                                <label for="update_password">Password</label>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Password</label>
+                            <input type="password" name="add_password" id="add_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-shield-lock-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="password" name="update_confirm_password" id="update_confirm_password" class="form-control" placeholder="Confirm Password">
-                                <label for="update_confirm_password">Confirm Password</label>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Confirm Password</label>
+                            <input type="password" name="add_confirm_password" id="add_confirm_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="email" name="update_email" id="update_email" class="form-control" placeholder="Email">
-                                <label for="update_email">Email</label>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Role</label>
+                            <select name="add_role_type" id="add_role_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
+                                <option value="">Select Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="employee">Employee</option>
+                            </select>
                         </div>
-                        <div class="input-group mb-4">
-                            <div class="input-group-text"><i class="bi bi-person-up"></i></div>
-                            <div class="form-floating">
-                                <select class="form-select" name="update_role_type" id="update_role_type">
-                                    <option value="">Role</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="employee">Employee</option>
-                                </select>
-                                <label for="update_role_type" class="form-label">Role</label>
-                            </div>
-                        </div>
-                        <div class="mb-4 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="update_active" id="update_active" value="1">
-                            <label class="form-check-label">Activate Employee</label>
-                        </div>
-                    </div>
-                    <div class="modal-footer" id="updateEmployeeFooter">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="btnUpdateEmployee">Update</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Delete Employee -->
-    <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <form method="POST" id="frmDeleteEmployee">
-                <div class="modal-content">
-                    <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                        <h5 class="modal-title fw-bold" id="deleteEmployeeTitle">
-                            Delete Employee: <span id="deleteUsernameDisplay"></span>
-                        </h5>
-                    </div>
-                    <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
-                        <div class="mb-4">
-                            <div class="mb-2">
-                                <div class="alert alert-danger w-100 d-none" id="deleteEmployeeAlert">
-                                    <span id="deleteEmployeeAlertMsg"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-center mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16" style="color:red">
-                                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
-                                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
-                                </svg>
-                            </div>
-                            <input type="hidden" name="delete_id" id="delete_id">
-                            <label class="form-label">
-                                Do you want to delete this employee <strong><span id="delete_username"></span></strong>?
+                        <div class="flex items-center">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="add_status" id="add_status" value="1" class="w-5 h-5 rounded border-gray-300 text-[rgb(255,110,55)]">
+                                <span>Activate Employee</span>
                             </label>
                         </div>
-                        <div class="modal-footer" id="deleteEmployeeFooter">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger" id="btnDeleteEmployee">Delete</button>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('addEmployeeModal')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Modal -->
+    <div id="updateEmployeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeModal('updateEmployeeModal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <form id="frmUpdateEmployee">
+                <div class="bg-[rgb(255,110,55)] text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                        <h5 class="font-bold">Update Employee: <span id="updateUsernameDisplay"></span></h5>
+                        <div class="text-sm opacity-80">Edit employee details and role</div>
+                    </div>
+                    <button type="button" onclick="closeModal('updateEmployeeModal')" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+                </div>
+                <div class="p-6">
+                    <div id="updateEmployeeAlert" class="hidden mb-4 p-4 bg-red-100 text-red-800 rounded-lg"><span id="updateEmployeeAlertMsg"></span></div>
+                    <input type="hidden" name="update_id" id="update_id">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Username</label>
+                            <input type="text" name="update_username" id="update_username" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Email</label>
+                            <input type="email" name="update_email" id="update_email" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">New Password</label>
+                            <input type="password" name="update_password" id="update_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Confirm Password</label>
+                            <input type="password" name="update_confirm_password" id="update_confirm_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Role</label>
+                            <select name="update_role_type" id="update_role_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="">Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="employee">Employee</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="update_active" id="update_active" value="1" class="w-5 h-5 rounded border-gray-300 text-[rgb(255,110,55)]">
+                                <span>Activate Employee</span>
+                            </label>
                         </div>
                     </div>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('updateEmployeeModal')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-[rgb(255,110,55)] text-white rounded-lg hover:bg-[rgb(230,60,20)]">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteEmployeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeModal('deleteEmployeeModal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <form id="frmDeleteEmployee">
+                <div class="bg-red-600 text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                        <h5 class="font-bold">Delete Employee</h5>
+                        <div class="text-sm opacity-80">This action cannot be undone</div>
+                    </div>
+                    <span class="font-bold" id="deleteUsernameDisplay">&mdash;</span>
+                </div>
+                <div class="p-6 text-center">
+                    <div id="deleteEmployeeAlert" class="hidden mb-4 p-4 bg-red-100 text-red-800 rounded-lg"><span id="deleteEmployeeAlertMsg"></span></div>
+                    <input type="hidden" name="delete_id" id="delete_id">
+                    <div class="text-5xl text-red-500 mb-4"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <h5 class="font-bold mb-2">Confirm deletion</h5>
+                    <p class="text-gray-600">Are you sure you want to remove <strong id="delete_username"></strong> from the system?</p>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-between">
+                    <button type="button" onclick="closeModal('deleteEmployeeModal')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Confirm</button>
                 </div>
             </form>
         </div>
@@ -353,413 +282,230 @@ $counterNumber = $token->counterNumber;
     <?php after_js()?>
     <?php include_once "./../includes/footer.php";?>
     <script src="./../asset/js/message.js"></script>
-    <script>       
-        var employee_search = '';
-        var page_employees = 1;
-        var paginate = 10;
-        var role_type_employee = 'none';
+    <script>
+const endpointHost = window.endpointHost;
+var employee_search = '';
+var page_employees = 1;
+var paginate = 25;
+var role_type_employee = 'none';
+var status_employee = 'none';
+const search = document.getElementById('searchEmployee');
+const filterRole = document.getElementById('filterRole');
+const filterStatus = document.getElementById('filterStatus');
+const perPageSelect = document.getElementById('employeesPerPage');
 
-        // Search
-        let search = document.getElementById('search');
-        search.addEventListener('keyup', (e)=> {
-            page_employees = 1;
-            employee_search = e.target.value;
-            loadEmployees();
+function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
 
-        });
+function textBadge(label, type) {
+    const colors = { success:'bg-green-500', danger:'bg-red-500', warning:'bg-yellow-500 text-gray-900', info:'bg-blue-500' };
+    return `<span class="px-2 py-1 text-xs rounded text-white ${colors[type]||'bg-gray-200 text-gray-800'}">${label}</span>`;
+}
 
-        let getRoleType = document.getElementById('getRoleType');
-        getRoleType.addEventListener('change', (e) => {
-            page_employees = 1;
-            role_type_employee = e.target.value;
-            loadEmployees();
-        });
+function debounce(fn, wait) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); }; }
+const debouncedSearch = debounce(v => { page_employees = 1; employee_search = v; loadEmployees(); }, 300);
+search?.addEventListener('keyup', e => { if (e.key === 'Enter') { page_employees = 1; employee_search = e.target.value; loadEmployees(); } else debouncedSearch(e.target.value); });
+filterRole?.addEventListener('change', e => { page_employees = 1; role_type_employee = e.target.value; loadEmployees(); });
+filterStatus?.addEventListener('change', e => { page_employees = 1; status_employee = e.target.value; loadEmployees(); });
+perPageSelect?.addEventListener('change', e => { paginate = Number(e.target.value) || 25; page_employees = 1; loadEmployees(); });
 
-        function loadEmployees() {
-            let table_employees = document.getElementById('table-employees');
-            if (table_employees) {
-                const params = new URLSearchParams({
-                    employees: true,
-                    page: page_employees,
-                    paginate: paginate,
-                    search: employee_search,
-                    role_type: role_type_employee
+function showLoading() {
+    const tbody = document.querySelector('#table-employees tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8"><div class="animate-spin w-8 h-8 border-4 border-[rgb(255,110,55)] border-t-transparent rounded-full mx-auto"></div></td></tr>';
+}
+
+function renderPagination(totalPages, currentPage) {
+    const container = document.getElementById('employeesPagination');
+    if (!container) return;
+    let html = '';
+    const btn = (label, p, disabled, active) => `<li><button class="px-3 py-1 rounded ${active?'bg-[rgb(255,110,55)] text-white':'border border-gray-300 hover:bg-gray-100'} ${disabled?'opacity-50 cursor-not-allowed':''}" ${disabled?'disabled':''} data-page="${p}">${label}</button></li>`;
+    html += btn('Prev', Math.max(1,currentPage-1), currentPage===1, false);
+    for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || (p >= currentPage-2 && p <= currentPage+2)) html += btn(p, p, false, p===currentPage);
+        else if (p === currentPage-3 || p === currentPage+3) html += '<li><span class="px-2">...</span></li>';
+    }
+    html += btn('Next', Math.min(totalPages,currentPage+1), currentPage===totalPages, false);
+    container.innerHTML = html;
+    container.querySelectorAll('button[data-page]').forEach(b => b.addEventListener('click', () => { page_employees = parseInt(b.dataset.page); loadEmployees(); }));
+}
+
+function loadEmployees() {
+    showLoading();
+    const set_limit = paginate;
+    const set_offset = (page_employees - 1) * paginate;
+    const params = new URLSearchParams();
+    if (employee_search?.trim()) params.set('username', employee_search.trim());
+    if (role_type_employee && role_type_employee !== 'none') params.set('role_type', role_type_employee);
+    if (status_employee && status_employee !== 'none') params.set('status', status_employee);
+    params.set('set_limit', set_limit);
+    params.set('set_offset', set_offset);
+    let apiUrl = buildApiUrl('/api/users', params);
+    if (!apiUrl) {
+        document.querySelector('#table-employees tbody').innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Service unavailable</td></tr>';
+        return;
+    }
+    $.ajax({
+        url: apiUrl, type: 'GET', timeout: 10000, dataType: 'json', xhrFields: { withCredentials: true },
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            const tbody = document.querySelector('#table-employees tbody');
+            tbody.innerHTML = '';
+            if (response.status === 'success') {
+                const employees = response.data || response.employees || [];
+                const total = response.total || employees.length;
+                document.getElementById('empShowingCount').innerText = employees.length;
+                const totalPages = Math.max(1, Math.ceil(total / paginate));
+                renderPagination(totalPages, page_employees);
+                employees.forEach(emp => {
+                    const statusBadge = emp.active == 1 ? textBadge('Active','success') : textBadge('Inactive','danger');
+                    const nameClass = emp.role_type === 'admin' ? 'text-blue-600' : 'text-green-600';
+                    const row = `<tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium ${nameClass}">${emp.username}</td>
+                        <td class="px-4 py-3 hidden md:table-cell td-truncate"><a href="mailto:${emp.email}" class="text-[rgb(255,110,55)] hover:underline">${emp.email||'—'}</a></td>
+                        <td class="px-4 py-3 hidden md:table-cell text-gray-500">${emp.role_type||'—'}</td>
+                        <td class="px-4 py-3">${statusBadge}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button class="btn-view px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 mr-1" data-id="${emp.id}">View</button>
+                            <button class="btn-edit px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 mr-1" data-id="${emp.id}">Edit</button>
+                            <button class="btn-delete px-2 py-1 text-xs border border-red-300 text-red-600 rounded hover:bg-red-50" data-id="${emp.id}">Delete</button>
+                        </td>
+                    </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
                 });
-                $.ajax({
-                    url: realHost + '/public/api/api_endpoint.php?' + params,
-                    type: 'GET',
-                    success: function (response) {
-                        while (table_employees.rows.length > 1) {
-                            table_employees.deleteRow(-1);
-                        }
-                        if (response.status === 'success') {
-                            const employees = response.employees;
-                            if (employees.length < paginate) {
-                                pageNextEmployees.classList.add('disabled');
-                            } else {
-                                pageNextEmployees.classList.remove('disabled');
-                            }
-                            employees.forEach((employee) => {
-                                let row = table_employees.insertRow(-1);
-                                row.innerHTML = `
-                                    <tr>
-                                        <td class="col-2">${employee.id}</td>
-                                        <td>
-                                            <strong>
-                                                ${userStatusIcon(employee.username, employee.role_type, employee.active)}
-                                            </strong>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a class="btn btn-outline-info text-info" id="view-employee-${employee.id}" data-toggle="modal" data-target="#viewEmployeeModal"><i class="bi bi-eye-fill"></i></a>
-                                                <a class="btn btn-outline-primary text-primary" id="update-employee-${employee.id}" data-toggle="modal" data-target="#updateEmployeeModal"><i class="bi bi-pencil-square"></i></a>
-                                                <a class="btn btn-outline-danger text-danger" id="delete-employee-${employee.id}" data-toggle="modal" data-target="#deleteEmployeeModal"><i class="bi bi-trash-fill"></i></a>
-                                            </div>
-                                    </tr>              
-                                `;
-                            });
-                        } else {
-                            let row = table_employees.insertRow(-1);
-                            row.innerHTML = `
-                                <tr>
-                                    <td colspan="3" class="fw-bold text-center">No employees assigned</td>
-                                </tr>            
-                            `;
-                        }
-                    },
-                });
+                if (!employees.length) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">No employees found</td></tr>';
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">No employees found</td></tr>';
             }
+        },
+        error: function() { document.querySelector('#table-employees tbody').innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Error loading employees</td></tr>'; }
+    });
+}
+
+document.getElementById('btn-add-employee')?.addEventListener('click', () => { document.getElementById('frmAddEmployee')?.reset(); openModal('addEmployeeModal'); });
+document.getElementById('btnRefreshEmployees')?.addEventListener('click', () => loadEmployees());
+
+$(document).on('click', '.btn-view', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    const params = new URLSearchParams({ user_id: id });
+    $.ajax({
+        url: buildApiUrl('/api/users', params), type: 'GET', dataType: 'json', xhrFields: { withCredentials: true },
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            const emp = response.data || response.employee || {};
+            document.getElementById('viewUsernameDisplay').innerText = emp.username || '';
+            document.getElementById('viewEmployeeId').innerText = id;
+            document.getElementById('viewEmployeeUsername').innerText = emp.username || '';
+            document.getElementById('viewEmployeeEmail').innerText = emp.email || '—';
+            document.getElementById('viewEmployeeEmail').href = emp.email ? 'mailto:'+emp.email : '#';
+            document.getElementById('viewEmployeeRoleType').innerText = emp.role_type || '—';
+            document.getElementById('viewEmployeeRoleTypeSidebar').innerText = emp.role_type ? emp.role_type.charAt(0).toUpperCase()+emp.role_type.slice(1) : '—';
+            document.getElementById('viewEmployeeStatus').innerHTML = emp.active == 1 ? textBadge('Active','success') : textBadge('Inactive','danger');
+            document.getElementById('viewEmployeeStatusSidebar').innerHTML = emp.active == 1 ? textBadge('Active','success') : textBadge('Inactive','danger');
+            document.getElementById('viewEmployeeCreated').innerText = emp.created_at ? new Date(emp.created_at).toLocaleString() : '—';
+            document.getElementById('viewEmployeeLastLogin').innerText = emp.employee_last_login ? new Date(emp.employee_last_login).toLocaleString() : 'Never';
+            openModal('viewEmployeeModal');
         }
+    });
+});
 
-        // View Employee
-        $(document).on('click', '[id^="view-employee-"]', function (e) {
-            e.preventDefault();
-
-            const elementId = $(this).attr('id');
-            const employeeId = elementId.split('-').pop();
-            console.log(employeeId);
-
-            const params = new URLSearchParams({
-                employees: true,
-                id: employeeId
-            });
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function (response) {
-                    console.log(response);
-                    const employee = response.employee;
-                    const username = employee.username;
-                    const email = employee.email;
-                    const role_type = employee.role_type;
-                    const active = employee.active;
-
-                    let viewUsernameDisplay = document.getElementById('viewUsernameDisplay');
-                    viewUsernameDisplay.innerText = username;
-                    let viewEmployeeId = document.getElementById('viewEmployeeId');
-                    viewEmployeeId.innerText = employeeId;
-                    let viewEmployeeUsername = document.getElementById('viewEmployeeUsername');
-                    viewEmployeeUsername.innerText = username;
-                    let viewEmployeeEmail = document.getElementById('viewEmployeeEmail');
-                    viewEmployeeEmail.innerText = email ? email : 'Not present';
-                    let viewEmployeeRoleType = document.getElementById('viewEmployeeRoleType');
-                    viewEmployeeRoleType.innerText = role_type;
-                    let viewEmployeeStatus = document.getElementById('viewEmployeeStatus');
-                    if (active === 1) {
-                        viewEmployeeStatus.innerHTML = textBadge('Active', 'success');
-                    } else {
-                        viewEmployeeStatus.innerHTML = textBadge('Inactive', 'danger');
-                    }
-                }
-
-            });
-
-        });
-
-        // Add Employee
-        let btnAddEmployeeModal = document.getElementById('btn-add-employee');
-        btnAddEmployeeModal.addEventListener('click', (e) => {
-            e.preventDefault();
-            let form = document.getElementById('frmAddEmployee');
+$(document).on('click', '.btn-edit', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    const params = new URLSearchParams({ user_id: id });
+    $.ajax({
+        url: buildApiUrl('/api/users', params), type: 'GET', dataType: 'json', xhrFields: { withCredentials: true },
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            const emp = response.data || response.employee || {};
+            document.getElementById('updateUsernameDisplay').innerText = emp.username || '';
+            const form = document.getElementById('frmUpdateEmployee');
             form.reset();
-        });
+            form.elements['update_id'].value = id;
+            form.elements['update_username'].value = emp.username || '';
+            form.elements['update_email'].value = emp.email || '';
+            form.elements['update_role_type'].value = emp.role_type || '';
+            form.elements['update_active'].checked = emp.active == 1;
+            openModal('updateEmployeeModal');
+        }
+    });
+});
 
-        let frmAddEmployee = document.getElementById('frmAddEmployee');
-        frmAddEmployee.addEventListener('submit', function (e) {
-            e.preventDefault();
+$(document).on('click', '.btn-delete', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    const params = new URLSearchParams({ user_id: id });
+    $.ajax({
+        url: buildApiUrl('/api/users', params), type: 'GET', dataType: 'json', xhrFields: { withCredentials: true },
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            const emp = response.data || response.employee || {};
+            document.getElementById('deleteUsernameDisplay').innerText = emp.username || '';
+            document.getElementById('delete_username').innerText = emp.username || '';
+            document.getElementById('delete_id').value = id;
+            openModal('deleteEmployeeModal');
+        }
+    });
+});
 
-            let formAlert = document.getElementById('addEmployeeAlert');
-            let formAlertMsg = document.getElementById('addEmployeeAlertMsg');
-            const formData = new FormData(this);
-            const username = formData.get('add_username');
-            const password = formData.get('add_password');
-            const confirm_password = formData.get('add_confirm_password');
-            const email = formData.get('add_email');
-            const role_type = formData.get('add_role_type');
-            const active = formData.get('add_status');
-            console.log(username, password, confirm_password, email, role_type, status);
+document.getElementById('frmAddEmployee')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const password = formData.get('add_password');
+    const confirm = formData.get('add_confirm_password');
+    const alert = document.getElementById('addEmployeeAlert');
+    const alertMsg = document.getElementById('addEmployeeAlertMsg');
+    if (password !== confirm) { alertMsg.innerText = 'Passwords do not match'; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); return; }
+    $.ajax({
+        url: buildApiUrl('/api/users'), type: 'POST', contentType: 'application/json', dataType: 'json',
+        data: JSON.stringify({ username: formData.get('add_username'), password, email: formData.get('add_email'), user_role: formData.get('add_role_type'), active: formData.get('add_status') ? 1 : 0 }),
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            if (response.status === 'success') { alert.classList.remove('hidden','bg-red-100','text-red-800'); alert.classList.add('bg-green-100','text-green-800'); alertMsg.innerText = response.message; setTimeout(() => location.reload(), 1000); }
+            else { alertMsg.innerText = response.message; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+        },
+        error: function(x) { alertMsg.innerText = 'Error: ' + (x.responseText || 'Failed'); alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+    });
+});
 
-            if (password !== confirm_password) {
-                formAlertMsg.innerText = 'Password and Confirm Password do not match';
-                formAlert.classList.remove('d-none');
-                setTimeout(() => {
-                    formAlert.classList.add('d-none');
-                }, 5000);
-            }
+document.getElementById('frmUpdateEmployee')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const password = formData.get('update_password');
+    const confirm = formData.get('update_confirm_password');
+    const alert = document.getElementById('updateEmployeeAlert');
+    const alertMsg = document.getElementById('updateEmployeeAlertMsg');
+    if (password !== confirm) { alertMsg.innerText = 'Passwords do not match'; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); return; }
+    const payload = { id: formData.get('update_id'), username: formData.get('update_username'), email: formData.get('update_email'), role_type: formData.get('update_role_type'), active: formData.get('update_active') ? 1 : 0 };
+    if (password?.trim()) payload.password = password;
+    $.ajax({
+        url: buildApiUrl('/api/users'), type: 'PATCH', contentType: 'application/json', dataType: 'json', data: JSON.stringify(payload), xhrFields: { withCredentials: true },
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            if (response.status === 'success') { alert.classList.remove('hidden','bg-red-100','text-red-800'); alert.classList.add('bg-green-100','text-green-800'); alertMsg.innerText = response.message || 'Updated'; setTimeout(() => location.reload(), 1000); }
+            else { alertMsg.innerText = response.message || 'Failed'; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+        },
+        error: function(x) { alertMsg.innerText = 'Error: ' + (x.responseText || 'Failed'); alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+    });
+});
 
-            $.ajax({
-                url: '/public/api/api_endpoint.php',
-                type: 'POST',
-                data: JSON.stringify({
-                    username : username,
-                    password : password,
-                    email : email,
-                    role_type : role_type,
-                    method : "employees-add",
-                    active: active
-                }),
-                success: function (response) {
-                    console.log(response);
-                    if (response.status === 'success') {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none', 'alert-danger');
-                        formAlert.classList.add('alert-success');
-                        setTimeout(()=> {
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none',);
-                        setTimeout(() => {
-                            formAlert.classList.add('d-none');
-                        }, 5000);
-                    }
-                },
-                error: function(x, s, e) {
-                    formAlertMsg.innerText = 'Error: ' + x.responseText;
-                    formAlert.classList.remove('d-none');
-                    setTimeout(() => {
-                        formAlert.classList.add('d-none');
-                    }, 5000);
-                }
-            });
-        });
+document.getElementById('frmDeleteEmployee')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const alert = document.getElementById('deleteEmployeeAlert');
+    const alertMsg = document.getElementById('deleteEmployeeAlertMsg');
+    $.ajax({
+        url: buildApiUrl('/api/users'), type: 'DELETE', contentType: 'application/json', dataType: 'json', data: JSON.stringify({ user_id: formData.get('delete_id'), force: true }), xhrFields: { withCredentials: true },
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            if (response.status === 'success') { alert.classList.remove('hidden','bg-red-100','text-red-800'); alert.classList.add('bg-green-100','text-green-800'); alertMsg.innerText = response.message; setTimeout(() => location.reload(), 1000); }
+            else { alertMsg.innerText = response.message || 'Failed'; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+        },
+        error: function(x) { alertMsg.innerText = 'Error: ' + (x.responseText || 'Failed'); alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+    });
+});
 
-        // Edit Employee
-        $(document).on('click', '[id^="update-employee-"]', function (e) {
-            e.preventDefault();
-
-            // Get the ID of the clicked element
-            const elementId = $(this).attr('id');
-            const employeeId = elementId.split('-').pop(); 
-
-            console.log(employeeId);
-            const params = new URLSearchParams({
-                employees: true,
-                id: employeeId
-            });
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function (response) {
-                    console.log(response);
-
-                    const employee = response.employee;
-                    const username = employee.username;
-                    const email = employee.email;
-                    const role_type = employee.role_type;
-                    const active = employee.active;
-
-                    let updateUsernameDisplay = document.getElementById('updateUsernameDisplay');
-                    updateUsernameDisplay.innerText = username;
-
-                    let frmUpdateEmployee = document.getElementById('frmUpdateEmployee');
-                    frmUpdateEmployee.reset();
-                    frmUpdateEmployee.elements['update_id'].value = employeeId;
-                    frmUpdateEmployee.elements['update_username'].value = username;
-                    frmUpdateEmployee.elements['update_email'].value = email;
-                    frmUpdateEmployee.elements['update_role_type'].value = role_type;  
-                    frmUpdateEmployee.elements['update_active'].checked = active === 1; 
-                }
-            });
-        });
-
-        let frmUpdateEmployee = document.getElementById('frmUpdateEmployee');
-        frmUpdateEmployee.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            let formAlert = document.getElementById('updateEmployeeAlert');
-            let formAlertMsg = document.getElementById('updateEmployeeAlertMsg');
-            
-            const formData = new FormData(this);
-            const employeeId = formData.get('update_id');
-            console.log(employeeId);
-            const username = formData.get('update_username');
-            const password = formData.get('update_password');
-            const confirm_password = formData.get('update_confirm_password');
-            const email = formData.get('update_email');
-            const role_type = formData.get('update_role_type');
-            const active = formData.get('update_active') ? 1 : 0;
-
-            console.log('ID: ' + employeeId);
-            console.log('Username: ' + username);
-            console.log('Password: ' + password);
-            console.log('Confirm Password: ' + confirm_password);
-            console.log('Email: ' + email);
-            console.log('Role Type: ' + role_type);
-            console.log('Active: ' + active);
-            // console.log('Status: ' + status);
-            if (password !== confirm_password) {
-                formAlertMsg.innerText = 'Password and Confirm Password do not match';
-                formAlert.classList.remove('d-none');
-                setTimeout(() => {
-                    formAlert.classList.add('d-none');
-                }, 5000);
-            }
-            
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
-                type: 'POST',
-                data: JSON.stringify({
-                    id: employeeId,
-                    username : username,
-                    password : password,
-                    email : email,
-                    role_type : role_type,
-                    method : "employees-update",
-                    active: active
-                }),
-                success: function (response) {
-                    console.log(response);
-                    if (response.status === 'success') {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none', 'alert-danger');
-                        formAlert.classList.add('alert-success');
-                        setTimeout(function() {
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none',);
-                        setTimeout(() => {
-                            formAlert.classList.add('d-none');
-                        }, 5000);
-                    }
-                },
-                error: function(x, s, e) {
-                    formAlertMsg.innerText = 'Error: ' + x.responseText;
-                    formAlert.classList.remove('d-none');
-                    setTimeout(() => {
-                        formAlert.classList.add('d-none');
-                    }, 5000);
-                }
-            });
-        });
-
-        // Delete Employee
-        $(document).on('click', '[id^="delete-employee-"]', function (e) {
-            e.preventDefault();
-
-            const elementId = $(this).attr('id');
-            const employeeId = elementId.split('-').pop(); 
-
-            console.log(employeeId);
-            const params = new URLSearchParams({
-                employees: true,
-                id: employeeId
-            });
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function (response) {
-                    console.log(response);
-                    let frmDeleteEmployee = document.getElementById('frmDeleteEmployee');
-                    frmDeleteEmployee.reset();
-                    const employee = response.employee;
-                    const username = employee.username;
-
-                    let updateUsernameDisplay = document.getElementById('deleteUsernameDisplay');
-                    updateUsernameDisplay.innerText = username;
-
-                    frmDeleteEmployee.elements['delete_id'].value = employeeId;
-
-                    let del_username = document.getElementById('delete_username');
-                    del_username.innerText = username;
-                }
-            });
-        });
-
-        let frmDeleteEmployee = document.getElementById('frmDeleteEmployee');
-        frmDeleteEmployee.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            let formAlert = document.getElementById('deleteEmployeeAlert');
-            let formAlertMsg = document.getElementById('deleteEmployeeAlertMsg');
-            
-            const formData = new FormData(this);
-            const employeeId = formData.get('delete_id');
-            console.log(employeeId);
-            console.log('ID: ' + employeeId);
-            
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
-                type: 'POST',
-                data: JSON.stringify({
-                    id: employeeId,
-                    method : "employees-delete"
-                }),
-                success: function (response) {
-                    console.log(response);
-                    if (response.status === 'success') {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none', 'alert-danger');
-                        formAlert.classList.add('alert-success');
-                        setTimeout(function() {
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none',);
-                        setTimeout(() => {
-                            formAlert.classList.add('d-none');
-                        }, 5000);
-                    }
-                },
-                error: function(x, s, e) {
-                    formAlertMsg.innerText = 'Error: ' + x.responseText;
-                    formAlert.classList.remove('d-none');
-                    setTimeout(() => {
-                        formAlert.classList.add('d-none');
-                    }, 5000);
-                }
-            });
-        });
-
-        let pagePrevEmployees = document.getElementById('pagePrevEmployees');
-        let pageNextEmployees = document.getElementById('pageNextEmployees');
-
-        pagePrevEmployees.addEventListener('click', (e) => {
-            if (page_employees > 1) {
-                page_employees--;
-                if (page_employees === 1) {
-                    pagePrevEmployees.classList.add('disabled');
-                }
-                loadEmployees();    
-            }
-        });
-
-        pageNextEmployees.addEventListener('click', (e) => {
-            page_employees++;
-            if (page_employees > 1) {
-                pagePrevEmployees.classList.remove('disabled');
-            }
-            loadEmployees();
-        });
-
-        loadEmployees();
+loadEmployees();
     </script>
 </body>
 </html>

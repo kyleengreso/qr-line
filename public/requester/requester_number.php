@@ -1,7 +1,7 @@
 <?php
 include './../base.php';
+@include_once __DIR__ . '/../includes/config.php';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,178 +10,246 @@ include './../base.php';
     <?php head_icon()?>
     <title>Queue | <?php echo $project_name?></title>
     <?php head_css()?>
-    <?php before_js()?>
-    <link rel="stylesheet" href="./../asset/css/user_number.css">
+    <style>
+        .queue-circle{width:320px;height:320px;border-radius:50%;border:5px solid rgb(255,110,55);display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.2)}
+        @media(min-width:640px){.queue-circle{width:400px;height:400px}}
+    </style>
     <?php
-    $requester_token = $_SESSION['requester_token'];
+    $requester_token = isset($_SESSION['requester_token']) ? $_SESSION['requester_token'] : (isset($_GET['requester_token']) ? $_GET['requester_token'] : '');
     $web_domain = $_SERVER['HTTP_HOST'];
     $web_resource = $_SERVER['REQUEST_URI'];
     $website = $web_domain . $web_resource . '?requester_token=' . $requester_token;
     ?>
 </head>
-<body class="bg">
-    <?php include "./../includes/navbar_non.php"; ?>
-    <div class="container d-flex justify-content-center align-items-center" style="margin-top:100px;margin-bottom:100px;flex-direction:column">
-        <div class="container d-flex justify-content-center align-items-center" style="flex-direction:column">
-            <div class="alert alert-info" id="this_requester_status_alert">
-                Status: <span class="fw-bold" id="this_requester_status_info"></span>
+<body class="bg bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-lg">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Your Queue</h1>
+            <p class="text-gray-500 text-sm">Your queue status</p>
+        </div>
+        
+        <!-- Status Badge -->
+        <div class="flex justify-center mb-6">
+            <div id="this_requester_status_alert" class="px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                Status: <span class="font-bold" id="this_requester_status_info">Loading...</span>
             </div>
         </div>
-        <div class="row circle text-center">
-            <div>
-                <img src="./../asset/images/logo_blk.png" alt="logo" width="75px" style="margin-top: -15px;">
-            </div>
-            <div class="info-container">
-                <div class="info-box">
-                    <p class="label">Number:</p>
-                    <p class="value" id="queueNumber">N/A</p>
+        
+        <!-- Queue Circle -->
+        <div class="flex justify-center mb-6">
+            <div class="queue-circle text-center p-5">
+                <img src="./../asset/images/logo_blk.png" alt="logo" class="w-16 -mt-4 mb-2">
+                <div class="flex justify-between items-center w-4/5 gap-4">
+                    <div class="flex flex-col items-center">
+                        <p class="text-lg font-bold mb-1">Number:</p>
+                        <p class="text-5xl font-bold" id="queueNumber">N/A</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <p class="text-lg font-bold mb-1">Counter:</p>
+                        <p class="text-5xl font-bold" id="counterNumber">N/A</p>
+                    </div>
                 </div>
-                <div class="info-box">
-                    <p class="label">Counter:</p>
-                    <p class="value" id="counterNumber">N/A</p>
-                </div>
+                <p class="text-xl font-bold mt-4">Current number: <strong><span id="currentQueueNumber">N/A</span></strong></p>
             </div>
-            <p class="current-number">Current number: <strong><span id="currentQueueNumber">N/A</span></strong></p>
         </div>
-        <div class="d-flex justify-content-center align-items-center">
-            <div class="mt-4 rounded-start p-4 d-flex justify-content-center" style="width: 100%">
-                <a class="btn btn-primary text-white fw-bold" id="btnCancelRequestModal" data-toggle="modal" data-target="#requestCancelModal">Cancel Request</a>
+        
+        <!-- Action Button -->
+        <div class="flex justify-center">
+            <a href="#" id="btnCancelRequestModal" class="px-8 py-3 bg-[rgb(255,110,55)] text-white font-semibold rounded-lg hover:bg-[rgb(230,60,20)] transition">Cancel Request</a>
+        </div>
+        
+        <!-- Footer -->
+        <p class="text-center text-gray-400 text-sm mt-8">&copy; <?php echo project_year()?> <?php echo $project_name?></p>
+    </div>
+
+    <!-- Cancel Modal -->
+    <div id="requestCancelModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div class="bg-[rgb(255,110,55)] text-white px-6 py-4 font-bold text-lg">Cancel Transaction?</div>
+            <div class="p-6 text-gray-700">Do you want to cancel your current transaction?</div>
+            <div class="flex justify-end gap-3 px-6 pb-6">
+                <button type="button" onclick="closeModal('requestCancelModal')" class="px-5 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">Close</button>
+                <button type="button" id="btnCancelRequest" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Cancel</button>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="requestCancelModal" tabindex="-1" role="dialog"  aria-hidden="true" style="margin-top: 100px;">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Cancel Transaction?</h5>
-                </div>
-                <div class="modal-body py-4 px-6 fw-bold" id="viewEmployeeBody">
-                    Do you want to cancel you current transaction?
-                </div>
-                <div class="modal-footer col" id="viewEmployeeFooter">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="btnCancelRequest">Cancel</button>
-                </div>
-            </div>
+    <!-- Connection Alert -->
+    <div id="connectionAlert" class="hidden fixed bottom-4 right-4 z-50 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-lg shadow-lg">
+        <div class="flex items-center gap-2">
+            <span class="inline-block w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin"></span>
+            <span>Connecting...</span>
         </div>
     </div>
-    <?php after_js()?>
-    <script>
-        let this_requester_status_alert = document.getElementById("this_requester_status_alert");
-        let this_requester_status_info = document.getElementById("this_requester_status_info");
 
-        function fetchYourQuery() {
-            const token = new URLSearchParams(window.location.search).get('requester_token');
+<?php after_js()?>
+<script>
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-            if (!token) {
-                alert("Token was not assigned");
-                window.location.href = `${realHost}/public/requester/requester_form.php`;
+let this_requester_status_alert = document.getElementById("this_requester_status_alert");
+let this_requester_status_info = document.getElementById("this_requester_status_info");
+let connectionAlert = document.getElementById("connectionAlert");
+let connectionTimeout = null;
+
+function showConnectionAlert() {
+    if (connectionTimeout) clearTimeout(connectionTimeout);
+    connectionTimeout = setTimeout(function() {
+        connectionAlert.classList.remove('hidden');
+    }, 20000);
+}
+
+function hideConnectionAlert() {
+    if (connectionTimeout) { clearTimeout(connectionTimeout); connectionTimeout = null; }
+    connectionAlert.classList.add('hidden');
+}
+
+function fetchYourQuery() {
+    const token = new URLSearchParams(window.location.search).get('requester_token');
+    if (!token) {
+        alert("Token was not assigned");
+        window.location.href = `${realHost}/public/requester/requester_form.php`;
+    }
+    if (!(endpointHost && endpointHost.length > 0)) {
+        alert('Service unavailable. Please try again later.');
+        return;
+    }
+    showConnectionAlert();
+    $.ajax({
+        url: endpointHost.replace(/\/$/, '') + '/api/requester?token_number=' + encodeURIComponent(token),
+        type: 'GET',
+        xhrFields: { withCredentials: true },
+        success: function(response) {
+            hideConnectionAlert();
+            if (response && response.status === 'success') {
+                renderRequesterState(response);
+            } else {
+                alert(response ? (response.message || 'Failed to load status') : 'Failed to load status');
             }
-
-            var params = new URLSearchParams({
-                requester_number: true,
-                requester_token : token
-            })
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    console.log(response);
-                    if (response.status === 'success') {
-                        if (response.requester_status == "pending" || response.requester_status == "serve") {
-                            this_requester_status_alert.classList.remove('alert-success', 'alert-danger', 'alert-warning');
-                            this_requester_status_alert.classList.add('alert-info');
-                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
-                        } else if (response.requester_status == "completed") {
-                            this_requester_status_alert.classList.remove('alert-info', 'alert-danger', 'alert-warning');
-                            this_requester_status_alert.classList.add('alert-success');
-                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
-                        } else if (response.requester_status == "missed") {
-                            this_requester_status_alert.classList.remove('alert-success', 'alert-danger', 'alert-info');
-                            this_requester_status_alert.classList.add('alert-warning');
-                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
-                        } else if (response.requester_status == "cancelled") {
-                            this_requester_status_alert.classList.remove('alert-success', 'alert-info', 'alert-warning');
-                            this_requester_status_alert.classList.add('alert-danger');
-                            this_requester_status_info.textContent = response.requester_status.toUpperCase();
-                        }
-
-                        // Update button based on status
-                        const actionButton = document.getElementById('btnCancelRequestModal');
-                        if (response.requester_status == "completed" || response.requester_status == "cancelled") {
-                            actionButton.textContent = 'Exit';
-                            actionButton.classList.remove('btn-primary');
-                            actionButton.classList.add('btn-success');
-                            actionButton.setAttribute('data-toggle', '');
-                            actionButton.setAttribute('data-target', '');
-                            actionButton.href = '/public/requester/requester_form.php';
-                        } else {
-                            actionButton.textContent = 'Cancel Request';
-                            actionButton.classList.remove('btn-success');
-                            actionButton.classList.add('btn-primary');
-                            actionButton.setAttribute('data-toggle', 'modal');
-                            actionButton.setAttribute('data-target', '#requestCancelModal');
-                            actionButton.href = '#';
-                        }
-
-                        $('#queueNumber').text(response.queueNumber);
-                        $('#counterNumber').text(response.counterNumber);
-                        $('#currentQueueNumber').text(response.currentQueueNumber);
-
-                    } else {
-                        alert(response.message);
-                    }
-                },
-                error: function() {
-                    $('#user_number').text('0');
-                }
-            });
+        },
+        error: function() {
+            hideConnectionAlert();
+            $('#queueNumber').text('0');
+            alert('Network error. Please try again.');
         }
+    });
+}
 
-        let btnCancelRequest = document.getElementById("btnCancelRequest");
-        if (btnCancelRequest) {
-            btnCancelRequest.addEventListener("click", function () {
-                // get token from url
-                const token = new URLSearchParams(window.location.search).get('requester_token');
-                console.log(token);
-                var data = {
-                    method: "requester-form-cancel",
-                    token_number: token
-                }
-                $.ajax({
-                    url: '/public/api/api_endpoint.php',
-                    type: "POST",
-                    data: JSON.stringify(data),
-                    success: function (response) {
-                        console.log(response);
-                        if (response.status) {
-                            alert(response.message);
-                            window.location.href = '/public/requester/requester_form.php';
-                        } else {
-                            alert(response.message);
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Logout request failed:", error);
-                        alert("An error occurred while logging out. Please try again.");
-                    }
-                });
-            });
+function renderRequesterState(response) {
+    const statusVal = response.requester_status || (response.data && response.data.status) || 'N/A';
+    this_requester_status_alert.className = 'mb-4 px-4 py-2 rounded text-sm font-semibold';
+    if (statusVal === "pending" || statusVal === "serve") {
+        this_requester_status_alert.classList.add('bg-blue-100', 'text-blue-800');
+    } else if (statusVal === "completed") {
+        this_requester_status_alert.classList.add('bg-green-100', 'text-green-800');
+    } else if (statusVal === "missed") {
+        this_requester_status_alert.classList.add('bg-yellow-100', 'text-yellow-800');
+    } else if (statusVal === "cancelled") {
+        this_requester_status_alert.classList.add('bg-red-100', 'text-red-800');
+    } else {
+        this_requester_status_alert.classList.add('bg-gray-100', 'text-gray-800');
+    }
+    this_requester_status_info.textContent = String(statusVal).toUpperCase();
+
+    const actionButton = document.getElementById('btnCancelRequestModal');
+    if (statusVal === "completed" || statusVal === "cancelled") {
+        actionButton.textContent = 'Exit';
+        actionButton.className = 'px-8 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition';
+        actionButton.onclick = function() { window.location.href = '/public/requester/requester_form.php'; };
+    } else {
+        actionButton.textContent = 'Cancel Request';
+        actionButton.className = 'px-8 py-3 bg-[rgb(255,110,55)] text-white font-semibold rounded-lg hover:bg-[rgb(230,60,20)] transition';
+        actionButton.onclick = function(e) { e.preventDefault(); openModal('requestCancelModal'); };
+    }
+
+    const qNum = response.queueNumber || (response.data && response.data.queue_number) || 'N/A';
+    const cNum = response.counterNumber || (response.data && response.data.counter_number) || 'N/A';
+    const curQ = response.currentQueueNumber || 'N/A';
+    $('#queueNumber').text(qNum);
+    $('#counterNumber').text(cNum);
+    $('#currentQueueNumber').text(curQ);
+    try {
+        if (typeof soundManager !== 'undefined' && soundManager && soundManager.onStateUpdated) {
+            soundManager.onStateUpdated(qNum, curQ);
         }
-        fetchYourQuery();
+    } catch (e) {}
+}
 
-        setInterval(function() {
-            fetchYourQuery()
-        }, 5000);
+let btnCancelRequest = document.getElementById("btnCancelRequest");
+if (btnCancelRequest) {
+    btnCancelRequest.addEventListener("click", function () {
+        const token = new URLSearchParams(window.location.search).get('requester_token');
+        var data = { token_number: token };
+        if (!(endpointHost && endpointHost.length > 0)) {
+            alert('Service unavailable. Please try again later.');
+            return;
+        }
+        $.ajax({
+            url: endpointHost.replace(/\/$/, '') + '/api/requester',
+            type: "PATCH",
+            data: JSON.stringify(data),
+            contentType: 'application/json; charset=utf-8',
+            xhrFields: { withCredentials: true },
+            success: function (response) {
+                if (response && response.status === 'success') {
+                    closeModal('requestCancelModal');
+                    alert(response.message);
+                    fetchYourQuery();
+                    setTimeout(function() { window.location.href = '/public/requester/requester_form.php'; }, 900);
+                } else {
+                    alert(response ? (response.message || 'Cancellation failed') : 'Cancellation failed');
+                }
+            },
+            error: function () { alert('Network error. Please try again.'); }
+        });
+    });
+}
 
+(function(){
+    function NotificationSoundManager() {
+        this.audioContext = null;
+        this.customUrl = '/public/asset/audio/notify.wav';
+        this.prevMatched = false;
+        this.enabled = true;
+        this.initAudio();
+    }
+    NotificationSoundManager.prototype.initAudio = function() {
+        try { var AC = window.AudioContext || window.webkitAudioContext; if (AC) this.audioContext = new AC(); } catch (e) { this.audioContext = null; }
+    };
+    NotificationSoundManager.prototype.setCustomSound = function(url) { this.customUrl = url; };
+    NotificationSoundManager.prototype.playBeepOnce = function() {
+        if (!this.enabled) return;
+        if (this.customUrl) { var a = new Audio(this.customUrl); a.play().catch(function(){}); return; }
+        if (!this.audioContext) this.initAudio();
+        if (!this.audioContext) return;
+        var ctx = this.audioContext, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = 880; g.gain.value = 0.25;
+        o.connect(g); g.connect(ctx.destination); o.start();
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+        o.stop(ctx.currentTime + 0.25);
+    };
+    NotificationSoundManager.prototype.playThreeTimes = function() {
+        this.playBeepOnce();
+        var self = this;
+        setTimeout(function() { self.playBeepOnce(); }, 400);
+        setTimeout(function() { self.playBeepOnce(); }, 800);
+    };
+    NotificationSoundManager.prototype.onStateUpdated = function(qNum, curQ) {
+        try {
+            if (!this.enabled) return;
+            if (qNum == null || curQ == null) { this.prevMatched = false; return; }
+            if (String(qNum) === String(curQ) && String(qNum) !== 'N/A') {
+                if (!this.prevMatched) { this.playThreeTimes(); this.prevMatched = true; }
+            } else { this.prevMatched = false; }
+        } catch (e) {}
+    };
+    NotificationSoundManager.prototype.toggleEnabled = function() { this.enabled = !this.enabled; return this.enabled; };
+    window.soundManager = new NotificationSoundManager();
+})();
 
-
-    </script>
-    <script>
-
-
-    </script>
+fetchYourQuery();
+setInterval(function() { fetchYourQuery(); }, 5000);
+</script>
 </body>
-<?php include_once "./../includes/footer.php"; ?>
 </html>

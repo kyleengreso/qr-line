@@ -1,19 +1,13 @@
 <?php
 include_once __DIR__ . "/../base.php";
 restrictAdminMode();
-
 $token = $_COOKIE['token'];
 $token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
-
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
+$token = json_decode(json_encode($token));
+$id = (is_object($token) && property_exists($token, 'id')) ? $token->id : null;
+$username = (is_object($token) && property_exists($token, 'username')) ? $token->username : null;
+$role_type = (is_object($token) && property_exists($token, 'role_type')) ? $token->role_type : null;
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,759 +17,478 @@ $counterNumber = $token->counterNumber;
     <title>Counters | <?php echo $project_name?></title>
     <?php head_css()?>
     <?php before_js()?>
+    <style>
+        .table-counters thead th { position:sticky; top:0; background:#fff; z-index:2; }
+        .table-counters tbody tr:hover { background:rgba(0,0,0,0.02); }
+    </style>
 </head>
-<body>
+<body class="bg">
     <?php include "./../includes/navbar.php"; ?>
-
-    <div class="container before-footer d-flex justify-content-center" style="margin-top:100px;min-height:500px">
-        <div class="col-md-6" style="min-width:400px;max-width:900px;transform:scale(0.9)">
-            <div class="alert text-start alert-success d-none" id="logOutNotify">
+    <div class="min-h-screen pt-24 pb-32 flex justify-center px-4">
+        <div class="w-full max-w-5xl">
+            <div id="logOutNotify" class="hidden mb-4 p-4 bg-green-100 text-green-800 rounded-lg">
                 <span><?php echo $username?> has logged out successfully</span>
             </div>
-            <div class="card shadow px-4 py-2 mb-2" style="border-radius:30px">
-                <nav aria-label="breadcrumb mx-4">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="/public/admin" style="text-decoration:none;color:black">Dashboard</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Counters</li>
-                    </ol>
+            <div class="bg-white shadow rounded-full px-6 py-2 mb-4">
+                <nav class="text-sm">
+                    <a href="/public/admin" class="text-gray-700 hover:text-[rgb(255,110,55)]">Dashboard</a>
+                    <span class="mx-2 text-gray-400">/</span>
+                    <span class="text-gray-500">Counters</span>
                 </nav>
             </div>
-            <div class="card shadow">
-                <div class="card-header">
-                    <span>Counters</span>
+            <div class="bg-white shadow rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h5 class="text-lg font-semibold">Counters</h5>
+                        <div class="text-sm text-gray-500">Assigned counters and staff</div>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-gray-500">Per page</span>
+                        <select id="countersPerPage" class="border border-gray-300 rounded px-2 py-1 text-sm">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col">
-                                <h3 class="text-start my-1 mx-2 fw-bold">Counters</h3>
-                            </div>
-                            <div class="col d-flex justify-content-end">
-                                <a class="btn btn-success text-white px-4" id="btn-add-counter" data-toggle="modal" data-target="#addCounterModal" ><span class="fw-bold">+</span> Add New</a>
+                <div class="p-6">
+                    <div class="mb-4 flex flex-wrap gap-3">
+                        <div class="flex-1 min-w-[200px]">
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="bi bi-search"></i></span>
+                                <input type="text" id="searchCounterRegistered" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" placeholder="Search username">
                             </div>
                         </div>
-                    </div>
-                    <div class="col-12 mb-4">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="input-group mb-2">
-                                    <div class="input-group-text"><i class="bi bi-search"></i></div>
-                                    <div class="form-floating">
-                                        <input type="text" name="searchAdd" id="searchCounterRegistered" class="form-control" placeholder="Search username">
-                                        <label for="searchAdd">Search Username</label>
-                                    </div>
-                                </div>
-                            </div>
+                        <select id="counter-filter-availability" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="none">Any Availability</option>
+                            <option value="Available">Available</option>
+                            <option value="Assigned">Assigned</option>
+                            <option value="Offline">Offline</option>
+                        </select>
+                        <select id="counter-filter-priority" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="none">All Priority</option>
+                            <option value="Y">Priority</option>
+                            <option value="N">Normal</option>
+                        </select>
+                        <div class="flex gap-2 ml-auto">
+                            <button id="btn-add-counter" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"><span class="font-bold">+</span> Add</button>
+                            <button id="btnExportCountersCsv" class="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Export CSV</button>
+                            <button id="btnRefreshCounters" class="px-4 py-2 bg-[rgb(255,110,55)] text-white rounded-lg text-sm hover:bg-[rgb(230,60,20)]">Refresh</button>
                         </div>
                     </div>
-                    <table class="table table-striped table-members" id="table-counters-registered">
-                        <thead>
-                            <th>#</th>
-                            <!-- <th>Queue Count</th> -->
-                            <th>Employee</th>
-                            <th>Action</th>
-                        </thead>
-                        <tbody>
-                            <!-- Load -->
-                        </tbody>
-                    </table>
-                    <nav aria-label="">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item">
-                                <a class="page-link disabled" id="pagePrevCounterRegistered">Previous</a>
-                            </li>
-                            <!-- Page number reserved -->
-                            <li class="page-item">
-                                <a class="page-link" id="pageNextCounterRegistered">Next</a>
-                            </li>
-                        </ul>
+                    <div id="cards-counters-registered" class="space-y-3"></div>
+                    <nav class="mt-4">
+                        <ul id="countersPagination" class="flex justify-center gap-1"></ul>
                     </nav>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- VIEW COUNTER -->
-    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="viewEmployeeTitle">Modal title</h5>
+    <!-- Add Counter Modal -->
+    <div id="addCounterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeModal('addCounterModal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <form id="frmAddCounter">
+                <div class="bg-[rgb(255,110,55)] text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                        <h5 class="font-bold">Add Counter</h5>
+                        <div class="text-sm opacity-80">Assign an employee and set the counter number</div>
+                    </div>
+                    <button type="button" onclick="closeModal('addCounterModal')" class="text-white hover:text-gray-200 text-2xl">&times;</button>
                 </div>
-                <div class="modal-body py-4 px-6" id="viewEmployeeBody">
-                
-                </div>
-                <div class="modal-footer col" id="viewEmployeeFooter">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ADD COUNTER -->
-    <div class="modal fade" id="addCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                    <h5 class="modal-title fw-bold" id="addCounterTitle">Add Counter</h5>
-                </div>
-                <form method="POST" id="frmAddCounter">
-                    <div class="modal-body py-4 px-6" id="addCounterBody">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="addCounterAlert">
-                                <span id="addCounterAlertMsg"></span>
+                <div class="p-6">
+                    <div id="addCounterAlert" class="hidden mb-4 p-4 bg-red-100 text-red-800 rounded-lg"><span id="addCounterAlertMsg"></span></div>
+                    <input type="hidden" name="counter_no_add" id="counter_no_add">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm text-gray-600 mb-1">Search employees</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="bi bi-search"></i></span>
+                                <input type="text" id="addSearchUsername" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" placeholder="Search Username">
                             </div>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
-                            <div class="form-floating">
-                                <input type="text" name="addSearchUsername" id="addSearchUsername" class="form-control" placeholder="Search username">
-                                <label for="addSearchUsername">Search Username</label>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Priority Lane</label>
+                            <select name="transaction-filter-priority-add" id="transaction-filter-priority-add" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="N">No</option>
+                                <option value="Y">Yes</option>
+                            </select>
                         </div>
-                        <div class="mb-4">
-                            <label class="form-label">Employees Available</label>
-                            <div class="w-100">
-                                <table class="table table-striped table-members" id="table-add-counter-available">
-                                    <tr>
-                                        <th class="col-2"></th>
-                                        <th>Username</th>
-                                        <th>Available</th>
-                                    </tr>
-                                </table>
-                                <div class="w-100">
-                                    <nav class="w-100" aria-label="Page navigation example">
-                                        <ul class="pagination justify-content-center">
-                                            <li class="page-item">
-                                                <a class="page-link disabled" id="pagePrevCounterAvailableAdd">Previous</a>
-                                            </li>
-                                            <li class="page-item">
-                                                <a class="page-link" id="pageNextCounterAvailableAdd">Next</a>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text" ><i class="bi bi-arrow-down-up"></i></div>
-                            <div class="form-floating">
-                                <input type="number" name="counter_no_add" id="counter_no_add" class="form-control" placeholder="Counter Number" required>
-                                <label for="counter_no_add">Counter Number</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text" ><i class="bi bi-sort-up-alt"></i></div>
-                            <div class="form-floating">
-                                <select class="form-select" name="transaction-filter-priority-add" id="transaction-filter-priority-add">
-                                    <option value="N">No</option>
-                                    <option value="Y">Yes</option>
-                                </select>
-                                <label for="transaction-filter-status">Priority Lane</label>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <div class="d-flex justify-content-end">
-                                <a class="btn btn-secondary" style="width:max-content;margin-right:10px" data-dismiss="modal">Cancel</a>
-                                <button type="submit" class="btn btn-success" style="width:max-content;margin-right:10px">Add</button>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Counter Number</label>
+                            <input type="number" name="counter_no_add_visible" id="counter_no_add_visible" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="#" min="1">
                         </div>
                     </div>
-                </form>
-            </div>
+                    <label class="block text-sm text-gray-600 mb-2">Employees Available</label>
+                    <div class="border border-gray-200 rounded-lg p-3 max-h-64 overflow-auto">
+                        <div id="cards-add-counter-available" class="space-y-2"></div>
+                    </div>
+                    <nav class="mt-3"><ul id="addCounterPagination" class="flex justify-center gap-1"></ul></nav>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('addCounterModal')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <button type="submit" id="btnAddCounterSubmit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Add Counter</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- UPDATE COUNTER -->
-    <div class="modal fade" id="updateCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="updateCounterTitle">Update Counter: <span id="updateCounterDisplay"></span></h5>
+    <!-- Update Counter Modal -->
+    <div id="updateCounterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeModal('updateCounterModal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <form id="frmUpdateCounter">
+                <div class="bg-[rgb(255,110,55)] text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                        <h5 class="font-bold">Update Counter</h5>
+                        <div class="text-sm opacity-80">Edit assignment, number and priority</div>
+                    </div>
+                    <div class="text-xl font-bold" id="updateCounterDisplay">#<span></span></div>
                 </div>
-                <div class="modal-body py-4 px-6" id="updateCounterBody">
-                    <form method="POST" id="frmUpdateCounter">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="updateCounterAlert">
-                                <span id="updateCounterAlertMsg"></span>
+                <div class="p-6">
+                    <div id="updateCounterAlert" class="hidden mb-4 p-4 bg-red-100 text-red-800 rounded-lg"><span id="updateCounterAlertMsg"></span></div>
+                    <input type="hidden" name="update_counter_no" id="update_counter_no">
+                    <input type="hidden" name="update_id" id="update_id">
+                    <div class="hidden"><span id="updateCounterUsername"></span><span id="updateCounterNumber"></span></div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm text-gray-600 mb-1">Search employees</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="bi bi-search"></i></span>
+                                <input type="text" id="updateSearchUsername" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" placeholder="Search Username">
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <input type="hidden" name="update_counter_no" id="update_counter_no">
-                            <input type="hidden" name="update_id" id="update_id">
-                            <div class="w-100 pb-3">
-                                Username: <strong><span id="updateCounterUsername">NaN</span></strong>
-                            </div>
-                            <div class="w-100 pb-3">
-                                Counter No.: <strong><span id="updateCounterNumber">NaN</span></strong>
-                            </div>
-                            <div class="d-none">
-                                <span id="update-idcounter"></span>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Priority Lane</label>
+                            <select name="transaction-filter-priority-update" id="transaction-filter-priority-update" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="N">No</option>
+                                <option value="Y">Yes</option>
+                            </select>
                         </div>
-                        <div class="input-group mb-2">
-                            <div class="input-group-text"><i class="bi bi-search"></i></div>
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="updateSearchUsername" placeholder="Search Username">
-                                <label for="updateSearchUsername">Search Username</label>
-                            </div>
-                        </div>
-                        <div class="input-group mb-2">
-                            <span style="margin-right:20px">Priority Lane:</span>
-                            <span class="fw-bold"id="counter-priority-lane-update"></span>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Employees Available</label>
-                            <div class="w-100">
-                                <table class="table table-striped table-members" id="table-update-counter-available">
-                                    <tr>
-                                        <th class="col-2"></th>
-                                        <th>Username</th>
-                                        <th>Available</th>
-                                    </tr>
-                                </table>
-                                <div class="w-100">
-                                        <nav class="w-100" aria-label="Page navigation example">
-                                            <ul class="pagination justify-content-center">
-                                                <li class="page-item">
-                                                <a class="page-link disabled" id="pagePrevCounterAvailableUpdate">Previous</a>
-                                                </li>
-                                                <li class="page-item">
-                                                <a class="page-link" id="pageNextCounterAvailableUpdate">Next</a>
-                                                </li>
-                                            </ul>
-                                        </nav>
-                                    </div>
-                            </div>
-                        </div>
-                        <div class="mb-3 d-none">
-                            <label class="form-label">Counter No.</label>
-                            <div class="form-floating mb-2">
-                                <span class="form-floating mb-2-text"><i class="fas fa-sort-numeric-up"></i></span>
-                                <input type="hidden" name="counter_no_update" id="counter_no_update" class="form-control" placeholder="Enter counter number" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer row`">
-                            <div class="d-flex justify-content-end">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width:max-content;margin-right:10px">Cancel</button>
-                                <button type="submit" class="btn btn-primary" style="width:max-content;margin-right:10px">Update Counter</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- DELETE COUNTER -->
-    <div class="modal fade" id="deleteCounterModal" tabindex="-1" role="dialog"  aria-hidden="true" style="overflow-y:auto;margin-top: 50px">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-orange-custom d-flex justify-content-start text-white">
-                <h5 class="modal-title fw-bold" id="deleteCounterTitle">Delete Counter: <span id="deleteCounterDisplay"></span></h5>
-                </div>
-                <form method="POST" id="frmDeleteCounter">
-                    <div class="modal-body p-4 px-6" id="deleteEmployeeBody">
-                        <div class="mb-2">
-                            <div class="alert alert-danger w-100 d-none" id="deleteCounterAlert">
-                                <span id="deleteCounterAlertMsg"></span>
-                            </div>
-                        </div>
-                        <input type="hidden" name="delete_id" id="delete_id">
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-center mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16" style="color:red">
-                                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
-                                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
-                                </svg>
-                            </div>
-                            <div class="text-center">
-                                <h5 class="fw-bold">Are you sure?</h5>
-                            </div>
-                        </div>
-                        <div class="p-2">
-                            <label class="form-label" style="color:#333;font-size:14px">Do you want to delete this employee <strong><span id="deleteCounterUsername"></span></strong> assigned at counter number <strong><span id="deleteCounterNumber"></span></strong>?</label>
-                        </div>
-                        <div class="modal-footer row">
-                            <div class="d-flex justify-content-end">
-                                <a class="btn btn-secondary" style="width:max-content;margin-right:10px" data-dismiss="modal">Cancel</a>
-                                <button type="submit" class="btn btn-danger" style="width:max-content">Delete Counter</button>
-                            </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Counter Number</label>
+                            <input type="number" name="counter_no_update_visible" id="counter_no_update_visible" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="#" min="1">
                         </div>
                     </div>
-                </form>
-            </div>
+                    <label class="block text-sm text-gray-600 mb-2">Employees Available</label>
+                    <div class="border border-gray-200 rounded-lg p-3 max-h-64 overflow-auto">
+                        <div id="cards-update-counter-available" class="space-y-2"></div>
+                    </div>
+                    <nav class="mt-3"><ul id="updateCounterPagination" class="flex justify-center gap-1"></ul></nav>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('updateCounterModal')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <button type="submit" id="btnUpdateCounterSubmit" class="px-4 py-2 bg-[rgb(255,110,55)] text-white rounded-lg hover:bg-[rgb(230,60,20)]">Update Counter</button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- Delete Counter Modal -->
+    <div id="deleteCounterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" onclick="closeModal('deleteCounterModal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <form id="frmDeleteCounter">
+                <div class="bg-red-600 text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                        <h5 class="font-bold">Delete Counter</h5>
+                        <div class="text-sm opacity-80">This action cannot be undone</div>
+                    </div>
+                    <span class="font-bold">#<span id="deleteCounterDisplay">&mdash;</span></span>
+                </div>
+                <div class="p-6 text-center">
+                    <div id="deleteCounterAlert" class="hidden mb-4 p-4 bg-red-100 text-red-800 rounded-lg text-left"><span id="deleteCounterAlertMsg"></span></div>
+                    <input type="hidden" name="delete_id" id="delete_id">
+                    <div class="text-5xl text-red-500 mb-4"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <h5 class="font-bold mb-2">Confirm deletion</h5>
+                    <p class="text-gray-600 mb-4">Remove <strong id="deleteCounterUsername">&mdash;</strong> from counter <strong id="deleteCounterNumber">&mdash;</strong>?</p>
+                    <label class="flex items-center gap-2 justify-center cursor-pointer text-sm text-red-600">
+                        <input type="checkbox" name="delete_force" id="delete_force" value="1" class="w-4 h-4 rounded border-gray-300">
+                        <span>Force delete — permanently remove (admin only)</span>
+                    </label>
+                    <p id="deleteModeDesc" class="text-xs text-gray-500 mt-2">Detach will unassign the employee but will not reset today's counter counts.</p>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-between">
+                    <button type="button" onclick="closeModal('deleteCounterModal')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <button type="submit" id="btnDeleteCounterSubmit" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">Detach Counter</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <?php include_once './../includes/footer.php'; ?>
     <?php after_js()?>
     <script>
-        var counter_search = '';
-        var counter_page = 1;
-        var paginate = 10;
+const endpointHost = window.endpointHost;
+var counter_search = '';
+var counter_page = 1;
+var paginate = 25;
+var counter_page_modal = 1;
+var update_selected_employee = null;
+var lastCounters = [];
+var counter_filter_availability = 'none';
+var counter_filter_priority = 'none';
 
-        var counter_page_modal = 1;
+function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
+function escapeHtml(s) { if (s === null || s === undefined) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function textBadge(label, type) {
+    const colors = { success:'bg-green-500', danger:'bg-red-500', warning:'bg-yellow-500 text-gray-900' };
+    return `<span class="px-2 py-1 text-xs rounded text-white ${colors[type]||'bg-gray-200 text-gray-800'}">${label}</span>`;
+}
 
-        function loadCounters() {
-            let table_counters_registered = document.getElementById('table-counters-registered');
-            if (table_counters_registered) {
-                const params = new URLSearchParams({
-                    counters: true,
-                    page: counter_page,
-                    paginate: paginate,
-                    search: counter_search,
+function showLoading(container) {
+    if (container) container.innerHTML = '<div class="flex justify-center py-8"><div class="animate-spin w-8 h-8 border-4 border-[rgb(255,110,55)] border-t-transparent rounded-full"></div></div>';
+}
+
+function renderPagination(totalPages, currentPage, containerId = 'countersPagination') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    let html = '';
+    const btn = (label, p, disabled, active) => `<li><button class="px-3 py-1 rounded ${active?'bg-[rgb(255,110,55)] text-white':'border border-gray-300 hover:bg-gray-100'} ${disabled?'opacity-50 cursor-not-allowed':''}" ${disabled?'disabled':''} data-page="${p}">${label}</button></li>`;
+    html += btn('Prev', Math.max(1,currentPage-1), currentPage===1, false);
+    for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || (p >= currentPage-2 && p <= currentPage+2)) html += btn(p, p, false, p===currentPage);
+        else if (p === currentPage-3 || p === currentPage+3) html += '<li><span class="px-2">...</span></li>';
+    }
+    html += btn('Next', Math.min(totalPages,currentPage+1), currentPage===totalPages, false);
+    container.innerHTML = html;
+    container.querySelectorAll('button[data-page]').forEach(b => b.addEventListener('click', () => {
+        const page = parseInt(b.dataset.page);
+        if (containerId === 'countersPagination') { counter_page = page; loadCounters(); }
+        else if (containerId === 'addCounterPagination') { counter_page_modal = page; loadAddEmployees(); }
+        else if (containerId === 'updateCounterPagination') { counter_page_modal = page; loadUpdateAvailableEmployees(); }
+    }));
+}
+
+function loadCounters() {
+    const container = document.getElementById('cards-counters-registered');
+    if (!container) return;
+    showLoading(container);
+    const params = new URLSearchParams({ counters: true, page: counter_page, paginate, search: counter_search });
+    if (counter_filter_availability !== 'none') params.set('availability', counter_filter_availability);
+    if (counter_filter_priority !== 'none') params.set('priority', counter_filter_priority);
+    $.ajax({
+        url: buildApiUrl('/api/counters', params), type: 'GET', timeout: 10000, xhrFields: { withCredentials: true },
+        success: function(response) {
+            container.innerHTML = '';
+            if (response.status === 'success') {
+                const counters = response.counters || [];
+                lastCounters = counters;
+                const total = response.total || counters.length;
+                const totalPages = Math.max(1, Math.ceil(total / paginate));
+                renderPagination(totalPages, counter_page);
+                if (!counters.length) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-500"><div class="text-4xl mb-2"><i class="bi bi-collection"></i></div><div class="font-bold">No counters assigned</div><button class="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg" onclick="document.getElementById(\'btn-add-counter\').click()">Add Counter</button></div>';
+                    return;
+                }
+                counters.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-50 rounded-xl p-4 flex items-center justify-between';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-[rgb(255,110,55)] text-white rounded-full flex items-center justify-center text-xl font-bold">${escapeHtml(c.counterNumber||'')}</div>
+                            <div><div class="font-bold">${escapeHtml(c.username||'')}</div><div class="text-sm text-gray-500">${escapeHtml(c.role_type||'')}</div></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn-update-counter p-2 border border-gray-300 rounded hover:bg-gray-100" data-id="${c.idcounter}"><i class="bi bi-pencil-square text-blue-600"></i></button>
+                            <button class="btn-delete-counter p-2 border border-red-300 rounded hover:bg-red-50" data-id="${c.idcounter}"><i class="bi bi-trash-fill text-red-600"></i></button>
+                        </div>`;
+                    container.appendChild(card);
                 });
-                $.ajax({
-                    url: realHost + '/public/api/api_endpoint.php?' + params,
-                    type: 'GET',
-                    success: function(response) {
-                        while (table_counters_registered.rows.length > 1) {
-                            table_counters_registered.deleteRow(-1);
-                        }
-                        if (response.status === 'success') {
-                            const counters = response.counters;
-                            if (counters.length < paginate) {
-                                pageNextCounterRegistered.classList.add('disabled');
-                            } else {
-                                pageNextCounterRegistered.classList.remove('disabled');
-                            }
-                            counters.forEach(counter => {
-                                let row = table_counters_registered.insertRow(-1);
-                                row.innerHTML = `
-                                    <tr>
-                                        <td style="min-width:20px;max-width:35px">${counter.counterNumber}</td>
-                                        <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                                            <span>${userStatusIcon(counter.username, counter.role_type, counter.active)}</span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a class="btn btn-outline-primary text-primary" id="update-counter-${counter.idcounter}" data-toggle="modal" data-target="#updateCounterModal"><i class="bi bi-pencil-square"></i></a>
-                                                <a id="delete-counter-${counter.idcounter}" class="btn btn-outline-danger" id="delete-counter" data-toggle="modal" data-target="#deleteCounterModal"><i class="bi bi-trash-fill"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>    
-                                `;
-                            });
-                        } else {
-                            let row = table_counters_registered.insertRow(-1);
-                            row.innerHTML = `
-                                <tr>
-                                    <td colspan="3" class="fw-bold text-center">No counters assigned</td>
-                                </tr>
-                            `;
-                        }
-                    }
-                })
+            } else {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500">No counters found</div>';
+            }
+        },
+        error: function(xhr) {
+            if (xhr?.status === 404) container.innerHTML = '<div class="text-center py-8 text-gray-500"><div class="font-bold">No counters assigned</div><button class="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg" onclick="document.getElementById(\'btn-add-counter\').click()">Add Counter</button></div>';
+            else container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading counters <button class="ml-2 underline" onclick="loadCounters()">Retry</button></div>';
+        }
+    });
+}
+
+function loadAddEmployees() {
+    const container = document.getElementById('cards-add-counter-available');
+    if (!container) return;
+    showLoading(container);
+    const params = new URLSearchParams({ counters: true, available: true, search: counter_search, page: counter_page_modal, paginate });
+    $.ajax({
+        url: buildApiUrl('/api/counters', params), type: 'GET', timeout: 10000, xhrFields: { withCredentials: true },
+        success: function(response) {
+            container.innerHTML = '';
+            if (response.status === 'success') {
+                const employees = response.counters || [];
+                if (!employees.length) { container.innerHTML = '<div class="text-center font-bold py-4">No employees available</div>'; return; }
+                employees.forEach(e => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between cursor-pointer hover:border-[rgb(255,110,55)]';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="employee-counter-set" value="${e.id}" class="w-4 h-4">
+                            <div><div class="font-bold">${escapeHtml(e.username)}</div><div class="text-sm text-gray-500">${escapeHtml(e.role_type||'')}</div></div>
+                        </div>
+                        <div>${textBadge(e.availability, e.availability==='Available'?'success':e.availability==='Assigned'?'danger':'warning')}</div>`;
+                    card.addEventListener('click', () => card.querySelector('input[type=radio]').checked = true);
+                    container.appendChild(card);
+                });
+                const hasMore = employees.length === paginate;
+                renderPagination(hasMore ? counter_page_modal + 1 : counter_page_modal, counter_page_modal, 'addCounterPagination');
+            } else { container.innerHTML = '<div class="text-center font-bold py-4">No employees available</div>'; }
+        },
+        error: function() { container.innerHTML = '<div class="text-center font-bold py-4">No employees available</div>'; }
+    });
+}
+
+function loadUpdateAvailableEmployees() {
+    const container = document.getElementById('cards-update-counter-available');
+    if (!container) return;
+    showLoading(container);
+    const params = new URLSearchParams({ counters: true, available: true, search: counter_search, page: counter_page_modal, paginate });
+    $.ajax({
+        url: buildApiUrl('/api/counters', params), type: 'GET', timeout: 10000, xhrFields: { withCredentials: true },
+        success: function(response) {
+            container.innerHTML = '';
+            if (response.status === 'success') {
+                const employees = response.counters || [];
+                if (!employees.length) { container.innerHTML = '<div class="text-center font-bold py-4">No employees available</div>'; return; }
+                employees.forEach(e => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between cursor-pointer hover:border-[rgb(255,110,55)]';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="employee-counter-set" value="${e.id}" class="w-4 h-4" ${e.id == update_selected_employee ? 'checked' : ''}>
+                            <div><div class="font-bold">${escapeHtml(e.username)}</div><div class="text-sm text-gray-500">${escapeHtml(e.role_type||'')}</div></div>
+                        </div>
+                        <div>${textBadge(e.availability, e.availability==='Available'?'success':e.availability==='Assigned'?'danger':'warning')}</div>`;
+                    card.addEventListener('click', () => card.querySelector('input[type=radio]').checked = true);
+                    container.appendChild(card);
+                });
+                const hasMore = employees.length === paginate;
+                renderPagination(hasMore ? counter_page_modal + 1 : counter_page_modal, counter_page_modal, 'updateCounterPagination');
+            } else { container.innerHTML = '<div class="text-center font-bold py-4">No employees available</div>'; }
+        },
+        error: function() { container.innerHTML = '<div class="text-center font-bold py-4">No employees available</div>'; }
+    });
+}
+
+document.getElementById('btn-add-counter')?.addEventListener('click', () => { counter_page_modal = 1; counter_search = ''; document.getElementById('frmAddCounter')?.reset(); loadAddEmployees(); openModal('addCounterModal'); });
+document.getElementById('btnRefreshCounters')?.addEventListener('click', () => loadCounters());
+document.getElementById('searchCounterRegistered')?.addEventListener('keyup', e => { counter_search = e.target.value; counter_page = 1; loadCounters(); });
+document.getElementById('counter-filter-availability')?.addEventListener('change', e => { counter_filter_availability = e.target.value; counter_page = 1; loadCounters(); });
+document.getElementById('counter-filter-priority')?.addEventListener('change', e => { counter_filter_priority = e.target.value; counter_page = 1; loadCounters(); });
+document.getElementById('countersPerPage')?.addEventListener('change', e => { paginate = parseInt(e.target.value) || 25; counter_page = 1; loadCounters(); });
+document.getElementById('addSearchUsername')?.addEventListener('keyup', e => { counter_search = e.target.value; counter_page_modal = 1; loadAddEmployees(); });
+document.getElementById('updateSearchUsername')?.addEventListener('keyup', e => { counter_search = e.target.value; counter_page_modal = 1; loadUpdateAvailableEmployees(); });
+
+$(document).on('click', '.btn-update-counter', function() {
+    const id = this.dataset.id;
+    counter_search = ''; counter_page_modal = 1;
+    $.ajax({
+        url: buildApiUrl('/api/counters', new URLSearchParams({ counters: true, id })), type: 'GET', dataType: 'json', xhrFields: { withCredentials: true },
+        success: function(response) {
+            if (response.status === 'success') {
+                const c = response.counter;
+                document.querySelector('#updateCounterDisplay span').innerText = c.counterNumber;
+                document.getElementById('update_id').value = c.idcounter;
+                document.getElementById('update_counter_no').value = c.counterNumber;
+                document.getElementById('counter_no_update_visible').value = c.counterNumber;
+                document.getElementById('transaction-filter-priority-update').value = c.counter_priority === 'Y' ? 'Y' : 'N';
+                update_selected_employee = c.idemployee;
+                loadUpdateAvailableEmployees();
+                openModal('updateCounterModal');
             }
         }
+    });
+});
 
-        loadCounters();
-
-        // Add Counter
-        let btnAddCounterModal = document.getElementById('btn-add-counter');
-        btnAddCounterModal.addEventListener('click', function(e) {
-            counter_page_modal = 1;
-            e.preventDefault();
-
-            let form = document.getElementById('frmAddCounter');
-            form.reset();
-            loadAddEmployees();
-        });
-
-        function loadAddEmployees() {
-            let table_counters_available = document.getElementById('table-add-counter-available');
-            if (table_counters_available) {
-                const params = new URLSearchParams({
-                    counters: true,
-                    available: true,
-                    search: counter_search,
-                    page: counter_page_modal,
-                    paginate: paginate,
-                });
-                $.ajax({
-                    url: realHost + '/public/api/api_endpoint.php?' + params,
-                    type: 'GET',
-                    success: function (response) {
-                        while (table_counters_available.rows.length > 1) {
-                            table_counters_available.deleteRow(-1);
-                        }
-                        if (response.status === 'success') {
-                            const employees = response.counters;
-                            employees.forEach(employee => {
-                                let row = table_counters_available.insertRow(-1);
-                                row.innerHTML = `
-                                    <tr>
-                                        <td style="min-width:20px;max-width:35px">
-                                            <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}">
-                                        </td>
-                                        <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                                            <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
-                                        </td>
-                                        <td style="min-width:20px;max-width:35px">
-                                            ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
-                                        </td>
-                                    </tr>
-                                `;
-                            });
-                        } else {
-                            let row = table_counters_available.insertRow(-1);
-                            row.innerHTML = `
-                                <tr>
-                                    <td colspan="3" class="fw-bold text-center fw-bold">No employee available</td> 
-                                </tr>
-                            `;
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error loading employees:', error);
-                    }
-                });
+$(document).on('click', '.btn-delete-counter', function() {
+    const id = this.dataset.id;
+    $.ajax({
+        url: buildApiUrl('/api/counters', new URLSearchParams({ counters: true, id })), type: 'GET', dataType: 'json', xhrFields: { withCredentials: true },
+        success: function(response) {
+            if (response.status === 'success') {
+                const c = response.counter;
+                document.getElementById('deleteCounterDisplay').innerText = c.counterNumber;
+                document.getElementById('deleteCounterUsername').innerText = c.username;
+                document.getElementById('deleteCounterNumber').innerText = c.counterNumber;
+                document.getElementById('delete_id').value = c.idcounter;
+                openModal('deleteCounterModal');
             }
         }
+    });
+});
 
-        let pagePrevCounterAvailableAdd = document.getElementById('pagePrevCounterAvailableAdd');
-        pagePrevCounterAvailableAdd.addEventListener('click', function(e) {
-            if (counter_page_modal > 1) {
-                counter_page_modal--;
-                if (counter_page_modal === 1) {
-                    pagePrevCounterAvailableAdd.classList.add('disabled');
-                }
-                loadAddEmployees();
-            }
-        });
+document.getElementById('frmAddCounter')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const alert = document.getElementById('addCounterAlert'), alertMsg = document.getElementById('addCounterAlertMsg');
+    document.getElementById('counter_no_add').value = document.getElementById('counter_no_add_visible').value;
+    const formData = new FormData(this);
+    const radio = document.querySelector('input[name="employee-counter-set"]:checked');
+    if (!radio) { alertMsg.innerText = 'Please select an employee'; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); return; }
+    $.ajax({
+        url: buildApiUrl('/api/counters'), type: 'POST', contentType: 'application/json', dataType: 'json', xhrFields: { withCredentials: true },
+        data: JSON.stringify({ counterNumber: formData.get('counter_no_add'), counter_priority: formData.get('transaction-filter-priority-add') || 'N', user_id: radio.value }),
+        success: function(response) {
+            if (response.status === 'success') { alert.classList.remove('hidden','bg-red-100','text-red-800'); alert.classList.add('bg-green-100','text-green-800'); alertMsg.innerText = response.message; setTimeout(() => location.reload(), 1000); }
+            else { alertMsg.innerText = response.message; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+        },
+        error: function(x) { alertMsg.innerText = 'Failed: ' + (x.responseText || 'Error'); alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+    });
+});
 
-        let pageNextCounterAvailableAdd = document.getElementById('pageNextCounterAvailableAdd');
-        pageNextCounterAvailableAdd.addEventListener('click', function(e) {
-            pagePrevCounterAvailableAdd.classList.remove('disabled');
-            e.preventDefault();
-            counter_page_modal++;
-            loadAddEmployees();
-        });
+document.getElementById('frmUpdateCounter')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const alert = document.getElementById('updateCounterAlert'), alertMsg = document.getElementById('updateCounterAlertMsg');
+    document.getElementById('update_counter_no').value = document.getElementById('counter_no_update_visible').value;
+    const formData = new FormData(this);
+    const radio = document.querySelector('#cards-update-counter-available input[name="employee-counter-set"]:checked');
+    if (!radio) { alertMsg.innerText = 'Please select an employee'; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); return; }
+    $.ajax({
+        url: buildApiUrl('/api/counters'), type: 'PUT', contentType: 'application/json', dataType: 'json', xhrFields: { withCredentials: true },
+        data: JSON.stringify({ counter_id: formData.get('update_id'), counterNumber: formData.get('update_counter_no'), idemployee: radio.value, counter_priority: formData.get('transaction-filter-priority-update') || 'N' }),
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            if (response.status === 'success') { alert.classList.remove('hidden','bg-red-100','text-red-800'); alert.classList.add('bg-green-100','text-green-800'); alertMsg.innerText = response.message; setTimeout(() => location.reload(), 1000); }
+            else { alertMsg.innerText = response.message; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+        },
+        error: function(x) { alertMsg.innerText = 'Failed: ' + (x.responseText || 'Error'); alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+    });
+});
 
+document.getElementById('delete_force')?.addEventListener('change', function() {
+    const btn = document.getElementById('btnDeleteCounterSubmit');
+    const desc = document.getElementById('deleteModeDesc');
+    if (this.checked) { btn.classList.remove('bg-yellow-500','hover:bg-yellow-600'); btn.classList.add('bg-red-600','hover:bg-red-700'); btn.innerText = 'Delete Counter'; desc.innerText = 'Force delete will permanently remove the counter row.'; }
+    else { btn.classList.remove('bg-red-600','hover:bg-red-700'); btn.classList.add('bg-yellow-500','hover:bg-yellow-600'); btn.innerText = 'Detach Counter'; desc.innerText = "Detach will unassign the employee but will not reset today's counter counts."; }
+});
 
-        let addSearchUsername = document.getElementById('addSearchUsername');
-        addSearchUsername.addEventListener('keyup', function(e) {
-            page_counterModal = 1;
-            pagePrevCounterAvailableAdd.classList.add('disabled');
-            e.preventDefault();
-            counter_search = this.value;
-            loadAddEmployees();
-        });
+document.getElementById('frmDeleteCounter')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const alert = document.getElementById('deleteCounterAlert'), alertMsg = document.getElementById('deleteCounterAlertMsg');
+    const formData = new FormData(this);
+    $.ajax({
+        url: buildApiUrl('/api/counters'), type: 'DELETE', contentType: 'application/json', dataType: 'json', xhrFields: { withCredentials: true },
+        data: JSON.stringify({ counter_id: formData.get('delete_id'), force: formData.get('delete_force') === '1' }),
+        beforeSend: function(xhr) { <?php if (isset($_COOKIE['token'])): ?>try { xhr.setRequestHeader('Authorization', 'Bearer <?php echo addslashes($_COOKIE['token']); ?>'); } catch(e){}<?php endif; ?> },
+        success: function(response) {
+            if (response.status === 'success') { alert.classList.remove('hidden','bg-red-100','text-red-800'); alert.classList.add('bg-green-100','text-green-800'); alertMsg.innerText = response.message; setTimeout(() => location.reload(), 1000); }
+            else { alertMsg.innerText = response.message; alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+        },
+        error: function(x) { alertMsg.innerText = 'Failed: ' + (x.responseText || 'Error'); alert.classList.remove('hidden'); setTimeout(() => alert.classList.add('hidden'), 3000); }
+    });
+});
 
-        let frmAddEmployee = document.getElementById('frmAddCounter');
-        frmAddEmployee.addEventListener('submit', function(e) {
-            e.preventDefault();
+document.getElementById('btnExportCountersCsv')?.addEventListener('click', function() {
+    const data = lastCounters.length ? lastCounters : [];
+    if (!data.length) { alert('No counters to export'); return; }
+    const cols = ['counterNumber','username','role_type','queue_count','idcounter'];
+    const csv = [['Counter','Username','Role','Queue','ID'].join(',')].concat(data.map(c => cols.map(k => '"' + String(c[k]||'').replace(/"/g,'""') + '"').join(','))).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' })); a.download = 'counters_export.csv'; a.click();
+});
 
-            let formAlert = document.getElementById('addCounterAlert');
-            let formAlertMsg = document.getElementById('addCounterAlertMsg');
-            const formData = new FormData(this);
-            const employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
-            const counter_number = formData.get('counter_no_add');
-            const priority = formData.get('transaction-filter-priority');
-            // console.log(employee_id, counter_number);
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
-                type: 'POST',
-                data: JSON.stringify({
-                    method: "counter-add",
-                    idemployee: employee_id,
-                    counterNumber: counter_number,
-                    counter_priority: priority
-                }),
-                success: function(response) {
-                    console.log(response);
-                    if (response.status === 'success') {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none', 'alert-danger');
-                        formAlert.classList.add('alert-success');
-                        setTimeout(()=>{
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.add('alert-danger');
-                        formAlert.classList.remove('d-none', 'alert-success');
-                        setTimeout(()=>{
-                            formAlert.classList.add('d-none');
-                        }, 5000);
-                    }
-                },
-            });
-        });
-
-        $(document).on('click', '[id^="update-counter-"]', function (e) {
-            counter_search = '';
-            counter_page_modal = 1;
-            e.preventDefault();
-
-            const counterId = this.id.split('-')[2];
-            console.log(counterId);
-
-            const params = new URLSearchParams({
-                counters: true,
-                id: counterId,
-                page: counter_page_modal,
-                paginate: paginate,
-            });
-            let frmUpdateCounter = document.getElementById('frmUpdateCounter');
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function (response) {
-                console.log(response);
-                if (response.status === 'success') {
-                    const counter = response.counter;
-                    let updateCounterDisplay = document.getElementById('updateCounterDisplay');
-                    updateCounterDisplay.innerText = counter.counterNumber;
-                    let updateCounterUsername = document.getElementById('updateCounterUsername');
-                    updateCounterUsername.innerText = counter.username;
-                    let updateCounterNumber = document.getElementById('updateCounterNumber');
-                    updateCounterNumber.innerText = counter.counterNumber;
-                    let counter_priority_lane_update = document.getElementById('counter-priority-lane-update');
-                    counter_priority_lane_update.textContent = counter.counter_priority === 'Y' ? 'Yes' : 'No';
-                    let update_id = document.getElementById('update_id');
-                    update_id.value = counter.idcounter;
-                    console.log(counter);
-                    loadUpdateEmployees();
-
-                    frmUpdateCounter.reset();
-                    frmUpdateCounter.elements['update_id'].value = counter.idcounter;
-                    frmUpdateCounter.elements['update_counter_no'].value = counter.counterNumber;
-                }
-                },
-            
-            });
-        });
-
-        let pagePrevCounterAvailableUpdate = document.getElementById('pagePrevCounterAvailableUpdate');
-        pagePrevCounterAvailableUpdate.addEventListener('click', function(e) {
-            if (counter_page_modal > 1) {
-                counter_page_modal--;
-                if (counter_page_modal === 1) {
-                    pagePrevCounterAvailableUpdate.classList.add('disabled');
-                }
-                loadUpdateEmployees();
-            }
-        });
-
-        let pageNextCounterAvailableUpdate = document.getElementById('pageNextCounterAvailableUpdate');
-        pageNextCounterAvailableUpdate.addEventListener('click', function(e) {
-            pagePrevCounterAvailableUpdate.classList.remove('disabled');
-            e.preventDefault();
-            counter_page_modal++;
-            loadUpdateEmployees();
-        });
-
-        let updateSearchUsername = document.getElementById('updateSearchUsername');
-        updateSearchUsername.addEventListener('keyup', function(e) {
-            page_counterModal = 1;
-            pagePrevCounterAvailableUpdate.classList.add('disabled');
-            e.preventDefault();
-            counter_search = this.value;
-            loadUpdateEmployees();
-        });
-
-        function loadUpdateEmployees() {
-            let table_counters_available = document.getElementById('table-update-counter-available');
-            if (table_counters_available) {
-                const params = new URLSearchParams({
-                    counters: true,
-                    available: true,
-                    search: counter_search,
-                    page: counter_page_modal,
-                    paginate: paginate,
-                });
-                $.ajax({
-                    url: realHost + '/public/api/api_endpoint.php?' + params,
-                    type: 'GET',
-                    success: function (response) {
-                        while (table_counters_available.rows.length > 1) {
-                            table_counters_available.deleteRow(-1);
-                        }
-                        if (response.status === 'success') {
-                            const employees = response.counters;
-                            employees.forEach(employee => {
-                                let row = table_counters_available.insertRow(-1);
-                                row.innerHTML = `
-                                    <tr>
-                                        <td style="min-width:20px;max-width:35px">
-                                            <input class="form-check-input" type="radio" name="employee-counter-set" id="employee-counter-set-${employee.id}" value="${employee.id}">
-                                        </td>
-                                        <td class="fw-bold role_type_employee_icon" style="min-width:40px">
-                                            <span>${userStatusIcon(employee.username, employee.role_type, employee.active)}</span>
-                                        </td>
-                                        <td style="min-width:20px;max-width:35px">
-                                            ${textBadge(employee.availability, employee.availability === 'Available' ? 'success' : employee.availability === 'Assigned' ? 'danger' : 'warning')}
-                                        </td>
-                                    </tr>
-                                `;
-                            });
-                        } else {
-                            let row = table_counters_available.insertRow(-1);
-                            row.innerHTML = `
-                                <tr>
-                                        <td colspan="3" class="text-center fw-bold">No employee available</td> 
-                                </tr>
-                            `;
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error loading employees:', error);
-                    }
-                });
-            }
-        }
-        let frmUpdateCounter = document.getElementById('frmUpdateCounter');
-        frmUpdateCounter.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            let formAlert = document.getElementById('updateCounterAlert');
-            let formAlertMsg = document.getElementById('updateCounterAlertMsg');
-
-            const formData = new FormData(this);    // RESERVE :>
-
-            const idcounter = formData.get('update_id');
-            const employee_id = document.querySelector('input[name="employee-counter-set"]:checked').value;
-            const counter_number = formData.get('update_counter_no');
-            console.log(employee_id);
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
-                method: 'POST',
-                data: JSON.stringify({
-                    method: "counters-update",
-                    id: idcounter,
-                    counterNumber: counter_number,
-                    idemployee: employee_id,
-                }),
-                success: function(response) {
-                    console.log(response);
-                    if (response.status === 'success') {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none', 'alert-danger');
-                        formAlert.classList.add('alert-success');
-                        setTimeout(()=>{
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.add('alert-danger');
-                        formAlert.classList.remove('d-none', 'alert-success');
-                        setTimeout(()=>{
-                            formAlert.classList.add('d-none');
-                        }, 5000);
-                    }
-                }
-            });
-
-
-
-        });
-
-        $(document).on('click', '[id^="delete-counter-"]', function (e) {
-            e.preventDefault();
-
-            const counterId = this.id.split('-')[2];
-            console.log(counterId);
-
-            let frmDeleteCounter = document.getElementById('frmDeleteCounter');
-            const params = new URLSearchParams({
-                counters: true,
-                id: counterId,
-            });
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function (response) {
-                    console.log(response);
-                    let deleteCounterDisplay = document.getElementById('deleteCounterDisplay');
-                    deleteCounterDisplay.innerText = response.counter.counterNumber;
-                    let deleteCounterUsername = document.getElementById('deleteCounterUsername');
-                    deleteCounterUsername.innerText = response.counter.username;
-                    let deleteCounterNumber = document.getElementById('deleteCounterNumber');
-                    deleteCounterNumber.innerText = response.counter.counterNumber;
-                    frmDeleteCounter.reset();
-                    frmDeleteCounter.elements['delete_id'].value = response.counter.idcounter;
-                }
-            });
-        });
-
-        let frmDeleteCounter = document.getElementById('frmDeleteCounter');
-        frmDeleteCounter.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            let formAlert = document.getElementById('deleteCounterAlert');
-            let formAlertMsg = document.getElementById('deleteCounterAlertMsg');
-
-            const formData = new FormData(this);
-            const idcounter = formData.get('delete_id');
-
-            $.ajax({
-                url: realHost + '/public/api/api_endpoint.php',
-                method: 'POST',
-                data: JSON.stringify({
-                    method: "counters-delete",
-                    id: idcounter,
-                }),
-                success: function(response) {
-                    console.log(response);
-                    if (response.status === 'success') {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.remove('d-none', 'alert-danger');
-                        formAlert.classList.add('alert-success');
-                        setTimeout(()=>{
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        formAlertMsg.innerText = response.message;
-                        formAlert.classList.add('alert-danger');
-                        formAlert.classList.remove('d-none', 'alert-success');
-                        setTimeout(()=>{
-                            formAlert.classList.add('d-none');
-                        }, 5000);
-                    }
-                }
-            });
-        });
-
-        let pagePrevCounterRegistered = document.getElementById('pagePrevCounterRegistered');
-        pagePrevCounterRegistered.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log(counter_search);
-            if (counter_page > 1) {
-                counter_page--;
-                if (counter_page === 1) {
-                    pagePrevCounterRegistered.classList.add('disabled');
-                }
-                loadCounters();
-            }
-        });
-
-        let pageNextCounterRegistered = document.getElementById('pageNextCounterRegistered');
-        pageNextCounterRegistered.addEventListener('click', function(e) {
-            pagePrevCounterRegistered.classList.remove('disabled');
-            e.preventDefault();
-            counter_page++;
-            loadCounters();
-        });
-
-        let searchCounterRegistered = document.getElementById('searchCounterRegistered');
-        searchCounterRegistered.addEventListener('keyup', function(e) {
-            console.log(this.value);
-            counter_page = 1;
-            pagePrevCounterRegistered.classList.add('disabled');
-            e.preventDefault();
-            counter_search = this.value;
-            loadCounters();
-        });
-
-
-
+loadCounters();
     </script>
 </body>
 </html>

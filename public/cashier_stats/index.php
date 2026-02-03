@@ -1,7 +1,4 @@
-<?php
-include "./../base.php"
-?>
-
+<?php include "./../base.php" ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,103 +7,48 @@ include "./../base.php"
     <?php head_icon()?>
     <title>Counter Stats | <?php echo $project_name?></title>
     <?php head_css()?>
-    <?php before_js()?>
 </head>
-<body class="bg">
+<body class="bg min-h-screen">
     <?php include "./../includes/navbar_non.php"; ?>
-        <div class="container d-flex justify-content-center before-footer" style="margin-top: 100px;transform:scale(1)">
-        <div class="card shadow-sm p-4" style="max-width: 800px; width: 100%;">
-            <div class="w-100">
-                <h4 class="text-center fw-bold fs-2">Counter Stats</h4>
+    <div class="pt-24 px-4 pb-12 flex justify-center">
+        <div class="bg-white rounded-xl shadow-lg p-6 max-w-3xl w-full">
+            <h1 class="text-2xl font-bold text-center mb-6">Counter Stats</h1>
+            <div class="bg-gray-100 rounded-xl p-6 text-center mb-6">
+                <span class="block text-lg font-semibold" id="requester_number_label">Current Number</span>
+                <span class="text-4xl font-bold text-psu-orange" id="requester_number_latest">--</span>
             </div>
-            <div class="w-100">
-                <div class="w-100 w-md-50">
-                    <div class="card">
-                        <span class="fs-5 fw-bold text-center" id="requester_number_label">
-                            Current Number
-                        </span>
-                        <span class="fs-1 fw-bold text-center" id="requester_number_latest">
-                            
-                        </span>
-                    </div>
-                </div>
-                <div class="row" id="counters-list">
-                    <div class="col-6 p-0 m-0">
-                        <div class="card m-2 p-2">
-                            <div class="row p-0 m-0">
-                                <div class="fw-bold text-start col-6 mb-2">
-                                    Counter 
-                                </div>
-                                <div class="fw-bold text-end col-6">
-                                    1
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="grid sm:grid-cols-2 gap-4" id="counters-list"></div>
         </div>
     </div>
-
-<?php after_js()?>
-    <script src="./../asset/js/message.js"></script>
-    <script src="./../asset/js/user_form.js"></script>
-    <!-- <script src="./../asset/js/counters.js"></script> -->
-</body>
-<?php include_once "./../includes/footer.php"; ?>
-<script>
-    let counters_list = document.getElementById("counters-list");
-    let requester_number_label = document.getElementById("requester_number_label");
-    let requester_number_latest = document.getElementById("requester_number_latest");
-    function fetchCounters() {
-        let params = new URLSearchParams({
-            counter_current_number: true
-        })
-        $.ajax({
-            url: '/public/api/api_endpoint.php?' + params,
-            type: 'GET',
-            success: function(response) {
-                counters_list.innerHTML = "";
-                if (response.status == "success") {
-                    requester_number_label.classList.remove('text-danger');
-                    requester_number_label.textContent = "Current Number";
-                    requester_number_latest.textContent = response.requester;
-                    console.log(response.counters);
-                    let counters = response.counters;
-                    counters.forEach(counter => {
-                        console.log(counter);
-                    counters_list.innerHTML += `
-                    <div class="col-6 p-0 m-0">
-                        <div class="card m-2 p-2">
-                            <div class="row p-0 m-0">
-                                <div class="fw-bold text-start col-6">
-                                    Counter ${counter.counterNumber}
-                                </div>
-                                <div class="fw-bold text-end col-6">
-                                    ${counter.queue_number ?counter.queue_number: "No Queue"}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    `;
+    <?php after_js()?>
+    <?php include_once "./../includes/footer.php"; ?>
+    <script>
+    const endpointHost = window.endpointHost;
+    function fetchCounters(){
+        if(!endpointHost) return;
+        $.ajax({url:endpointHost.replace(/\/$/,'')+'/api/counter_current_number',type:'GET',
+            success:function(r){
+                const list=document.getElementById('counters-list');list.innerHTML='';
+                if(r.status==='success'){
+                    document.getElementById('requester_number_label').className='block text-lg font-semibold';
+                    document.getElementById('requester_number_label').textContent='Current Number';
+                    document.getElementById('requester_number_latest').textContent=r.requester||'--';
+                    (r.counters||[]).forEach(c=>{
+                        list.innerHTML+=`<div class="bg-white border rounded-xl p-4 flex justify-between items-center">
+                            <span class="font-bold">Counter ${c.counterNumber}</span>
+                            <span class="font-bold text-psu-orange">${c.queue_number||'No Queue'}</span>
+                        </div>`;
                     });
-                } else {
-                    console.log(response);
-                    requester_number_label.classList.add('text-danger');
-                    requester_number_label.textContent = "Notice";
-                    requester_number_latest.textContent = response.message;
-
+                }else{
+                    document.getElementById('requester_number_label').className='block text-lg font-semibold text-red-500';
+                    document.getElementById('requester_number_label').textContent='Notice';
+                    document.getElementById('requester_number_latest').textContent=r.message||'Error';
                 }
-            },
-            error: function(response) {
-                console.log(response);
             }
-        })
+        });
     }
     fetchCounters();
-
-    setInterval(() => {
-        fetchCounters();
-    }, 5000);
-</script>
+    setInterval(fetchCounters,5000);
+    </script>
+</body>
 </html>

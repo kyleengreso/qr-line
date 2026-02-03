@@ -1,7 +1,4 @@
-<?php
-include "./../base.php"
-?>
-
+<?php include "./../base.php" ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,122 +7,66 @@ include "./../base.php"
     <?php head_icon()?>
     <title>Stats | <?php echo $project_name?></title>
     <?php head_css()?>
-    <?php before_js()?>
 </head>
-<body class="bg">
+<body class="bg min-h-screen">
     <?php include "./../includes/navbar_non.php"; ?>
-        <div class="container d-flex justify-content-center before-footer" style="margin-top: 100px;transform:scale(0.9)">
-        <div class="card shadow-sm p-4" style="max-width: 1000px; width: 100%;">
-            <div class="w-100">
-                <h4 class="text-center fw-bold fs-1"><?php echo $project_name ?> Stats</h4>
+    <div class="pt-24 px-4 pb-12 flex justify-center">
+        <div class="bg-white rounded-xl shadow-lg p-6 max-w-4xl w-full">
+            <h1 class="text-3xl font-bold text-center mb-6"><?php echo $project_name ?> Stats</h1>
+            <div class="bg-gray-100 rounded-xl p-6 text-center mb-4">
+                <h3 class="text-4xl font-bold text-psu-orange" id="transactions-total">0</h3>
+                <p class="text-gray-500">Total Transactions</p>
             </div>
-            <div class="row">
-                <div class="col-12">
-                    <div class="text-center bg-white p-4 border border-2 shadow-sm rounded">
-                        <h3 class="fs-2 fw-bold" id="transactions-total"></h3>
-                        <p class="text-muted mb-0">Total Transactions</p>
-                    </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-white border rounded-xl p-6 text-center">
+                    <i class="bi bi-people text-4xl text-psu-orange mb-2 block"></i>
+                    <h3 class="text-2xl font-bold" id="transactions-today">0</h3>
+                    <p class="text-gray-500 text-sm">Today</p>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4 m-0 p-0 d-flex align-items-stretch">
-                    <div class="p-3 w-100">
-                        <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
-                            <i class="bi bi-people fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-today"></h3>
-                            <p class="text-muted mb-0">Transaction Today</p>
-                        </div>
-                    </div>
+                <div class="bg-white border rounded-xl p-6 text-center">
+                    <i class="bi bi-people-fill text-4xl text-psu-orange mb-2 block"></i>
+                    <h3 class="text-2xl font-bold" id="transactions-yesterday">0</h3>
+                    <p class="text-gray-500 text-sm">Yesterday</p>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4 m-0 p-0 d-flex align-items-stretch">
-                    <div class="p-3 w-100">
-                        <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
-                            <i class="bi bi-people-fill fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-yesterday"></h3>
-                            <p class="text-muted mb-0">Transaction Yesterday</p>
-                        </div>
-                    </div>
+                <div class="bg-white border rounded-xl p-6 text-center">
+                    <i class="bi bi-calendar-fill text-4xl text-psu-orange mb-2 block"></i>
+                    <h3 class="text-2xl font-bold" id="transactions-week">0</h3>
+                    <p class="text-gray-500 text-sm">This Week</p>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4 m-0 p-0 d-flex align-items-stretch">
-                    <div class="p-3 w-100">
-                        <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
-                            <i class="bi bi-calendar-fill fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-week"></h3>
-                            <p class="text-muted mb-0">This week</p>
-                        </div>
-                    </div>
+                <div class="bg-white border rounded-xl p-6 text-center">
+                    <i class="bi bi-calendar text-4xl text-psu-orange mb-2 block"></i>
+                    <h3 class="text-2xl font-bold" id="transactions-month">0</h3>
+                    <p class="text-gray-500 text-sm">This Month</p>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4 m-0 p-0 d-flex align-items-stretch">
-                    <div class="p-3 w-100">
-                        <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
-                            <i class="bi bi-calendar fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-month"></h3>
-                            <p class="text-muted mb-0">This Month</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 m-0 p-0 d-flex align-items-stretch">
-                    <div class="p-3 w-100">
-                        <div class="text-center bg-white p-4 border border-2 shadow-sm rounded h-100">
-                            <i class="bi bi-calendar-fill fs-1 text-primary mb-3"></i>
-                            <h3 class="fs-2 fw-bold" id="transactions-year"></h3>
-                            <p class="text-muted mb-0">This Year</p>
-                        </div>
-                    </div>
+                <div class="bg-white border rounded-xl p-6 text-center">
+                    <i class="bi bi-calendar-fill text-4xl text-psu-orange mb-2 block"></i>
+                    <h3 class="text-2xl font-bold" id="transactions-year">0</h3>
+                    <p class="text-gray-500 text-sm">This Year</p>
                 </div>
             </div>
         </div>
     </div>
-
-<?php after_js()?>
-    <script src="./../asset/js/message.js"></script>
-    <script src="./../asset/js/user_form.js"></script>
-    <!-- <script src="./../asset/js/counters.js"></script> -->
-</body>
-<?php include_once "./../includes/footer.php"; ?>
-<script>
-    // Monitor
-function rtTransaction() {
-    $.ajax({
-        url: './../api/api_endpoint.php?dashboard_stats',
-        type: 'GET',
-        success: function(response) {
-            let stat = response.data;
-            console.log(stat);
-            if (response.status === 'success') {
-
-                // For transaction for today
-                let transactionsToday = stat.find(item => item.setup_key === 'transactions_today');
-                let transactionsPending = stat.find(item => item.setup_key === 'transactions_today_pending');
-                let transactionsCompleted = stat.find(item => item.setup_key === 'transactions_today_completed');
-                let transactionsCancelled = stat.find(item => item.setup_key === 'transactions_today_cancelled');
-
-                $('#transactions-today').text(transactionsToday ? transactionsToday.setup_value_int : 'N/A');
-                $('#transactions-pending').text(transactionsPending ? transactionsPending.setup_value_int : 'N/A');
-                $('#transactions-completed').text(transactionsCompleted ? transactionsCompleted.setup_value_int : 'N/A');
-                $('#transactions-cancelled').text(transactionsCancelled ? transactionsCancelled.setup_value_int : 'N/A');
-
-                // Transaction Total
-                let transactionsTotal = stat.find(item => item.setup_key === 'transactions_total');
-                $('#transactions-total').text(transactionsTotal ? transactionsTotal.setup_value_int : 'N/A');
-
-                // Transaction History for pasts
-                let transactionsYesterday = stat.find(item => item.setup_key === 'transactions_yesterday');
-                let transactionsThisWeek = stat.find(item => item.setup_key === 'transactions_this_week');
-                let transactionsThisMonth = stat.find(item => item.setup_key === 'transactions_this_month');
-                let transactionsThisYear = stat.find(item => item.setup_key === 'transactions_this_year');
-
-                $('#transactions-yesterday').text(transactionsYesterday ? transactionsYesterday.setup_value_int : 'N/A');
-                $('#transactions-week').text(transactionsThisWeek ? transactionsThisWeek.setup_value_int : 'N/A');
-                $('#transactions-month').text(transactionsThisMonth ? transactionsThisMonth.setup_value_int : 'N/A');
-                $('#transactions-year').text(transactionsThisYear ? transactionsThisYear.setup_value_int : 'N/A');
-            } else {
-                // Reserved
+    <?php after_js()?>
+    <?php include_once "./../includes/footer.php"; ?>
+    <script>
+    const endpointHost = window.endpointHost;
+    function rtTransaction(){
+        if(!endpointHost) return;
+        $.ajax({url:endpointHost.replace(/\/$/,'')+'/api/dashboard/admin/public',type:'GET',dataType:'json',xhrFields:{withCredentials:true},
+            success:function(r){
+                var d=r&&r.data||{};
+                if(r.status==='success'){
+                    $('#transactions-today').text(d.transaction_today_total||0);
+                    $('#transactions-total').text(d.transaction_total||0);
+                    $('#transactions-yesterday').text(d.transction_yesterday_total||0);
+                    $('#transactions-week').text(d.transaction_week_total||0);
+                    $('#transactions-month').text(d.transaction_month_total||0);
+                    $('#transactions-year').text(d.transaction_year_total||0);
+                }
             }
-        },
-        error: function(response) {
-            console.log(response);
-        }
-    });
-}
-rtTransaction();
-</script>
+        });
+    }
+    rtTransaction();
+    </script>
+</body>
 </html>

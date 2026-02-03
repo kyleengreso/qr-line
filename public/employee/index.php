@@ -1,21 +1,13 @@
 <?php
-
 include_once __DIR__ . "/../base.php";
 restrictEmployeeMode();
-
-$token = $_COOKIE['token'];
-$token = decryptToken($token, $master_key);
-$token = json_encode($token);
-$token = json_decode($token);
-
-$id = $token->id;
-$username = $token->username;
-$role_type = $token->role_type;
-$email = $token->email;
-$counterNumber = $token->counterNumber;
-$priority = $token->priority;
+$payload = getDecodedTokenPayload();
+$tok = is_array($payload) ? json_decode(json_encode($payload)) : (is_object($payload) ? $payload : null);
+$id = isset($tok->id) ? (int)$tok->id : 0;
+$username = isset($tok->username) ? $tok->username : '';
+$counterNumber = isset($tok->counterNumber) ? (int)$tok->counterNumber : 0;
+$priority = isset($tok->priority) ? $tok->priority : 'N';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,434 +16,248 @@ $priority = $token->priority;
     <?php head_icon()?>
     <title>Dashboard | <?php echo $project_name?></title>
     <?php head_css()?>
-    <?php before_js()?>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
     <?php include "./../includes/navbar.php"; ?>
-    <div class="container-lg d-flex justify-content-center align-items-center before-footer" style="margin-top: 100px">
-        <div class="text-center w-100" style="max-width: 1200px;" id="employeeDashboard">
-            <div class="row d-flex justify-content-center align-items-start" style="margin: auto;">
-                <div class="col-12 col-md-6">
-                    <div class="alert text-start alert-success d-none" id="logOutNotify">
-                        <span><?php echo $username ?> has logged out successfully</span>
+
+    <!-- Connection Modal -->
+    <div id="connectionTimeoutModal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 text-center shadow-xl">
+            <div class="animate-spin w-10 h-10 border-4 border-[rgb(255,110,55)] border-t-transparent rounded-full mx-auto mb-4"></div>
+            <h5 class="text-lg font-semibold text-gray-800">Connecting...</h5>
+            <p class="text-gray-500 text-sm">Attempting to reconnect</p>
+        </div>
+    </div>
+
+    <div class="pt-24 px-4 pb-12 max-w-5xl mx-auto">
+        <!-- Status Alert -->
+        <div id="logOutNotify" class="hidden mb-4 p-4 bg-green-100 text-green-800 rounded-lg"><?php echo $username?> has logged out successfully</div>
+        <div id="cutOffNotification" class="hidden mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-green-100 text-green-700">
+            <i class="bi bi-check-circle mr-1"></i> Operational
+        </div>
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Counter <span id="employee-counter-number"><?php echo $counterNumber ?></span></h1>
+                <p class="text-gray-500 text-sm">Cashier Dashboard</p>
+            </div>
+            <div id="cutOffState" class="hidden px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                <i class="bi bi-pause-circle mr-1"></i> Cut-Off Active
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Left Panel -->
+            <div>
+                <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+                    <p class="text-gray-500 text-sm text-center mb-2">Currently Serving</p>
+                    <div class="border-4 border-[rgb(255,110,55)] rounded-xl p-8 text-center mb-6">
+                        <span id="queue-number" class="text-6xl font-bold text-gray-800">N/A</span>
                     </div>
-                    <div class="alert text-start alert-success d-none" id="cutOffNotification">Operational</div>
-                    <h3 class="fw-bold">
-                        COUNTER <span id="employee-counter-number"><?php echo $counterNumber ?></span>
-                        <span class="text-danger d-none" id="cutOffState">(Cut-Off)</span>
-                    </h3>
-                    
-                    <p class="mb-3">Current Serving</p>
-                    <div class="border border-warning rounded p-4 fw-bold fs-1 mb-3">
-                        <span id="queue-number">N/A</span>
+                    <div class="flex justify-center gap-3 mb-4">
+                        <button id="btn-counter-success" class="bg-[rgb(255,110,55)] text-white font-semibold px-8 py-3 rounded-lg hover:bg-[rgb(230,60,20)] transition">NEXT</button>
+                        <button id="btn-counter-skip" class="bg-gray-500 text-white font-semibold px-8 py-3 rounded-lg hover:bg-gray-600 transition">SKIP</button>
                     </div>
-                    <form method="POST" id="frmNextTransaction">
-                        <div class="w-100 mb-4">
-                            <div class="mb-4">
-                                <button type="submit" name="next_queue" id="btn-counter-success" class="btn btn-warning text-white fw-bold px-4">NEXT</button>
-                                <button type="submit" name="skip_queue" id="btn-counter-skip" class="btn btn-warning text-white fw-bold px-4">SKIP</button>
-                            </div>
-                            <div>
-                                <a class="btn btn-danger ms-auto" id="employee-cut-off">Cut-Off</a>
-                            </div>
-                        </div>
-                    </form>
-                    
-                    <div class="w-100 mb-4">
-                        <div class="card border-1 p-4 text-center">
-                            <form class="d-none" action="" id="frmCutOff_trigger">
-                                <div class="alert alert-info text-start d-none" id="cutOff_trigger_notification">
-                                    <span id="cutOff_trigger_message">
-                                        Standby...
-                                    </span>
-                                </div>
-                                <div class="form-floating mb-4">
-                                    <select class="form-select" name="cut_off_select" id="cut_off_select">
-                                        <option value="null">No action</option>
-                                        <option value="1">After this queue</option>
-                                        <option value="3">After 3 queries</option>
-                                        <option value="5">After 5 queries</option>
-                                        <option value="10">After 10 queries</option>
-                                        <!-- On production -->
-                                        <!-- <option value="last">Until no transaction</option> -->
-                                    </select>
-                                    <label for="cut_off_select">Auto-cut off action</label>
-                                </div>
-                            </form>
-                            <div class="alert alert-info d-none" id="frmCutOff_trigger_message">
-                                <span>You need to resume to show Auto-cut off feature</span>
-                            </div>
-                        </div>
+                    <div class="flex justify-center">
+                        <button id="employee-cut-off" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition font-medium">Cut-Off</button>
                     </div>
                 </div>
-                <div class="col-12 col-md-6">
-                <div class="card border-1 p-4" style="min-height:100%">
-                    <table class="table table-striped table-members" id="table-transactions-student">
+
+                <div class="bg-white border border-gray-200 rounded-xl p-5">
+                    <h6 class="font-semibold text-gray-800 mb-3">Auto Cut-Off</h6>
+                    <div id="cutOff_trigger_notification" class="hidden mb-3 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
+                        <i class="bi bi-info-circle mr-1"></i> <span id="cutOff_trigger_message">1 queue remain.</span>
+                    </div>
+                    <div id="frmCutOff_trigger">
+                        <label class="block text-sm text-gray-600 mb-2">Action after queues</label>
+                        <select id="cut_off_select" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[rgb(255,110,55)] focus:border-transparent outline-none">
+                            <option value="null">No action</option>
+                            <option value="1">After this queue</option>
+                            <option value="3">After 3 queues</option>
+                            <option value="5">After 5 queues</option>
+                            <option value="10">After 10 queues</option>
+                        </select>
+                    </div>
+                    <div id="frmCutOff_trigger_message" class="hidden mt-3 p-3 bg-yellow-50 text-yellow-700 rounded-lg text-sm">
+                        <i class="bi bi-exclamation-triangle mr-1"></i> Resume to enable auto cut-off
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Transactions Table -->
+            <div class="bg-white border border-gray-200 rounded-xl p-5">
+                <h6 class="font-semibold text-gray-800 mb-4">Queue List</h6>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="table-transactions-student">
                         <thead>
-                            <tr>
-                                <th scope="col-2">#</th>
-                                <th scope="col">Email</th>
-                                <th scope="col">Payment</th>                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-2 px-3 font-medium text-gray-600">#</th>
+                                <th class="text-left py-2 px-3 font-medium text-gray-600">Email</th>
+                                <th class="text-left py-2 px-3 font-medium text-gray-600">Payment</th>
+                            </tr>
                         </thead>
+                        <tbody class="divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
+                <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                    <small class="text-gray-500" id="transactions-count"></small>
+                    <div id="transactions-pagination" class="flex gap-2"></div>
+                </div>
             </div>
-            </div>
-
-
         </div>
     </div>
 
     <?php after_js()?>
-    <script src="./../asset/js/message.js"></script>
     <script>
-        var notify_priority = false;
-        var notify_priority_timer = 5;
-        var cutOff_auto = false;
-        var queue_remain = null;
-        var this_counter_priority = "<?php echo $priority; ?>";
+    const serverTokenFallback = <?php echo json_encode($_COOKIE['token'] ?? ''); ?>;
+    const this_counter_priority = "<?php echo $priority; ?>";
+    const counterNumber = <?php echo $counterNumber; ?>;
+    const employeeId = <?php echo $id; ?>;
 
-        let frmCutOff_trigger = document.getElementById('frmCutOff_trigger');
-        let frmCutOff_trigger_message = document.getElementById('frmCutOff_trigger_message');
-        let cutOff_trigger_notification = document.getElementById('cutOff_trigger_notification');
-        let cutOff_trigger_message = document.getElementById('cutOff_trigger_message');
-    
-        function queue_remain_set(queue_remain) {
-            $.ajax({
-                url: "/public/api/api_endpoint.php",
-                method: "POST",
-                data: JSON.stringify({
-                    method : "counter_queue_remain",
-                    counter_number : <?php echo $counterNumber?>,
-                    queue_remain : queue_remain
-                }),
-                success: function (response) {
-                    cutOff_trigger_notification.classList.remove('d-none');
-                    notify_priority = true;
-                    if (notify_priority && queue_remain != null) {
-                        cutOff_trigger_message.innerText = "Queue remining set to " + queue_remain;
-                    } else if (notify_priority && queue_remain == null) {
-                        cutOff_trigger_message.innerText = "Auto-cut off is disabled";
-                    }
-                    setTimeout(() => {
-                        notify_priority = false;
-                        cutOff_trigger_notification.classList.add('d-none');
-                    },notify_priority_timer * 1000);
-                    console.log(response);
+    function getAuthTokenValue() {
+        try { const m=document.cookie.match('(?:^|; )token=([^;]*)'); if(m) return decodeURIComponent(m[1]); } catch(e){}
+        return serverTokenFallback||null;
+    }
+
+    (function(){
+        window.API_BASE = window.endpointHost ? window.endpointHost.replace(/\/+$/,'') + '/api' : '';
+        if(window.jQuery && $.ajaxSetup) $.ajaxSetup({xhrFields:{withCredentials:true},beforeSend:function(xhr){
+            hideConnectionTimeout();
+            const t=getAuthTokenValue(); if(t) xhr.setRequestHeader('Authorization','Bearer '+t);
+        }});
+    })();
+
+    function showConnectionTimeout(){ document.getElementById('connectionTimeoutModal').classList.remove('hidden'); document.getElementById('connectionTimeoutModal').style.display='flex'; }
+    function hideConnectionTimeout(){ document.getElementById('connectionTimeoutModal').style.display='none'; }
+
+    // Fetch current queue
+    function fetchTransaction(){
+        $.ajax({url:window.API_BASE+'/cashier',type:'GET',cache:false,success:function(r){
+            let el=document.getElementById('queue-number');
+            if(r.status==='success'&&r.data&&r.data.queue_number!=null) el.innerHTML=r.data.queue_number;
+            else el.innerHTML='No queue';
+        }});
+    }
+
+    // Next/Skip buttons
+    document.getElementById('btn-counter-success').addEventListener('click',function(e){
+        e.preventDefault(); const btn=this,txt=btn.innerHTML; btn.disabled=true; btn.innerHTML='Processing...';
+        $.ajax({url:window.API_BASE+'/cashier',type:'POST',contentType:'application/json',
+            data:JSON.stringify({method:'cashier-success',idemployee:employeeId}),
+            complete:function(){btn.disabled=false;btn.innerHTML=txt;},
+            success:function(r){if(r.status==='success'){queue_remain_get();fetchCutOff();fetchTransaction();fetchStudentTransaction();}}
+        });
+    });
+
+    document.getElementById('btn-counter-skip').addEventListener('click',function(e){
+        e.preventDefault(); const btn=this,txt=btn.innerHTML; btn.disabled=true; btn.innerHTML='Processing...';
+        $.ajax({url:window.API_BASE+'/cashier',type:'POST',contentType:'application/json',
+            data:JSON.stringify({method:'cashier-missed',idemployee:employeeId}),
+            complete:function(){btn.disabled=false;btn.innerHTML=txt;},
+            success:function(r){if(r.status==='success'){queue_remain_get();fetchCutOff();fetchTransaction();fetchStudentTransaction();}}
+        });
+    });
+
+    // Student transactions table
+    let studentTransactions=[],studentTxnPage=1;const studentPageSize=10;
+    function renderStudentTransactionsPage(){
+        const tbody=document.querySelector('#table-transactions-student tbody');tbody.innerHTML='';
+        if(!studentTransactions.length){document.getElementById('transactions-count').innerText='';updatePagination();return;}
+        const total=studentTransactions.length,pages=Math.ceil(total/studentPageSize);
+        if(studentTxnPage>pages)studentTxnPage=pages;
+        const start=(studentTxnPage-1)*studentPageSize,end=Math.min(start+studentPageSize,total);
+        for(let i=start;i<end;i++){const t=studentTransactions[i];tbody.innerHTML+=`<tr><td>${t.queue_number||''}</td><td>${t.email||''}</td><td>${t.payment||''}</td></tr>`;}
+        document.getElementById('transactions-count').innerText=`${start+1}–${end} of ${total}`;
+        updatePagination(pages);
+    }
+    function updatePagination(pages){
+        pages=pages||1;const c=document.getElementById('transactions-pagination');c.innerHTML='';
+        c.innerHTML=`<button class="px-3 py-1 border rounded ${studentTxnPage<=1?'opacity-50':'hover:bg-gray-100'}" ${studentTxnPage<=1?'disabled':''} onclick="studentTxnPage--;renderStudentTransactionsPage()">Prev</button>
+        <span class="px-2">${studentTxnPage}/${pages}</span>
+        <button class="px-3 py-1 border rounded ${studentTxnPage>=pages?'opacity-50':'hover:bg-gray-100'}" ${studentTxnPage>=pages?'disabled':''} onclick="studentTxnPage++;renderStudentTransactionsPage()">Next</button>`;
+    }
+    function fetchStudentTransaction(){
+        $.ajax({url:window.API_BASE+'/dashboard/cashier',type:'GET',cache:false,success:function(r){
+            studentTransactions=Array.isArray(r.data)?r.data:[];studentTxnPage=1;renderStudentTransactionsPage();
+        }});
+    }
+
+    // Cut-off
+    var operational=false;
+    function fetchCutOff(){
+        $.ajax({url:window.API_BASE+'/cashier?employeeCutOff=true&id='+employeeId,type:'GET',success:function(r){
+            if(r.status==='success'){
+                const notif=document.getElementById('cutOffNotification');
+                const state=document.getElementById('cutOffState');
+                const cutBtn=document.getElementById('employee-cut-off');
+                if(r.cut_off_state==1){
+                    operational=false;
+                    notif.className='mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-red-100 text-red-700';
+                    notif.innerHTML='<i class="bi bi-pause-circle mr-1"></i> Cut-Off Active';
+                    state.classList.remove('hidden');
+                    cutBtn.className='bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition font-medium';
+                    cutBtn.innerText='Resume';
+                    document.getElementById('btn-counter-success').disabled=true;document.getElementById('btn-counter-skip').disabled=true;
+                    document.getElementById('frmCutOff_trigger').classList.add('hidden');
+                    document.getElementById('frmCutOff_trigger_message').classList.remove('hidden');
+                }else{
+                    operational=true;
+                    notif.className='hidden mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-green-100 text-green-700';
+                    state.classList.add('hidden');
+                    cutBtn.className='bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition font-medium';
+                    cutBtn.innerText='Cut-Off';
+                    document.getElementById('btn-counter-success').disabled=false;document.getElementById('btn-counter-skip').disabled=false;
+                    document.getElementById('frmCutOff_trigger').classList.remove('hidden');
+                    document.getElementById('frmCutOff_trigger_message').classList.add('hidden');
                 }
-            });
-        }
-
-        let cut_off_select = document.getElementById('cut_off_select');
-        cut_off_select.addEventListener('change', function (e) {
-            console.log(this.value);
-            if (this.value == "null") {
-                fetchCutOff();
-                queue_remain_set(this.null);
-            } else {
-                fetchCutOff();
-                queue_remain_set(this.value);
             }
+        }});
+    }
+
+    document.getElementById('employee-cut-off').addEventListener('click',function(e){
+        e.preventDefault();const btn=this,txt=btn.innerHTML;btn.disabled=true;btn.innerHTML='Processing...';
+        $.ajax({url:window.API_BASE+'/cashier',type:'POST',contentType:'application/json',
+            data:JSON.stringify({method:'employee-cut-off',id:employeeId}),
+            complete:function(){btn.disabled=false;btn.innerHTML=txt;},
+            success:function(r){if(r.status==='success')fetchCutOff();}
         });
+    });
 
-        function queue_remain_get() {
-            let param = new URLSearchParams({
-                counter_queue_remain: true,
-                counter_number: <?php echo htmlspecialchars($counterNumber); ?>
-            });
-            $.ajax({
-                url: "/public/api/api_endpoint.php?" + param.toString(),
-                method: "GET",
-                success: function(response) {
-                    console.log("Response received:", response); // Log the response
-                    queue_remain = response.queue_remain;
-                    if (response.status === 'success') {
-                        if (response.queue_remain != null) {
-                            if (cutOff_trigger_notification.classList.contains('d-none')) {
-                                cutOff_trigger_notification.classList.remove('d-none');
-                                cutOff_trigger_notification.innerText = response.queue_remain + " queue remain.";
-                            }
-                        } else {
-                            cutOff_trigger_notification.classList.add('d-none');
-                        }
-                        console.log("Success:", response.message);
-                    } else {
-                        // cutOff_trigger_notification.innerText = 
-                        console.log("Error in response:", response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error("AJAX Error:", status, error);
-                    console.error("Response Text:", xhr.responseText); // Log the raw response
+    // Queue remain
+    function queue_remain_get(){
+        $.ajax({url:window.API_BASE+'/cashier?counter_queue_remain=true&counter_number='+counterNumber,type:'GET',success:function(r){
+            if(r.status==='success'){
+                if(r.queue_remain!=null){
+                    document.getElementById('cutOff_trigger_notification').classList.remove('hidden');
+                    document.getElementById('cutOff_trigger_message').innerText=r.queue_remain+' queue remain.';
+                    document.getElementById('cut_off_select').value=r.queue_remain;
+                }else{
+                    document.getElementById('cutOff_trigger_notification').classList.add('hidden');
+                    document.getElementById('cut_off_select').value='null';
                 }
-            });
-        }
-    
-        let x = <?php echo $counterNumber . $id?>;
-        function fetchTransaction() {
-            let resp = null;
-            console.log("Priority: ", this_counter_priority);
-            var params = new URLSearchParams({
-                cashier: true,
-                employee_id: <?php echo $id?>
-            });
-            // console.log("Params", params.toString());
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    console.log("RECV:", response);
-                    let queue_number = document.getElementById('queue-number');
-                    if (response.status === 'success') {
-                        resp = response;
-                        queue_number.innerHTML = response.data.queue_number;
-                        console.log(resp);
-                    } else {
-                        queue_number.innerHTML = "No queue";
-                        if (cutOff_auto && cutOff_trigger_queue == 0) {
-                            cutOff.click();
-                        }
-                        // console.log('Error:', response.message);     // Disable
-                    }
-                },
-                error: function(xhr, status, error) {
-                    // Check phph erro message json
-                    console.log(xhr.responseText);
-                    // console.error('AJAX Error:', status, error);
-                }
-            });
-        }
-
-        let btn_counter_success = document.getElementById('btn-counter-success');
-        let btn_counter_skip = document.getElementById('btn-counter-skip');
-        btn_counter_success.addEventListener('click', function(e) {
-            e.preventDefault();
-            $.ajax({
-                url: '/public/api/api_endpoint.php',
-                type: 'POST',
-                data: JSON.stringify({
-                    method: 'cashier-success',
-                    idemployee: <?php echo $id?>,
-                }),
-                success: function(response) {
-                    if (response.status === 'success') {
-                        return;
-                    } else {
-                        console.log('Error:', response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                    // console.log('Raw Response:', xhr.responseText);
-                }
-            });
-        });
-
-        
-        btn_counter_skip.addEventListener('click', function(e) {
-            e.preventDefault();
-            $.ajax({
-                url: '/public/api/api_endpoint.php',
-                type: 'POST',
-                data: JSON.stringify({
-                    method: 'cashier-missed',
-                    idemployee: <?php echo $id?>,
-                }),
-                success: function(response) {
-                    if (response.status === 'success') {
-                        return;
-                    } else {
-                        console.log('Error:', response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                    // console.log('Raw Response:', xhr.responseText);
-                }
-            });
-        });
-
-        // Students
-        let table_transactions_student = document.getElementById('table-transactions-student');
-        let this_employee_id = <?php echo $id?>;
-        function fetchStudentTransaction() {
-            const params = new URLSearchParams({
-                transactions: true,
-                employee_id: this_employee_id,
-                students: 1,
-                email: "palawan.edu.ph",
-                desc: true,
-                date_range: 'today'
-            });
-        
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    let transactions = response.transactions;
-                    while (table_transactions_student.rows.length > 1) {
-                        table_transactions_student.deleteRow(-1);
-                    }
-                    if (Array.isArray(transactions) && transactions.length > 0) {
-                        transactions.forEach((transaction) => {
-                            let row = table_transactions_student.insertRow();
-                            let cell1 = row.insertCell(0);
-                            let cell2 = row.insertCell(1);
-                            let cell3 = row.insertCell(2);
-                            cell1.innerHTML = transaction.queue_number;
-                            cell2.innerHTML = transaction.email;
-                            cell3.innerHTML = transaction.payment;
-                        });
-                    } else {
-                        // console.warn("No transactions found or invalid data format.");
-                    }
-
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                }
-            });
-        }
-
-
-        // Cut Off Feature
-
-        var operational = false;
-        let btn_counter_resume = document.getElementById('employee-resume');
-        let cutOffNotification = document.getElementById('cutOffNotification');
-        
-        let cutOffState = document.getElementById('cutOffState');
-
-        let cutOff = document.getElementById('employee-cut-off');
-        const params = new URLSearchParams({
-            employeeCutOff: true,
-            id: <?php echo $id?>
-        });
-
-        async function fetchCutOff() {
-            $.ajax({
-                url: '/public/api/api_endpoint.php?' + params,
-                type: 'GET',
-                success: function(response) {
-                    console.log(response);
-                    if (response.status == "success") {
-                        console.log(response.cut_off);
-                        if (response.cut_off_state == 1) {
-                            operational = false;
-                            frmCutOff_trigger.classList.add('d-none');
-                            // frmCutOff_trigger.querySelectorAll('input, select, button, textarea').forEach(e => {
-                            //     e.disabled = true;
-                            // });
-                            frmCutOff_trigger_message.classList.remove('d-none');
-                            cutOffNotification.classList.remove('alert-success');
-                            cutOffNotification.classList.add('alert-danger');
-                            cutOffNotification.innerHTML = 'You have been cut-off';
-                            cutOff.classList.remove('btn-danger');
-                            cutOff.innerText = "Resume";
-                            cutOff.classList.add('btn-success');
-                            cutOffState.classList.remove('d-none');
-                            btn_counter_success.disabled = true;
-                            btn_counter_skip.disabled = true;
-                        } else if (response.cut_off_state == 0){
-                            operational = true;
-                            frmCutOff_trigger.classList.remove('d-none');
-                            frmCutOff_trigger_message.classList.add('d-none');
-                            cutOffNotification.classList.remove('alert-danger');
-                            cutOffNotification.classList.add('alert-success');
-                            cutOffNotification.innerHTML = 'You are back to operational';
-                            cutOff.classList.remove('btn-success');
-                            cutOff.innerText = "Cut Off";
-                            cutOff.classList.add('btn-danger');
-                            cutOffState.classList.add('d-none');
-                            btn_counter_success.disabled = false;
-                            btn_counter_skip.disabled = false;
-                        }
-                    }
-                }
-            });
-        };
-
-        cutOff.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (operational) {
-                $.ajax({
-                    url: '/public/api/api_endpoint.php',
-                    type: 'POST',
-                    data: JSON.stringify({
-                        method: 'employee-cut-off',
-                        id: <?php echo $id?>,
-                    }),
-                    success: function(response) {
-                        fetchCutOff();
-                        if (response.status === 'success') {
-                            operational = false;
-                            cutOffNotification.classList.remove('alert-success', 'd-none');
-                            cutOffNotification.classList.add('alert-danger');
-                            cutOffNotification.innerHTML = 'You have been cut-off';
-                            cutOff.classList.remove('btn-danger');
-                            cutOff.innerText = "Resume";
-                            cutOff.classList.add('btn-success');
-                            cutOffState.classList.remove('d-none');
-                            btn_counter_success.disabled = true;
-                            btn_counter_skip.disabled = true;
-                            setTimeout(() => {
-                                cutOffNotification.classList.add('d-none');
-                            }, 5000);      
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX Error:', status, error);
-                    }
-                });
-            } else {
-                $.ajax({
-                    url: '/public/api/api_endpoint.php',
-                    type: 'POST',
-                    data: JSON.stringify({
-                        method: 'employee-cut-off',
-                        id: <?php echo $id?>,
-                    }),
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            operational = true;
-                            cutOffNotification.classList.remove('alert-danger', 'd-none');
-                            cutOffNotification.classList.add('alert-success');
-                            cutOffNotification.innerHTML = 'You are back to operational';
-                            cutOff.classList.remove('btn-success');
-                            cutOff.innerText = "Cut Off";
-                            cutOff.classList.add('btn-danger');
-                            cutOffState.classList.add('d-none');
-                            btn_counter_success.disabled = false;
-                            btn_counter_skip.disabled = false;
-                            setTimeout(() => {
-                                cutOffNotification.classList.add('d-none');
-                            }, 5000);
-                        } else {
-                            console.log('Error:', response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX Error:', status, error);
-                    }
-                })
             }
+        }});
+    }
+    function queue_remain_set(v){
+        $.ajax({url:window.API_BASE+'/cashier',type:'PATCH',contentType:'application/json',
+            data:JSON.stringify({counter_number:counterNumber,queue_remain:v}),
+            success:function(r){if(r.status==='success')queue_remain_get();}
         });
+    }
+    document.getElementById('cut_off_select').addEventListener('change',function(){
+        const v=this.value;queue_remain_set(v==='null'?null:parseInt(v,10));
+    });
 
-
-        async function daemon() {
-            await fetchCutOff();
-            queue_remain_get();
-            if (operational) {
-                fetchTransaction();
-                fetchStudentTransaction();
-            }
-            // Schedule the next execution
-            setTimeout(daemon, 500);
-        }
-        
-        // Start the daemon loop
-        daemon();
+    // Daemon loop
+    async function daemon(){
+        await fetchCutOff();queue_remain_get();
+        if(operational){fetchTransaction();fetchStudentTransaction();}
+        hideConnectionTimeout();
+        setTimeout(daemon,500);
+    }
+    daemon();
     </script>
+    <?php include_once "./../includes/footer.php"; ?>
 </body>
-<?php include_once "./../includes/footer.php"; ?>
 </html>
